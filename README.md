@@ -1,6 +1,6 @@
 # mq-metric-samples
 
-This repository contains a collection of IBM® MQ sample clients that utilize the [IBM® MQ golang metric packages](https://github.com/ibm-messaging/mq-golang) to provide a program that can be used with existing monitoring technologies (such as prometheus, AWS Cloud watch, etc).
+This repository contains a collection of IBM® MQ sample clients that utilize the [IBM® MQ golang metric packages](https://github.com/ibm-messaging/mq-golang) to provide a program that can be used with existing monitoring technologies (such as prometheus, AWS Cloud watch, etc). These samples were moved to this repository from the [IBM® MQ golang metric packages repository](https://github.com/ibm-messaging/mq-golang).
 
 ## Getting started
 
