@@ -48,7 +48,7 @@ var config mqCloudWatchConfig
 /*
 initConfig parses the command line parameters.
 */
-func initConfig() {
+func initConfig() error {
 
 	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
 	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
@@ -70,6 +70,11 @@ func initConfig() {
 	flag.Parse()
 
 	if config.monitoredQueuesFile != "" {
-		config.monitoredQueues = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+		var err error
+		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }

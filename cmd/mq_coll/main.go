@@ -40,7 +40,11 @@ func initLog() {
 func main() {
 	var err error
 
-	initConfig()
+	err = initConfig()
+	if err != nil {
+		log.Errorf("Failed to initialize configuration: %v\n", err)
+		os.Exit(1)
+	}
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)

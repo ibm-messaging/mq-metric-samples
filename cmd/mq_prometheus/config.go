@@ -62,7 +62,7 @@ info/error logging
 The default IP port for this monitor is registered with prometheus so
 does not have to be provided.
 */
-func initConfig() {
+func initConfig() error {
 
 	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
 	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
@@ -90,7 +90,11 @@ func initConfig() {
 	flag.Parse()
 
 	if config.monitoredQueuesFile != "" {
-		config.monitoredQueues = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+		var err error
+		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	if config.cc.UserId != "" && config.cc.Password == "" {
@@ -99,4 +103,6 @@ func initConfig() {
 		scanner.Scan()
 		config.cc.Password = scanner.Text()
 	}
+
+	return nil
 }

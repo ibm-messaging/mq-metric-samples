@@ -1,0 +1,8 @@
+[[constraint]]
+  name = "github.com/ibm-messaging/mq-golang"
+  branch = "dev"
+
+[prune]
+  go-tests = true
+  unused-packages = true
+  non-go = true
