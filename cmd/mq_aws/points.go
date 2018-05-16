@@ -20,11 +20,11 @@ package main
 
 import (
 	"errors"
-	_ "github.com/Sirupsen/logrus"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
 func newPoint(metric string, timestamp time.Time, value float64, tags map[string]string) (*cloudwatch.MetricDatum, error) {

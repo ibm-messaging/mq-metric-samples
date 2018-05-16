@@ -28,9 +28,9 @@ and update the various data points.
 import (
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	client "github.com/influxdata/influxdb/client/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

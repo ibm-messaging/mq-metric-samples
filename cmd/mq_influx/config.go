@@ -24,8 +24,8 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+	log "github.com/sirupsen/logrus"
 )
 
 type mqInfluxConfig struct {

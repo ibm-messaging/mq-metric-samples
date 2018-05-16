@@ -21,7 +21,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	_ "github.com/Sirupsen/logrus"
 )
 
 /*
