@@ -59,10 +59,13 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ibm-messaging/mq-golang"
-  packages = ["mqmetric"]
-  revision = "a8f57c3df1b50c706bde726a43ae658c270abff3"
-  version = "v1.0.0"
+  packages = [
+    "ibmmq",
+    "mqmetric"
+  ]
+  revision = "f0f330052e496ec2aff6c650ffd9e4162e433a2d"
 
 [[projects]]
   name = "github.com/influxdata/influxdb"
@@ -131,7 +134,7 @@
     "unix",
     "windows"
   ]
-  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
+  revision = "89da893103a6ed6c87fb4bb5c19fcf97812df621"
 
 [solve-meta]
   analyzer-name = "dep"
