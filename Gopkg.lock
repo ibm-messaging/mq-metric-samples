@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/Sirupsen/logrus"
+  packages = ["."]
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
+
+[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -53,13 +59,10 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "dev"
   name = "github.com/ibm-messaging/mq-golang"
-  packages = [
-    "ibmmq",
-    "mqmetric"
-  ]
-  revision = "294f0c9e21f4608cc4749c11d928a36d26c8ace7"
+  packages = ["mqmetric"]
+  revision = "a8f57c3df1b50c706bde726a43ae658c270abff3"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/influxdata/influxdb"
@@ -116,12 +119,6 @@
   revision = "8b1c2da0d56deffdbb9e48d4414b4e674bd8083e"
 
 [[projects]]
-  name = "github.com/sirupsen/logrus"
-  packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
-
-[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -139,6 +136,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ea90fed4a2e3befed0ccb01acf3be4a44c36c9d3c747e774d90ed44ba2a5cf72"
+  inputs-digest = "1914270bfc5baafd6ea9ff2265da66e319f5bc9270fe261758497a0cac7b70de"
   solver-name = "gps-cdcl"
   solver-version = 1

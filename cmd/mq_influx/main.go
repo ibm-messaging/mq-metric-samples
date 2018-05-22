@@ -22,9 +22,9 @@ import (
 	"os"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
-	client "github.com/influxdata/influxdb/client/v2"
-	log "github.com/sirupsen/logrus"
+	"github.com/influxdata/influxdb/client/v2"
 )
 
 func initLog() {
@@ -39,11 +39,7 @@ func main() {
 	var err error
 	var c client.Client
 
-	err = initConfig()
-	if err != nil {
-		log.Errorf("Failed to initialize configuration: %v\n", err)
-		os.Exit(1)
-	}
+	initConfig()
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)

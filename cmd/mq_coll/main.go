@@ -22,8 +22,8 @@ import (
 	"os"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
-	log "github.com/sirupsen/logrus"
 )
 
 func initLog() {
@@ -40,11 +40,7 @@ func initLog() {
 func main() {
 	var err error
 
-	err = initConfig()
-	if err != nil {
-		log.Errorf("Failed to initialize configuration: %v\n", err)
-		os.Exit(1)
-	}
+	initConfig()
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)

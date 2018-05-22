@@ -42,7 +42,7 @@ var config mqTTYConfig
 /*
 initConfig parses the command line parameters.
 */
-func initConfig() error {
+func initConfig() {
 
 	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
 	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
@@ -58,12 +58,7 @@ func initConfig() error {
 	flag.Parse()
 
 	if config.monitoredQueuesFile != "" {
-		var err error
-		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
-		if err != nil {
-			return err
-		}
+		config.monitoredQueues = mqmetric.ReadPatterns(config.monitoredQueuesFile)
 	}
 
-	return nil
 }

@@ -1,6 +1,6 @@
 [[constraint]]
   name = "github.com/ibm-messaging/mq-golang"
-  branch = "dev"
+  branch = "master"
 
 [prune]
   go-tests = true
