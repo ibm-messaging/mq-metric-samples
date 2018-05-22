@@ -31,8 +31,8 @@
     "service/cloudwatch",
     "service/sts"
   ]
-  revision = "c7cd1ebe87257cde9b65112fc876b0339ea0ac30"
-  version = "v1.13.49"
+  revision = "cf00d544fc3c02f31e05e8d02444a1325d3a840b"
+  version = "v1.13.53"
 
 [[projects]]
   branch = "master"
@@ -59,7 +59,7 @@
     "ibmmq",
     "mqmetric"
   ]
-  revision = "83109d22f960a2a3d47af5a55e04f426aaa91c55"
+  revision = "294f0c9e21f4608cc4749c11d928a36d26c8ace7"
 
 [[projects]]
   name = "github.com/influxdata/influxdb"
@@ -102,7 +102,7 @@
     "internal/bitbucket.org/ww/goautoneg",
     "model"
   ]
-  revision = "d811d2e9bf898806ecfb6ef6296774b13ffc314c"
+  revision = "7600349dcfe1abd18d72d3a1770870d9800a7801"
 
 [[projects]]
   branch = "master"
