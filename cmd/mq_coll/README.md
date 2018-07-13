@@ -28,7 +28,7 @@ also contains the mqmetric package used as a common component for
 supporting alternative database collection protocols.
 
 * Get the error logger package used by all of these monitors
-using `go get -u github.com/Sirupsen/logrus`.
+using `go get -u github.com/sirupsen/logrus`.
 
 Run `go build -o <directory>/mq_coll cmd/mq_coll/*.go` to compile
 the program and put it to a specific directory.
