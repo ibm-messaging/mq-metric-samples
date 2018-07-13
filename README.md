@@ -18,6 +18,10 @@ You will also require the following programs:
 
 * [dep](https://golang.github.io/dep/) - Golang dependency management tool
 
+If using a version of Go from after 2017, you must set environment variables to permit some compile/link flags. This is due to a security fix in the compiler.
+
+  ```export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"```
+
 ### Building a component
 
 * Change directory to your go path. (`cd $GOPATH`)
