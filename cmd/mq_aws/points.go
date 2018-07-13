@@ -20,7 +20,7 @@ package main
 
 import (
 	"errors"
-	_ "github.com/Sirupsen/logrus"
+	_ "github.com/sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"strings"

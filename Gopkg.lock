@@ -20,6 +20,7 @@
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
     "aws/credentials/stscreds",
+    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
@@ -28,6 +29,7 @@
     "aws/signer/v4",
     "internal/sdkio",
     "internal/sdkrand",
+    "internal/sdkuri",
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/query",
@@ -37,8 +39,8 @@
     "service/cloudwatch",
     "service/sts"
   ]
-  revision = "cf00d544fc3c02f31e05e8d02444a1325d3a840b"
-  version = "v1.13.53"
+  revision = "9e9afa0895e9daff556cc18f90dc53eb91f41ffd"
+  version = "v1.14.26"
 
 [[projects]]
   branch = "master"
@@ -49,8 +51,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
-  version = "v1.36.0"
+  revision = "358ee7663966325963d4e8b2e1fbd570c5195153"
+  version = "v1.38.1"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -59,13 +61,13 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ibm-messaging/mq-golang"
   packages = [
     "ibmmq",
     "mqmetric"
   ]
-  revision = "f0f330052e496ec2aff6c650ffd9e4162e433a2d"
+  revision = "1b2a2ad95ba3c555944be28097d392c27bda4071"
+  version = "v2.0.0"
 
 [[projects]]
   name = "github.com/influxdata/influxdb"
@@ -74,8 +76,8 @@
     "models",
     "pkg/escape"
   ]
-  revision = "02d7d4f043b34ecb4e9b2dbec298c6f9450c2a32"
-  version = "v1.5.2"
+  revision = "62ab18a0f43ee342b84debaaae5486b8b2d8682c"
+  version = "v1.6.0"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -85,8 +87,8 @@
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
-  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
-  version = "v1.0.0"
+  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+  version = "v1.0.1"
 
 [[projects]]
   name = "github.com/prometheus/client_golang"
@@ -98,7 +100,7 @@
   branch = "master"
   name = "github.com/prometheus/client_model"
   packages = ["go"]
-  revision = "99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c"
+  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
 
 [[projects]]
   branch = "master"
@@ -119,13 +121,19 @@
     "nfs",
     "xfs"
   ]
-  revision = "8b1c2da0d56deffdbb9e48d4414b4e674bd8083e"
+  revision = "ae68e2d4c00fed4943b5f6698d504a5fe083da8a"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
+  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
 [[projects]]
   branch = "master"
@@ -134,11 +142,11 @@
     "unix",
     "windows"
   ]
-  revision = "89da893103a6ed6c87fb4bb5c19fcf97812df621"
+  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1914270bfc5baafd6ea9ff2265da66e319f5bc9270fe261758497a0cac7b70de"
+  inputs-digest = "9b8c8d6a6a4a2fa2424e61c0cb3c30f20af40706ebfe480ba8da2c7e4d6766e7"
   solver-name = "gps-cdcl"
   solver-version = 1
