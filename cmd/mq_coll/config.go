@@ -67,7 +67,7 @@ func initConfig() {
 		var err error
 		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
 		if err != nil {
-			log.Errorf("Failed to parse montiored queues file - %v", err)
+			log.Errorf("Failed to parse monitored queues file - %v", err)
 		}
 	}
 
