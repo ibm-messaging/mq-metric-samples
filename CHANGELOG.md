@@ -1,5 +1,9 @@
 # Changelog
 
+## July 2019
+
+* Updated repo to use 2.0.0 version of mq-golang repo
+
 ## May 2018
 
 * Initial commit

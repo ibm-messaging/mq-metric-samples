@@ -34,7 +34,7 @@ supporting alternative database collection protocols.
 * The error logger package may need to be explicitly downloaded
 
   On my system, I also had to forcibly download the logger package,
-  using `go get -u github.com/Sirupsen/logrus`.
+  using `go get -u github.com/sirupsen/logrus`.
 
 Run `go build -o <directory>/mq_influx cmd/mq_influx/*.go` to compile
 the program and put it to a specific directory.

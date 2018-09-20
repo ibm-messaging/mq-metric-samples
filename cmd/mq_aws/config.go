@@ -22,6 +22,8 @@ import (
 	"flag"
 
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type mqCloudWatchConfig struct {
@@ -70,6 +72,10 @@ func initConfig() {
 	flag.Parse()
 
 	if config.monitoredQueuesFile != "" {
-		config.monitoredQueues = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+		var err error
+		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+		if err != nil {
+			log.Errorf("Failed to parse monitored queues file - %v", err)
+		}
 	}
 }
