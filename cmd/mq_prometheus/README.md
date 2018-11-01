@@ -32,9 +32,9 @@ MQ V9.0.2
   export GOROOT=/usr/lib/golang  (or wherever you have installed it)
   mkdir -p $GOPATH/src
   cd $GOPATH/src
-
 ```
-* Clone this GitHub repository for the monitoring programs into your GOPATH
+* Clone this GitHub repository for the monitoring programs into your GOPATH. The repository
+contains the prereq packages at a suitable version in the `vendor` tree
 ```
   git clone https://github.com/ibm-message/mq-metric-samples ibm-messaging/mq-metric-samples
 ```
@@ -70,7 +70,7 @@ The monitor always collects all of the available queue manager-wide metrics.
 It can also be configured to collect statistics for specific sets of queues.
 The sets of queues can be given either directly on the command line with the
 `-ibmmq.monitoredQueues` flag, or put into a separate file which is also
-named on the command line, with the `ibmmq.monitoredQueuesFile` flag. An
+named on the command line, with the `-ibmmq.monitoredQueuesFile` flag. An
 example is included in the startup shell script.
 
 Note that the queue patterns are expanded only at startup
@@ -92,7 +92,7 @@ Another command line parameter is `pollInterval`. This determines how frequently
 channel status is collected. You may want to have it collected at a different rate to
 the queue data, as it may be more expensive to extract the channel status. The default
 pollInterval is 0, which means that the channel status is collected every time Prometheus
-asks for the queue and queue manager statistics. Setting it to 1m means that a minimum
+asks for the queue and queue manager statistics. Setting it to `1m` means that a minimum
 time of one minute will elapse between asking for channel status even if the queue statistics
 are gathered more frequently.
 
