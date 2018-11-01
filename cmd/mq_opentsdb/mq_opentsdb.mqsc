@@ -10,8 +10,8 @@ DEFINE SERVICE(MQOPENTSDB)         +
        STARTARG(+QMNAME+)          +
        STOPCMD('/usr/bin/kill ' )  +
        STOPARG(+MQ_SERVER_PID+)    +
-       STDOUT('/var/mqm/errors/opentsdb.out')  +
-       STDERR('/var/mqm/errors/opentsdb.out')  +
+       STDOUT('/var/mqm/errors/mq_opentsdb.out')  +
+       STDERR('/var/mqm/errors/mq_opentsdb.out')  +
        DESCR('MQ exporter for OpenTSDB')
 
 * Start it manually now; will be automatically started on future qmgr startup

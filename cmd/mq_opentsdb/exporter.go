@@ -32,8 +32,8 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+	log "github.com/sirupsen/logrus"
 )
 
 type client struct {

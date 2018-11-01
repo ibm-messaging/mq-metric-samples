@@ -18,9 +18,12 @@ queues="APP.*,MYQ.*"
 # An alternative is to have a file containing the patterns, and named
 # via the ibmmq.monitoredQueuesFile option.
 
+# Do similar for channels
+channels="TO.*,SYSTEM.DEF.SVRCONN"
+
 # See config.go for all recognised flags
 
 # Start via "exec" so the pid remains the same. The queue manager can
 # then check the existence of the service and use the MQ_SERVER_PID value
 # to kill it on shutdown.
-exec /usr/local/bin/mqgo/mq_prometheus -ibmmq.queueManager=$qMgr -ibmmq.monitoredQueues="$queues" -log.level=error
+exec /usr/local/bin/mqgo/mq_prometheus -ibmmq.queueManager=$qMgr -ibmmq.monitoredQueues="$queues" -ibmmq.monitoredChannels="$channels" -log.level=error

@@ -22,9 +22,9 @@ import (
 	"os"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	"github.com/influxdata/influxdb/client/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 func initLog() {

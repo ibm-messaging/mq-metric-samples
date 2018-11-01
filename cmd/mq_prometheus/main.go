@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2018
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import (
 	"net/http"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 func initLog() {
@@ -38,7 +38,8 @@ func initLog() {
 func main() {
 	var err error
 
-	initConfig()
+	err = initConfig()
+
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
@@ -47,13 +48,14 @@ func main() {
 	initLog()
 	log.Infoln("Starting IBM MQ metrics exporter for Prometheus monitoring")
 
-	// Connect and open standard queues
-	err = mqmetric.InitConnectionStats(config.qMgrName, config.replyQ, config.statisticsQueueName, &config.cc)
 	if err == nil {
-		log.Infoln("Connected to queue manager ", config.qMgrName)
-		defer mqmetric.EndConnection()
+		// Connect and open standard queues
+		err = mqmetric.InitConnection(config.qMgrName, config.replyQ, &config.cc)
+		if err == nil {
+			log.Infoln("Connected to queue manager ", config.qMgrName)
+			defer mqmetric.EndConnection()
+		}
 	}
-
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
 	if err == nil {
@@ -70,13 +72,8 @@ func main() {
 	// created, allocate the Prometheus gauges for each resource
 	if err == nil {
 		allocateGauges()
+		allocateChannelStatusGauges()
 	}
-
-	// TODO: continue with the channel stat collection
-	//if err == nil && config.statisticsQueueName != "" {
-	//	mqmetric.InitChlStatistics()
-	//allocateChlGauges()
-	//}
 
 	// Go into main loop for handling requests from Prometheus
 	if err == nil {
@@ -107,9 +104,9 @@ The only link on it jumps to the list of available metrics.
 func landingPage() []byte {
 	return []byte(
 		`<html>
-<head><title>IBM MQ Exporter</title></head>
+<head><title>IBM MQ metrics exporter for Prometheus</title></head>
 <body>
-<h1>IBM MQ Exporter</h1>
+<h1>IBM MQ metrics exporter for Prometheus</h1>
 <p><a href='` + config.httpMetricPath + `'>Metrics</a></p>
 </body>
 </html>

@@ -1,18 +1,18 @@
 * Cleanup any existing service
-STOP SERVICE(PROMETHEUS)
-DELETE SERVICE(PROMETHEUS)
+STOP SERVICE(MQPROMETHEUS)
+DELETE SERVICE(MQPROMETHEUS)
 
 * Reset the definition
-DEFINE SERVICE(PROMETHEUS)         +
+DEFINE SERVICE(MQPROMETHEUS)         +
        CONTROL(QMGR)               +
        SERVTYPE(SERVER)            +
        STARTCMD('/usr/local/bin/mqgo/mq_prometheus.sh') +
        STARTARG(+QMNAME+)          +
        STOPCMD('/usr/bin/kill ' )  +
        STOPARG(+MQ_SERVER_PID+)    +
-       STDOUT('/var/mqm/errors/prom.out')  +
-       STDERR('/var/mqm/errors/prom.out')  +
+       STDOUT('/var/mqm/errors/mq_prometheus.out')  +
+       STDERR('/var/mqm/errors/mq_prometheus.out')  +
        DESCR('MQ exporter for Prometheus')
 
 * Start it manually now; will be automatically started on future qmgr startup
-START SERVICE(PROMETHEUS)
+START SERVICE(MQPROMETHEUS)

@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2018
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -28,26 +28,32 @@ and update the various Gauges.
 import (
 	"strings"
 	"sync"
+	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 type exporter struct {
-	mutex   sync.RWMutex
-	metrics mqmetric.AllMetrics
+	mutex     sync.RWMutex
+	metrics   mqmetric.AllMetrics
+	chlStatus mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
 	return &exporter{
-		metrics: mqmetric.Metrics,
+		metrics:   mqmetric.Metrics,
+		chlStatus: mqmetric.ChannelStatus,
 	}
 }
 
 var (
-	first    = true
-	gaugeMap = make(map[string]*prometheus.GaugeVec)
+	first                 = true
+	gaugeMap              = make(map[string]*prometheus.GaugeVec)
+	channelStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
+	lastPoll              = time.Now()
 )
 
 /*
@@ -65,6 +71,10 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 			}
 		}
 	}
+
+	for _, attr := range e.chlStatus.Attributes {
+		channelStatusGaugeMap[attr.MetricName].Describe(ch)
+	}
 }
 
 /*
@@ -76,6 +86,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	defer e.mutex.Unlock()
 
 	log.Infof("IBMMQ Collect started")
+
+	// Do we need to poll for object status on this iteration
+	pollStatus := false
+	thisPoll := time.Now()
+	elapsed := thisPoll.Sub(lastPoll)
+	if elapsed >= config.pollIntervalDuration {
+		log.Debugf("Polling for object status")
+		lastPoll = thisPoll
+		pollStatus = true
+	}
 
 	// Clear out everything we know so far. In particular, replace
 	// the map of values for each object so the collection starts
@@ -91,6 +111,21 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 	// Deal with all the publications that have arrived
 	mqmetric.ProcessPublications()
+
+	// If there has been sufficient interval since the last explicit poll for
+	// status, then do that collection too
+	if pollStatus {
+		for _, attr := range e.chlStatus.Attributes {
+			channelStatusGaugeMap[attr.MetricName].Reset()
+		}
+
+		err := mqmetric.CollectChannelStatus(config.monitoredChannels)
+		if err != nil {
+			log.Errorf("Error collecting channel status: %v", err)
+		} else {
+			log.Debugf("Collected all channel status")
+		}
+	}
 
 	// Have now processed all of the publications, and all the MQ-owned
 	// value fields and maps have been updated.
@@ -120,13 +155,56 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
-	// And finally tell Prometheus about the data
+	// And tell Prometheus about the queue and qmgr data
 	for _, cl := range e.metrics.Classes {
 		for _, ty := range cl.Types {
 			for _, elem := range ty.Elements {
 				gaugeMap[makeKey(elem)].Collect(ch)
+				log.Debugf("Reporting gauge for %s", elem.MetricName)
 			}
 		}
+	}
+
+	// Next we extract the info for channel status. Several of the attributes
+	// are used to build the tags that uniquely identify a channel instance
+	if pollStatus {
+		for _, attr := range e.chlStatus.Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 {
+					g := channelStatusGaugeMap[attr.MetricName]
+
+					f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
+
+					chlType := int(e.chlStatus.Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
+					chlTypeString := strings.Replace(ibmmq.MQItoString("CHT", chlType), "MQCHT_", "", -1)
+					// Not every channel status report has the RQMNAME attribute (eg SVRCONNs)
+					rqmname := ""
+					if rqmnameAttr, ok := e.chlStatus.Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
+						rqmname = rqmnameAttr.ValueString
+					}
+
+					chlName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+					connName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+					jobName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
+
+					g.With(prometheus.Labels{
+						"qmgr":                     strings.TrimSpace(config.qMgrName),
+						"channel":                  chlName,
+						mqmetric.ATTR_CHL_TYPE:     strings.TrimSpace(chlTypeString),
+						mqmetric.ATTR_CHL_RQMNAME:  strings.TrimSpace(rqmname),
+						mqmetric.ATTR_CHL_CONNNAME: strings.TrimSpace(connName),
+						mqmetric.ATTR_CHL_JOBNAME:  strings.TrimSpace(jobName)}).Set(f)
+				}
+			}
+		}
+	}
+
+	// Then put the channel info back to Prometheus
+	// We do this even if we have not polled for new status, so that Grafana's "instant"
+	// view will still show up the most recently known values
+	for _, attr := range e.chlStatus.Attributes {
+		channelStatusGaugeMap[attr.MetricName].Collect(ch)
+		log.Debugf("Reporting gauge for %s ", attr.MetricName)
 	}
 
 }
@@ -145,6 +223,14 @@ func allocateGauges() {
 				gaugeMap[key] = g
 			}
 		}
+	}
+}
+
+func allocateChannelStatusGauges() {
+	mqmetric.ChannelInitAttributes()
+	for _, attr := range mqmetric.ChannelStatus.Attributes {
+		g := newMqGaugeVecObj(attr.MetricName, attr.Description, "channel")
+		channelStatusGaugeMap[attr.MetricName] = g
 	}
 }
 
@@ -189,32 +275,44 @@ func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 		labels,
 	)
 
-	log.Infof("Created gauge for %s", elem.MetricName)
+	log.Infof("Created gauge for %s%s", prefix, elem.MetricName)
 	return gaugeVec
 }
 
 /*
-newMqGaugeVec returns the structure which will contain the
-values and suitable labels. For queues we tag each entry
-with both the queue and qmgr name; for the qmgr-wide entries, we
-only need the single label.
-*/
+ * Create gauges for other object types. The status for these gauges is obtained via
+ * a polling mechanism rather than pub/sub.
+ * Only type in here for now is channels. But queues and topics may be suitable later
+ */
+func newMqGaugeVecObj(name string, description string, objectType string) *prometheus.GaugeVec {
+	var labels []string
 
-// TODO: Finish this
-/*
-func newMqGaugeVecChl(elem *ibmmq.Statistic) *prometheus.GaugeVec {
-        prefix := "channel_"
+	prefix := objectType + "_"
 
-        gaugeVec := prometheus.NewGaugeVec(
-                prometheus.GaugeOpts{
-                        Namespace: config.namespace,
-                        Name:      prefix + elem.MetricName,
-                        Help:      elem.Description,
-                },
-                labels,
-        )
+	// There can be several channels active of the same name. They can be independently
+	// identified by the MCAJobName attribute along with connName. So those are set as labels
+	// on the gauge. The remote qmgr is also useful information to know.
+	channelLabels := []string{"qmgr", objectType,
+		mqmetric.ATTR_CHL_TYPE,
+		mqmetric.ATTR_CHL_RQMNAME,
+		mqmetric.ATTR_CHL_CONNNAME,
+		mqmetric.ATTR_CHL_JOBNAME}
 
-        log.Infof("Created gauge for %s", elem.MetricName)
-        return gaugeVec
+	switch objectType {
+	case "channel":
+		labels = channelLabels
+	default:
+		log.Errorf("Tried to create gauge for unknown object type %s", objectType)
+	}
+	gaugeVec := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: config.namespace,
+			Name:      prefix + name,
+			Help:      description,
+		},
+		labels,
+	)
+
+	log.Infof("Created gauge for %s%s", prefix, name)
+	return gaugeVec
 }
-*/

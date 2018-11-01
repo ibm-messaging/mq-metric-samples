@@ -1,7 +1,7 @@
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2018
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -12,7 +12,8 @@ package mqmetric
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific
+  See the License for the specific language governing permissions and
+  limitations under the License.
 
    Contributors:
      Mark Taylor - Initial Contribution
@@ -30,16 +31,15 @@ import (
 )
 
 var (
-	qMgr      ibmmq.MQQueueManager
-	cmdQObj   ibmmq.MQObject
-	replyQObj ibmmq.MQObject
-	statsQObj ibmmq.MQObject
-	getBuffer = make([]byte, 32768)
+	qMgr            ibmmq.MQQueueManager
+	cmdQObj         ibmmq.MQObject
+	replyQObj       ibmmq.MQObject
+	statusReplyQObj ibmmq.MQObject
+	getBuffer       = make([]byte, 32768)
 
-	qmgrConnected     = false
-	queuesOpened      = false
-	statsQueuesOpened = false
-	subsOpened        = false
+	qmgrConnected = false
+	queuesOpened  = false
+	subsOpened    = false
 )
 
 type ConnectionConfig struct {
@@ -54,14 +54,6 @@ opens both the command queue and a dynamic reply queue
 to be used for all responses including the publications
 */
 func InitConnection(qMgrName string, replyQ string, cc *ConnectionConfig) error {
-	return InitConnectionStats(qMgrName, replyQ, "", cc)
-}
-
-/*
-InitConnectionStats is the same as InitConnection with the addition
-of a call to open the queue manager statistics queue.
-*/
-func InitConnectionStats(qMgrName string, replyQ string, statsQ string, cc *ConnectionConfig) error {
 	var err error
 	gocno := ibmmq.NewMQCNO()
 	gocsp := ibmmq.NewMQCSP()
@@ -99,19 +91,7 @@ func InitConnectionStats(qMgrName string, replyQ string, statsQ string, cc *Conn
 
 	}
 
-	// MQOPEN of the statistics queue
-	if err == nil && statsQ != "" {
-		mqod := ibmmq.NewMQOD()
-		openOptions := ibmmq.MQOO_INPUT_AS_Q_DEF | ibmmq.MQOO_FAIL_IF_QUIESCING
-		mqod.ObjectType = ibmmq.MQOT_Q
-		mqod.ObjectName = statsQ
-		statsQObj, err = qMgr.Open(mqod, openOptions)
-		if err == nil {
-			statsQueuesOpened = true
-		}
-	}
-
-	// MQOPEN of a reply queue
+	// MQOPEN of a reply queue also used for subscription delivery
 	if err == nil {
 		mqod := ibmmq.NewMQOD()
 		openOptions := ibmmq.MQOO_INPUT_AS_Q_DEF | ibmmq.MQOO_FAIL_IF_QUIESCING
@@ -121,6 +101,15 @@ func InitConnectionStats(qMgrName string, replyQ string, statsQ string, cc *Conn
 		if err == nil {
 			queuesOpened = true
 		}
+	}
+
+	// MQOPEN of a second reply queue used for status polling
+	if err == nil {
+		mqod := ibmmq.NewMQOD()
+		openOptions := ibmmq.MQOO_INPUT_AS_Q_DEF | ibmmq.MQOO_FAIL_IF_QUIESCING
+		mqod.ObjectType = ibmmq.MQOT_Q
+		mqod.ObjectName = replyQ
+		statusReplyQObj, err = qMgr.Open(mqod, openOptions)
 	}
 
 	if err != nil {
@@ -150,10 +139,7 @@ func EndConnection() {
 	if queuesOpened {
 		cmdQObj.Close(0)
 		replyQObj.Close(0)
-	}
-
-	if statsQueuesOpened {
-		statsQObj.Close(0)
+		statusReplyQObj.Close(0)
 	}
 
 	// MQDISC regardless of other errors

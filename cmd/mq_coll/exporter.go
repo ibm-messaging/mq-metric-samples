@@ -28,8 +28,8 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
