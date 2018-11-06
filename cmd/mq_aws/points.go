@@ -20,9 +20,9 @@ package main
 
 import (
 	"errors"
-	_ "github.com/sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	_ "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )

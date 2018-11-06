@@ -12,7 +12,8 @@ package ibmmq
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific
+  See the License for the specific language governing permissions and
+  limitations under the License.
 
    Contributors:
      Mark Taylor - Initial Contribution
@@ -67,6 +68,8 @@ func MQItoString(class string, value int) string {
 
 	case "CC":
 		s = C.GoString(C.MQCC_STR(v))
+	case "CHT":
+		s = C.GoString(C.MQCHT_STR(v))
 	case "CMD":
 		s = C.GoString(C.MQCMD_STR(v))
 

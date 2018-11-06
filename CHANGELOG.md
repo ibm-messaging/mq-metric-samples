@@ -1,14 +1,20 @@
 # Changelog
+## October 2018
 
-## July 2019
+* Updated the Prometheus monitor program to support channel status reporting
+* Updated the README for Prometheus for newer build instructions
+* Updated dependencies
+
+
+## July 2018
 
 * Updated repo to use 2.0.0 version of mq-golang repo
+
+## July 2018
+
+* Added templates for PR and Issues
 
 ## May 2018
 
 * Initial commit
 * Added Golang dependency management using [dep](https://golang.github.io/dep/)
-
-## July 2018
-
-* Added templates for PR and Issues

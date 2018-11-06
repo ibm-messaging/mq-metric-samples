@@ -278,14 +278,17 @@ func ParseKey(buf []byte) (string, Tags) {
 }
 
 func ParseKeyBytes(buf []byte) ([]byte, Tags) {
+	return ParseKeyBytesWithTags(buf, nil)
+}
+
+func ParseKeyBytesWithTags(buf []byte, tags Tags) ([]byte, Tags) {
 	// Ignore the error because scanMeasurement returns "missing fields" which we ignore
 	// when just parsing a key
 	state, i, _ := scanMeasurement(buf, 0)
 
 	var name []byte
-	var tags Tags
 	if state == tagKeyState {
-		tags = parseTags(buf)
+		tags = parseTags(buf, tags)
 		// scanMeasurement returns the location of the comma if there are tags, strip that off
 		name = buf[:i-1]
 	} else {
@@ -295,7 +298,7 @@ func ParseKeyBytes(buf []byte) ([]byte, Tags) {
 }
 
 func ParseTags(buf []byte) Tags {
-	return parseTags(buf)
+	return parseTags(buf, nil)
 }
 
 func ParseName(buf []byte) []byte {
@@ -392,13 +395,17 @@ func parsePoint(buf []byte, defaultTime time.Time, precision string) (Point, err
 	}
 
 	var maxKeyErr error
-	walkFields(fields, func(k, v []byte) bool {
+	err = walkFields(fields, func(k, v []byte) bool {
 		if sz := seriesKeySize(key, k); sz > MaxKeyLength {
 			maxKeyErr = fmt.Errorf("max key length exceeded: %v > %v", sz, MaxKeyLength)
 			return false
 		}
 		return true
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	if maxKeyErr != nil {
 		return nil, maxKeyErr
@@ -1476,7 +1483,7 @@ func (p *point) Tags() Tags {
 	if p.cachedTags != nil {
 		return p.cachedTags
 	}
-	p.cachedTags = parseTags(p.key)
+	p.cachedTags = parseTags(p.key, nil)
 	return p.cachedTags
 }
 
@@ -1543,11 +1550,14 @@ func walkTags(buf []byte, fn func(key, value []byte) bool) {
 
 // walkFields walks each field key and value via fn.  If fn returns false, the iteration
 // is stopped.  The values are the raw byte slices and not the converted types.
-func walkFields(buf []byte, fn func(key, value []byte) bool) {
+func walkFields(buf []byte, fn func(key, value []byte) bool) error {
 	var i int
 	var key, val []byte
 	for len(buf) > 0 {
 		i, key = scanTo(buf, 0, '=')
+		if i > len(buf)-2 {
+			return fmt.Errorf("invalid value: field-key=%s", key)
+		}
 		buf = buf[i+1:]
 		i, val = scanFieldValue(buf, 0)
 		buf = buf[i:]
@@ -1560,22 +1570,38 @@ func walkFields(buf []byte, fn func(key, value []byte) bool) {
 			buf = buf[1:]
 		}
 	}
+	return nil
 }
 
-func parseTags(buf []byte) Tags {
+// parseTags parses buf into the provided destination tags, returning destination
+// Tags, which may have a different length and capacity.
+func parseTags(buf []byte, dst Tags) Tags {
 	if len(buf) == 0 {
 		return nil
+	}
+
+	n := bytes.Count(buf, []byte(","))
+	if cap(dst) < n {
+		dst = make(Tags, n)
+	} else {
+		dst = dst[:n]
+	}
+
+	// Ensure existing behaviour when point has no tags and nil slice passed in.
+	if dst == nil {
+		dst = Tags{}
 	}
 
 	// Series keys can contain escaped commas, therefore the number of commas
 	// in a series key only gives an estimation of the upper bound on the number
 	// of tags.
-	tags := make(Tags, 0, bytes.Count(buf, []byte(",")))
+	var i int
 	walkTags(buf, func(key, value []byte) bool {
-		tags = append(tags, Tag{Key: key, Value: value})
+		dst[i].Key, dst[i].Value = key, value
+		i++
 		return true
 	})
-	return tags
+	return dst[:i]
 }
 
 // MakeKey creates a key for a set of tags.

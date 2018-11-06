@@ -66,7 +66,7 @@ func initConfig() {
 	flag.StringVar(&config.databaseName, "ibmmq.databaseName", "", "Name of database")
 	flag.StringVar(&config.databaseAddress, "ibmmq.databaseAddress", "", "Address of database eg http://example.com:8086")
 	flag.StringVar(&config.userid, "ibmmq.databaseUserID", "", "UserID to access the database")
-	flag.StringVar(&config.passwordFile, "ibmmq.pwFile", "", "Where is password help temporarily")
+	flag.StringVar(&config.passwordFile, "ibmmq.pwFile", "", "Where is password held temporarily")
 	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
 	flag.IntVar(&config.maxErrors, "ibmmq.maxErrors", 10000, "Maximum number of errors communicating with server before considered fatal")
 	flag.IntVar(&config.maxPoints, "ibmmq.maxPoints", 30, "Maximum number of points to include in each write to the server")

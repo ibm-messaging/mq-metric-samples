@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2018
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,23 +23,21 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	log "github.com/sirupsen/logrus"
+	"time"
 
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 )
 
 type mqExporterConfig struct {
-	qMgrName            string
-	replyQ              string
-	monitoredQueues     string
-	monitoredQueuesFile string
-
-	// TODO: enable these
-	monitorChannelStatistics bool
-	statisticsQueueName      string
-
-	metaPrefix string
+	qMgrName              string
+	replyQ                string
+	monitoredQueues       string
+	monitoredQueuesFile   string
+	monitoredChannels     string
+	monitoredChannelsFile string
+	metaPrefix            string
+	pollInterval          string
+	pollIntervalDuration  time.Duration
 
 	cc mqmetric.ConnectionConfig
 
@@ -50,8 +48,9 @@ type mqExporterConfig struct {
 }
 
 const (
-	defaultPort      = "9157" // reserved in the prometheus wiki
-	defaultNamespace = "ibmmq"
+	defaultPort         = "9157" // Reserved in the prometheus wiki for MQ
+	defaultNamespace    = "ibmmq"
+	defaultPollInterval = "0s" // CHSTATUS is done every time there's a pull from Prometheus
 )
 
 var config mqExporterConfig
@@ -64,24 +63,24 @@ info/error logging
 The default IP port for this monitor is registered with prometheus so
 does not have to be provided.
 */
-func initConfig() {
+func initConfig() error {
+	var err error
 
 	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
-	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
+	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Model Queue used for reply queues to collect data")
+
 	flag.StringVar(&config.monitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
 	flag.StringVar(&config.monitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
 	flag.StringVar(&config.metaPrefix, "metaPrefix", "", "Override path to monitoring resource topic")
 
-	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
-	flag.StringVar(&config.cc.UserId, "ibmmq.userid", "", "UserId for MQ connection")
-	// TODO: Also enable a different mechanism to read the password
-	flag.StringVar(&config.cc.Password, "ibmmq.password", "", "Password for MQ connection")
+	flag.StringVar(&config.monitoredChannels, "ibmmq.monitoredChannels", "", "Patterns of channels to monitor")
+	flag.StringVar(&config.monitoredChannelsFile, "ibmmq.monitoredChannelsFile", "", "File with patterns of channels to monitor")
 
-	// TODO: turn these on
-	//flag.BoolVar(&config.monitorChannelStatistics, "ibmmq.monitorChannelStatistics", false, "Whether to collect channel stats")
-	//flag.StringVar(&config.statisticsQueueName, "ibmmq.statisticsQueueName", "SYSTEM.ADMIN.STATISTICS.QUEUE", "Which queue holds channel stats")
-	config.monitorChannelStatistics = false
-	config.statisticsQueueName = ""
+	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
+
+	flag.StringVar(&config.cc.UserId, "ibmmq.userid", "", "UserId for MQ connection")
+	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin
+	flag.StringVar(&config.cc.Password, "ibmmq.password", "", "Password for MQ connection")
 
 	flag.StringVar(&config.httpListenPort, "ibmmq.httpListenPort", defaultPort, "HTTP Listener")
 	flag.StringVar(&config.httpMetricPath, "ibmmq.httpMetricPath", "/metrics", "Path to exporter metrics")
@@ -89,20 +88,63 @@ func initConfig() {
 	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
 	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
 
+	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of checking channel status")
+
 	flag.Parse()
 
-	if config.monitoredQueuesFile != "" {
-		var err error
-		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
-		if err != nil {
-			log.Errorf("Failed to parse monitored queues file - %v", err)
+	if len(flag.Args()) > 0 {
+		err = fmt.Errorf("Extra command line parameters given")
+		flag.PrintDefaults()
+	}
+
+	if err == nil {
+		if config.monitoredQueuesFile != "" {
+			config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored queues file - %v", err)
+			}
 		}
 	}
 
-	if config.cc.UserId != "" && config.cc.Password == "" {
-		scanner := bufio.NewScanner(os.Stdin)
-		fmt.Printf("Enter password: \n")
-		scanner.Scan()
-		config.cc.Password = scanner.Text()
+	if err == nil {
+		if config.monitoredChannelsFile != "" {
+			config.monitoredChannels, err = mqmetric.ReadPatterns(config.monitoredChannelsFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored channels file - %v", err)
+			}
+		}
 	}
+
+	if err == nil {
+		if config.cc.UserId != "" && config.cc.Password == "" {
+			// TODO: If stdin is a tty, then disable echo. Done differently on Windows and Unix
+			scanner := bufio.NewScanner(os.Stdin)
+			fmt.Printf("Enter password: \n")
+			scanner.Scan()
+			config.cc.Password = scanner.Text()
+		}
+	}
+
+	if err == nil {
+		config.pollIntervalDuration, err = time.ParseDuration(config.pollInterval)
+		if err != nil {
+			err = fmt.Errorf("Invalid value for interval parameter: %v", err)
+		}
+	}
+
+	if err == nil {
+		err = mqmetric.VerifyPatterns(config.monitoredQueues)
+		if err != nil {
+			err = fmt.Errorf("Invalid value for monitored queues: %v", err)
+		}
+	}
+
+	if err == nil {
+		err = mqmetric.VerifyPatterns(config.monitoredChannels)
+		if err != nil {
+			err = fmt.Errorf("Invalid value for monitored channels: %v", err)
+		}
+	}
+
+	return err
 }

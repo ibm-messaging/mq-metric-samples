@@ -24,7 +24,7 @@ database="MQDB"
 userid="admin" 
 password="admin" # Probably get from an environment variable in reality
 passwordFile="/tmp/mqinfluxpw.$$.txt"           
-svr="http://klein.hursley.ibm.com:8086"
+svr="http://klein.hursley.uk.ibm.com:8086"
 interval="10"
 
 ARGS="-ibmmq.queueManager=$qMgr"
