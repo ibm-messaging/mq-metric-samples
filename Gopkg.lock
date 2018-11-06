@@ -50,13 +50,13 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "channel-status"
   name = "github.com/ibm-messaging/mq-golang"
   packages = [
     "ibmmq",
     "mqmetric"
   ]
-  revision = "2ed93edcc2f2a12c46da442ccd9e18a6bab382c2"
+  revision = "6eb2358f5490d2c2982950f949abbcacedbf2c9b"
+  version = "v3.0.1"
 
 [[projects]]
   name = "github.com/influxdata/influxdb"
@@ -145,6 +145,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f1e7d764d496226cc38d5258f12e2d8a80afde72898b5efb87dc43dfa331ef5b"
+  inputs-digest = "117975b7e0fd2f77d70b2e5820492bf8edcbf3ef7d0e9d0014e7acbfe8ad4194"
   solver-name = "gps-cdcl"
   solver-version = 1
