@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2018
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -64,7 +64,13 @@ func main() {
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
 	if err == nil {
-		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, true, "")
+		// Do we need to expand wildcarded queue names
+		// or use the wildcard as-is in the subscriptions
+		wildcardResource := true
+		if config.metaPrefix != "" {
+			wildcardResource = false
+		}
+		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, wildcardResource, config.metaPrefix)
 	}
 
 	// Go into main loop for sending data to stdout

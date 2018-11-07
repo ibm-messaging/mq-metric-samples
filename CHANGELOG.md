@@ -1,4 +1,8 @@
 # Changelog
+## November 2018
+
+* Updated the JSON monitor sample to support channel status reporting
+
 ## October 2018
 
 * Updated the Prometheus monitor program to support channel status reporting

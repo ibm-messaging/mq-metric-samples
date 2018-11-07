@@ -83,7 +83,7 @@ The monitor program can now process channel status, reporting that back into
 Prometheus.
 
 The channels to be monitored are set on the command line, similarly to
-the queue patterns, with `-ibmmq.monitoredChannels` or `-ibmmq.monitoredChannelFiles`.
+the queue patterns, with `-ibmmq.monitoredChannels` or `-ibmmq.monitoredChannelFile`.
 Unlike the queue monitoring, wildcards are handled automatically by the channel
 status API. So you do not need to restart this monitor in order to pick up newly-defined
 channels that match an existing pattern.

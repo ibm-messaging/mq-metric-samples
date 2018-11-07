@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2018
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,23 +25,39 @@ and update the various data points.
 */
 
 import (
+	"encoding/json"
 	"fmt"
-	"math"
-	"strings"
-	"time"
-
+	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	log "github.com/sirupsen/logrus"
+	"strings"
+	"time"
 )
 
 var (
 	first      = true
 	errorCount = 0
+	lastPoll   = time.Now()
 )
 
 const (
 	blankString = "                                "
 )
+
+type collectionTimeStruct struct {
+	TimeStamp string `json:"timeStamp"`
+	Epoch     int64  `json:"epoch"`
+}
+
+type pointsStruct struct {
+	Tags   map[string]string  `json:"tags"`
+	Metric map[string]float64 `json:"metrics"`
+}
+
+type jsonReportStruct struct {
+	CollectionTime collectionTimeStruct `json:"collectionTime"`
+	Points         []pointsStruct       `json:"points"`
+}
 
 /*
 Collect is called by the main routine at regular intervals to provide current
@@ -49,8 +65,19 @@ data
 */
 func Collect() error {
 	var err error
+	var j jsonReportStruct
 
 	log.Infof("IBM MQ JSON collector started")
+
+	// Do we need to poll for object status on this iteration
+	pollStatus := false
+	thisPoll := time.Now()
+	elapsed := thisPoll.Sub(lastPoll)
+	if elapsed >= config.pollIntervalDuration {
+		log.Debugf("Polling for object status")
+		lastPoll = thisPoll
+		pollStatus = true
+	}
 
 	// Clear out everything we know so far. In particular, replace
 	// the map of values for each object so the collection starts
@@ -66,6 +93,17 @@ func Collect() error {
 	// Process all the publications that have arrived
 	mqmetric.ProcessPublications()
 
+	// If there has been sufficient interval since the last explicit poll for
+	// status, then do that collection too
+	if pollStatus {
+		err := mqmetric.CollectChannelStatus(config.monitoredChannels)
+		if err != nil {
+			log.Errorf("Error collecting channel status: %v", err)
+		} else {
+			log.Debugf("Collected all channel status")
+		}
+	}
+
 	// Have now processed all of the publications, and all the MQ-owned
 	// value fields and maps have been updated.
 	//
@@ -76,60 +114,99 @@ func Collect() error {
 		// a misleading range on graphs.
 		first = false
 	} else {
-		firstPoint := true
-		fmt.Printf("\n{\n")
-		fmt.Printf("%s\"collectionTime\" : {\n", blankString[0:2])
-		t := time.Now()
-		fmt.Printf("%s\"timeStamp\" : \"%s\",\n", blankString[0:4], t.Format(time.RFC3339))
-		fmt.Printf("%s\"epoch\" : %d\n", blankString[0:4], t.Unix())
-		fmt.Printf("%s},\n", blankString[0:2])
 
-		fmt.Printf("%s\"points\" : [\n", blankString[0:2])
+		t := time.Now()
+		j.CollectionTime.TimeStamp = t.Format(time.RFC3339)
+		j.CollectionTime.Epoch = t.Unix()
+
+		// All of the metrics for a given set of tags are printed in a single
+		// JSON object.
+		ptMap := make(map[string]pointsStruct)
+		var pt pointsStruct
+		var ok bool
+
 		for _, cl := range mqmetric.Metrics.Classes {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
 					for key, value := range elem.Values {
-						if !firstPoint {
-							fmt.Printf(",\n")
-						} else {
-							firstPoint = false
-						}
-						f := mqmetric.Normalise(elem, key, value)
-						tags := map[string]string{
-							"qmgr": config.qMgrName,
+
+						if pt, ok = ptMap[key]; !ok {
+							pt = pointsStruct{}
+							pt.Tags = make(map[string]string)
+							pt.Metric = make(map[string]float64)
+
+							pt.Tags["qmgr"] = config.qMgrName
+							if key != mqmetric.QMgrMapKey {
+								pt.Tags["queue"] = key
+							}
 						}
 
-						if key != mqmetric.QMgrMapKey {
-							tags["object"] = key
-						}
-						printPoint(elem.MetricName, float32(f), tags)
-
+						pt.Metric[fixup(elem.MetricName)] = mqmetric.Normalise(elem, key, value)
+						ptMap[key] = pt
 					}
 				}
 			}
 		}
-		fmt.Printf("\n%s]\n}\n", blankString[0:2])
+
+		// After all the points have been created, add them to the JSON structure
+		// for printing out
+		for _, pt := range ptMap {
+			j.Points = append(j.Points, pt)
+		}
+
+		// Next we extract the info for channel status. Several of the attributes
+		// are used to build the tags that uniquely identify a channel instance.
+		if pollStatus {
+			ptMap := make(map[string]pointsStruct)
+
+			for _, attr := range mqmetric.ChannelStatus.Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
+
+						chlType := int(mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
+						chlTypeString := strings.Replace(ibmmq.MQItoString("CHT", chlType), "MQCHT_", "", -1)
+						// Not every channel status report has the RQMNAME attribute (eg SVRCONNs)
+						rqmName := ""
+						if rqmNameAttr, ok := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
+							rqmName = rqmNameAttr.ValueString
+						}
+
+						chlName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+						connName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+						jobName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
+						key := chlName + "/" + connName + "/" + jobName + "/" + rqmName
+
+						if pt, ok = ptMap[key]; !ok {
+							pt = pointsStruct{}
+							pt.Tags = make(map[string]string)
+							pt.Metric = make(map[string]float64)
+
+							pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+							pt.Tags["channel"] = chlName
+							pt.Tags[mqmetric.ATTR_CHL_TYPE] = strings.TrimSpace(chlTypeString)
+							pt.Tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
+							pt.Tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
+							pt.Tags[mqmetric.ATTR_CHL_JOBNAME] = strings.TrimSpace(jobName)
+
+						}
+						pt.Metric[fixup(attr.MetricName)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
+						ptMap[key] = pt
+					}
+				}
+			}
+
+			for _, pt := range ptMap {
+				j.Points = append(j.Points, pt)
+			}
+		}
+
+		b, _ := json.MarshalIndent(j, "", "  ")
+		fmt.Printf("%s\n", b)
 
 	}
 
 	return err
 
-}
-
-func printPoint(metric string, val float32, tags map[string]string) {
-	fmt.Printf("%s{\n", blankString[0:2])
-	qmgr := tags["qmgr"]
-	fmt.Printf("%s\"queueManager\" : \"%s\",\n", blankString[0:4], qmgr)
-	if q, ok := tags["object"]; ok {
-		fmt.Printf("%s\"queue\" : \"%s\",\n", blankString[0:4], q)
-	}
-	if float64(val) == math.Trunc(float64(val)) {
-		fmt.Printf("%s\"%s\" : %d\n", blankString[0:4], fixup(metric), int64(val))
-	} else {
-		fmt.Printf("%s\"%s\" : %f\n", blankString[0:4], fixup(metric), val)
-	}
-	fmt.Printf("%s}", blankString[0:2])
-	return
 }
 
 func fixup(s1 string) string {

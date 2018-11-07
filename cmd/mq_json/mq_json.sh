@@ -20,12 +20,16 @@ queues="APP.*,MYQ.*"
 # An alternative is to have a file containing the patterns, and named
 # via the ibmmq.monitoredQueuesFile option.
 
+# Do similar for channels
+channels="TO.*,SYSTEM.DEF.SVRCONN"
+
 # And other parameters that may be needed
 # See config.go for all recognised flags
 interval="5"
 
 ARGS="-ibmmq.queueManager=$qMgr"
 ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
+ARGS="$ARGS -ibmmq.monitoredChannels=$channels"
 ARGS="$ARGS -ibmmq.interval=$interval"
 ARGS="$ARGS -log.level=error"
 
@@ -36,4 +40,7 @@ ARGS="$ARGS -log.level=error"
 # Change this line to match wherever you have installed the MQ monitor program
 # You probably also want to do something with the stdout from the program,
 # such as sending it to a monitoring solution that understands the format.
-exec /usr/local/bin/mqgo/mq_json $ARGS
+
+# The "grep" is used to remove the line printed by the mqmetric package
+# that shows which queues are going to be monitored.
+exec /usr/local/bin/mqgo/mq_json $ARGS | grep -v "Monitored Queues:"
