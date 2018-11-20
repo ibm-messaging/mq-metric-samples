@@ -98,39 +98,51 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "alias": "/Oldest message APP/",
+          "yaxis": 2
+        }
+      ],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": true,
       "targets": [
         {
-          "expr": "ibmmq_object_mqget{object=~\"APP.*\"}",
+          "expr": "ibmmq_queue_mqget{queue=~\"APP.*\"} ",
           "format": "time_series",
           "hide": false,
           "instant": false,
           "intervalFactor": 2,
-          "legendFormat": "Get: {{object}}",
+          "legendFormat": "Get: {{queue}}",
           "metric": "",
           "refId": "A",
           "step": 2
         },
         {
-          "expr": "ibmmq_object_mqput_mqput1{object=~\"APP.*\"}",
+          "expr": "ibmmq_queue_mqput_mqput1{queue=~\"APP.*\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "Put: {{object}}",
+          "legendFormat": "Put: {{queue}}",
           "metric": "",
           "refId": "B",
           "step": 2
         },
         {
-          "expr": "ibmmq_object_queue_depth{object=~\"APP.*\"}",
+          "expr": "ibmmq_queue_queue_depth{queue=~\"APP.*\"}",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "Depth: {{object}}",
+          "legendFormat": "Depth: {{queue}}",
           "refId": "C",
           "step": 2
+        },
+        {
+          "expr": "ibmmq_queue_oldest_message_age{queue=~\"APP.*\"}",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "Oldest message {{queue}}",
+          "refId": "D"
         }
       ],
       "thresholds": [],
@@ -161,11 +173,11 @@
           "show": true
         },
         {
-          "format": "short",
+          "format": "µs",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         }
       ],
@@ -510,7 +522,16 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "alias": "Log %",
+          "yaxis": 2
+        },
+        {
+          "alias": "File system usage %",
+          "yaxis": 2
+        }
+      ],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -534,9 +555,13 @@
           "step": 2
         },
         {
-          "expr": "ibmmq_qmgr_log_fi",
+          "expr": "ibmmq_qmgr_mq_errors_file_system_free_space_percentage",
           "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
           "intervalFactor": 1,
+          "legendFormat": "File system usage %",
           "refId": "C"
         }
       ],
@@ -568,11 +593,11 @@
           "show": true
         },
         {
-          "format": "short",
+          "format": "percent",
           "label": "",
           "logBase": 1,
-          "max": null,
-          "min": null,
+          "max": "100",
+          "min": "0",
           "show": true
         }
       ],
@@ -1132,5 +1157,5 @@
   "timezone": "browser",
   "title": "MQ Prometheus",
   "uid": "yBfT2bDik",
-  "version": 20
+  "version": 24
 }

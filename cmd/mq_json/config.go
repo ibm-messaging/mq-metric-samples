@@ -35,6 +35,7 @@ type mqTTYConfig struct {
 
 	monitoredChannels     string
 	monitoredChannelsFile string
+	qStatus               bool
 
 	metaPrefix           string
 	pollInterval         string
@@ -72,6 +73,7 @@ func initConfig() error {
 	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
 
 	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
+	flag.BoolVar(&config.qStatus, "ibmmq.qstatus", false, "Add QSTATUS data")
 
 	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
 	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of checking channel status")

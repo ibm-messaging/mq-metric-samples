@@ -40,12 +40,14 @@ type exporter struct {
 	mutex     sync.RWMutex
 	metrics   mqmetric.AllMetrics
 	chlStatus mqmetric.StatusSet
+	qStatus   mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
 	return &exporter{
 		metrics:   mqmetric.Metrics,
 		chlStatus: mqmetric.ChannelStatus,
+		qStatus:   mqmetric.QueueStatus,
 	}
 }
 
@@ -53,6 +55,7 @@ var (
 	first                 = true
 	gaugeMap              = make(map[string]*prometheus.GaugeVec)
 	channelStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
+	qStatusGaugeMap       = make(map[string]*prometheus.GaugeVec)
 	lastPoll              = time.Now()
 )
 
@@ -74,6 +77,9 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 
 	for _, attr := range e.chlStatus.Attributes {
 		channelStatusGaugeMap[attr.MetricName].Describe(ch)
+	}
+	for _, attr := range e.qStatus.Attributes {
+		qStatusGaugeMap[attr.MetricName].Describe(ch)
 	}
 }
 
@@ -118,12 +124,24 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.chlStatus.Attributes {
 			channelStatusGaugeMap[attr.MetricName].Reset()
 		}
+		for _, attr := range e.qStatus.Attributes {
+			qStatusGaugeMap[attr.MetricName].Reset()
+		}
 
 		err := mqmetric.CollectChannelStatus(config.monitoredChannels)
 		if err != nil {
 			log.Errorf("Error collecting channel status: %v", err)
 		} else {
 			log.Debugf("Collected all channel status")
+		}
+
+		if config.qStatus {
+			err = mqmetric.CollectQueueStatus(config.monitoredQueues)
+			if err != nil {
+				log.Errorf("Error collecting queue status: %v", err)
+			} else {
+				log.Debugf("Collected all queue status")
+			}
 		}
 	}
 
@@ -145,9 +163,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						f := mqmetric.Normalise(elem, key, value)
 						g := gaugeMap[makeKey(elem)]
 						if key == mqmetric.QMgrMapKey {
-							g.WithLabelValues(config.qMgrName).Set(f)
+							g.With(prometheus.Labels{"qmgr": config.qMgrName}).Set(f)
 						} else {
-							g.WithLabelValues(key, config.qMgrName).Set(f)
+							g.With(prometheus.Labels{"qmgr": config.qMgrName, "queue": key}).Set(f)
 						}
 					}
 				}
@@ -197,14 +215,34 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				}
 			}
 		}
+
+		for _, attr := range e.qStatus.Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 {
+					qName := e.qStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+					g := qStatusGaugeMap[attr.MetricName]
+					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
+
+					g.With(prometheus.Labels{
+						"qmgr":  strings.TrimSpace(config.qMgrName),
+						"queue": qName}).Set(f)
+				}
+			}
+		}
 	}
 
 	// Then put the channel info back to Prometheus
 	// We do this even if we have not polled for new status, so that Grafana's "instant"
 	// view will still show up the most recently known values
 	for _, attr := range e.chlStatus.Attributes {
-		channelStatusGaugeMap[attr.MetricName].Collect(ch)
-		log.Debugf("Reporting gauge for %s ", attr.MetricName)
+		g := channelStatusGaugeMap[attr.MetricName]
+		log.Debugf("Reporting gauge for %s", attr.MetricName)
+		g.Collect(ch)
+	}
+	for _, attr := range e.qStatus.Attributes {
+		g := qStatusGaugeMap[attr.MetricName]
+		log.Debugf("Reporting gauge for %s", attr.MetricName)
+		g.Collect(ch)
 	}
 
 }
@@ -234,6 +272,14 @@ func allocateChannelStatusGauges() {
 	}
 }
 
+func allocateQStatusGauges() {
+	mqmetric.QueueInitAttributes()
+	for _, attr := range mqmetric.QueueStatus.Attributes {
+		g := newMqGaugeVecObj(attr.MetricName, attr.Description, "queue")
+		qStatusGaugeMap[attr.MetricName] = g
+	}
+}
+
 /*
 makeKey uses the 3 parts of a resource's name to build a unique string.
 The "/" character cannot be part of a name, so is a convenient way
@@ -255,7 +301,7 @@ with both the queue and qmgr name; for the qmgr-wide entries, we
 only need the single label.
 */
 func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
-	queueLabelNames := []string{"object", "qmgr"}
+	queueLabelNames := []string{"queue", "qmgr"}
 	qmgrLabelNames := []string{"qmgr"}
 
 	labels := qmgrLabelNames
@@ -263,7 +309,14 @@ func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 
 	if strings.Contains(elem.Parent.ObjectTopic, "%s") {
 		labels = queueLabelNames
-		prefix = "object_"
+		prefix = "queue_"
+	}
+
+	// After the change that makes the prefix "queue" to indicate the object type (instead of
+	// "object", then there are some metrics that look a bit silly such as
+	// "queue_queue_purged". So we remove the duplicate.
+	if prefix == "queue_" && strings.HasPrefix(elem.MetricName, "queue_") {
+		prefix = ""
 	}
 
 	gaugeVec := prometheus.NewGaugeVec(
@@ -298,9 +351,15 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		mqmetric.ATTR_CHL_CONNNAME,
 		mqmetric.ATTR_CHL_JOBNAME}
 
+	// Adding the polling queue status options means we can use this block for
+	// additional attributes. They should have the same labels as the published stats
+	genericLabels := []string{"qmgr", objectType}
+
 	switch objectType {
 	case "channel":
 		labels = channelLabels
+	case "queue":
+		labels = genericLabels
 	default:
 		log.Errorf("Tried to create gauge for unknown object type %s", objectType)
 	}
