@@ -103,7 +103,7 @@ as metrics. The key values returned are the status and number of messages proces
 The message count for SVRCONN channels is the number of MQI calls made by the client program.
 
 There are actually two versions of the channel status returned. The `channel_status` metric
-has the value corresponding to one of the MQCHS_* values. There are about 16 of these possible
+has the value corresponding to one of the MQCHS_* values. There are about 15 of these possible
 values. There is also a `channel_status_squash` metric which returns one of only three values,
 compressing the full set into a simpler value that is easier to put colours against in Grafana.
 From this squashed set, you can readily see if  a channel is stopped, running, or somewhere in between.
@@ -160,16 +160,31 @@ should be monitored from a variety of discovery tools.
 ## Metrics
 Once the monitor program has been started, and Prometheus refreshed to
 connect to it, you will see metrics being available in the prometheus
-console. All of the metrics are given the jobname prefix of **ibmmq**.
+console. All of the metrics are given the a prefix which by
+default is **ibmmq**. The name can be configured with the `-namespace` option
+on the command line.
 
 More information on the metrics collected through the publish/subscribe
-interface can be found in the [MQ KnowledgeCenter]
-(https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.0.0/com.ibm.mq.mon.doc/mo00013_.htm)
-with further description in [an MQDev blog entry]
-(https://www.ibm.com/developerworks/community/blogs/messaging/entry/Statistics_published_to_the_system_topic_in_MQ_v9?lang=en)
+interface can be found in the [MQ KnowledgeCenter](https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.0.0/com.ibm.mq.mon.doc/mo00013_.htm)
+with further description in [an MQDev blog entry](https://www.ibm.com/developerworks/community/blogs/messaging/entry/Statistics_published_to_the_system_topic_in_MQ_v9?lang=en)
 
 The queue and queue manager metrics shown in the Prometheus console are named after the descriptions
 that you can see when running the amqsrua sample program, but with some
 minor modifications to match the required style.
 
 The channel metrics all begin with `channel`.
+
+**Note**: This update to the Prometheus collector has changed the name of queue-level
+metrics. Instead of beginning `object_`, they now begin with `"queue_`. Dashboards building
+on this collector will need to change to use the new names. The change was done because
+of the inclusion of channels as an object type, and for future options with other
+object types.
+
+### z/OS Support
+Because the QSTATUS and CHSTATUS commands can be used on z/OS, the Prometheus monitor can now support showing some
+limited information from a z/OS queue manager. There is nothing special needed to configure it, beyond the client 
+connectivity that allows an application to connect to the z/OS system.
+
+The `ibmmq.qStatus` parameter must be set to `true` to use the DIS QSTATUS command
+
+

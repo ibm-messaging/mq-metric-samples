@@ -50,8 +50,9 @@ type collectionTimeStruct struct {
 }
 
 type pointsStruct struct {
-	Tags   map[string]string  `json:"tags"`
-	Metric map[string]float64 `json:"metrics"`
+	ObjectType string             `json:"objectType"`
+	Tags       map[string]string  `json:"tags"`
+	Metric     map[string]float64 `json:"metrics"`
 }
 
 type jsonReportStruct struct {
@@ -102,6 +103,14 @@ func Collect() error {
 		} else {
 			log.Debugf("Collected all channel status")
 		}
+		if config.qStatus {
+			err = mqmetric.CollectQueueStatus(config.monitoredQueues)
+			if err != nil {
+				log.Errorf("Error collecting queue status: %v", err)
+			} else {
+				log.Debugf("Collected all queue status")
+			}
+		}
 	}
 
 	// Have now processed all of the publications, and all the MQ-owned
@@ -136,8 +145,10 @@ func Collect() error {
 							pt.Metric = make(map[string]float64)
 
 							pt.Tags["qmgr"] = config.qMgrName
+							pt.ObjectType = "queueManager"
 							if key != mqmetric.QMgrMapKey {
 								pt.Tags["queue"] = key
+								pt.ObjectType = "queue"
 							}
 						}
 
@@ -178,6 +189,7 @@ func Collect() error {
 
 						if pt, ok = ptMap[key]; !ok {
 							pt = pointsStruct{}
+							pt.ObjectType = "channel"
 							pt.Tags = make(map[string]string)
 							pt.Metric = make(map[string]float64)
 
@@ -191,6 +203,27 @@ func Collect() error {
 						}
 						pt.Metric[fixup(attr.MetricName)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
 						ptMap[key] = pt
+					}
+				}
+
+				for _, attr := range mqmetric.QueueStatus.Attributes {
+					for key, value := range attr.Values {
+						if value.IsInt64 {
+							qName := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+							key := qName
+
+							if pt, ok = ptMap[key]; !ok {
+								pt = pointsStruct{}
+								pt.ObjectType = "queue"
+								pt.Metric = make(map[string]float64)
+								pt.Tags = make(map[string]string)
+								pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+								pt.Tags["queue"] = qName
+							}
+
+							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueNormalise(attr, value.ValueInt64)
+							ptMap[key] = pt
+						}
 					}
 				}
 			}

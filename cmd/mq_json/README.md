@@ -72,49 +72,52 @@ that further describe, and uniquely identify, the resource. All metrics for
 a particular resource are printed in the same point.
 
 For example,
-    {
-       "collectionTime" : {
-          "timeStamp" : "2016-11-07-T15:00:55Z"
-          "epoch" : 1478527255
-       },
-       "points": [
-       {
-         "tags": {
-           "qmgr": "QM1"
-         },
-         "metrics": {
-           "userCpuTimePercentage": 5.39,
-           "concurrentConnectionsHighWaterMark": 27,
-           ...
-         }
-       },
-       {
-         "tags": {
-           "qmgr": "QM1",
-           "queue": "APP.QUEUE.1"
-         },
-         "metrics": {
-           "destructiveMqgetNonPersistentMessage": 20,
-           ...
-         }
-       },
-       {
-         "tags": {
-           "channel": "TO.QM2",
-           "connname": "127.0.0.1(1415)",
-           "jobname": "00000F2D00000001",
-           "qmgr": "QM1",
-           "rqmname": "QM2",
-           "type": "SENDER"
-         },
-         "metrics": {
-           "messages": 15,
-           ...
-         }
-       },
+```
+{
+   "collectionTime" : {
+      "timeStamp" : "2016-11-07-T15:00:55Z"
+      "epoch" : 1478527255
+   },
+   "points": [
+   {
+     "tags": {
+       "qmgr": "QM1"
+     },
+     "metrics": {
+       "userCpuTimePercentage": 5.39,
+       "concurrentConnectionsHighWaterMark": 27,
        ...
-       ]
-    }
+     }
+   },
+   {
+     "tags": {
+       "qmgr": "QM1",
+       "queue": "APP.QUEUE.1"
+     },
+     "metrics": {
+       "destructiveMqgetNonPersistentMessage": 20,
+       ...
+     }
+   },
+   {
+     "tags": {
+       "channel": "TO.QM2",
+       "connname": "127.0.0.1(1415)",
+       "jobname": "00000F2D00000001",
+       "qmgr": "QM1",
+       "rqmname": "QM2",
+       "type": "SENDER"
+     },
+     "metrics": {
+       "messages": 15,
+       ...
+     }
+   },
+   ...
+   ]
+}
+
+```
 
 The JSON structure has been substantially changed in this version of
 the monitor program, to give it a more deterministic layout.

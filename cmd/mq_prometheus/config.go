@@ -38,6 +38,7 @@ type mqExporterConfig struct {
 	metaPrefix            string
 	pollInterval          string
 	pollIntervalDuration  time.Duration
+	qStatus               bool
 
 	cc mqmetric.ConnectionConfig
 
@@ -89,7 +90,7 @@ func initConfig() error {
 	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
 
 	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of checking channel status")
-
+	flag.BoolVar(&config.qStatus, "ibmmq.qStatus", false, "Add queue status polling")
 	flag.Parse()
 
 	if len(flag.Args()) > 0 {
