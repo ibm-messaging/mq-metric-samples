@@ -56,6 +56,7 @@ func main() {
 			defer mqmetric.EndConnection()
 		}
 	}
+
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
 	if err == nil {
@@ -65,6 +66,8 @@ func main() {
 		if config.metaPrefix != "" {
 			wildcardResource = false
 		}
+
+		mqmetric.SetLocale(config.locale)
 		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, wildcardResource, config.metaPrefix)
 	}
 

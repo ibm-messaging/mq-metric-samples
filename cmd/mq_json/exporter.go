@@ -35,9 +35,10 @@ import (
 )
 
 var (
-	first      = true
-	errorCount = 0
-	lastPoll   = time.Now()
+	first          = true
+	errorCount     = 0
+	lastPoll       = time.Now()
+	platformString = ""
 )
 
 const (
@@ -80,6 +81,9 @@ func Collect() error {
 		pollStatus = true
 	}
 
+	if platformString == "" {
+		platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)
+	}
 	// Clear out everything we know so far. In particular, replace
 	// the map of values for each object so the collection starts
 	// clean.
@@ -146,6 +150,7 @@ func Collect() error {
 
 							pt.Tags["qmgr"] = config.qMgrName
 							pt.ObjectType = "queueManager"
+							pt.Tags["platform"] = platformString
 							if key != mqmetric.QMgrMapKey {
 								pt.Tags["queue"] = key
 								pt.ObjectType = "queue"
@@ -195,6 +200,7 @@ func Collect() error {
 
 							pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
 							pt.Tags["channel"] = chlName
+							pt.Tags["platform"] = platformString
 							pt.Tags[mqmetric.ATTR_CHL_TYPE] = strings.TrimSpace(chlTypeString)
 							pt.Tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
 							pt.Tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
@@ -219,6 +225,7 @@ func Collect() error {
 								pt.Tags = make(map[string]string)
 								pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
 								pt.Tags["queue"] = qName
+								pt.Tags["platform"] = platformString
 							}
 
 							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueNormalise(attr, value.ValueInt64)

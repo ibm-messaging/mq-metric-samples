@@ -100,7 +100,7 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "alias": "/Oldest message APP/",
+          "alias": "/Oldest msg/",
           "yaxis": 2
         }
       ],
@@ -141,7 +141,7 @@
           "expr": "ibmmq_queue_oldest_message_age{queue=~\"APP.*\"}",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Oldest message {{queue}}",
+          "legendFormat": "Oldest msg {{queue}}",
           "refId": "D"
         }
       ],
@@ -342,7 +342,7 @@
           "expr": "ibmmq_qmgr_system_cpu_time_percentage",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "System CPU%",
+          "legendFormat": "System CPU%: {{platform}}",
           "refId": "A",
           "step": 2
         },
@@ -350,7 +350,7 @@
           "expr": "ibmmq_qmgr_user_cpu_time_percentage",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "User CPU%",
+          "legendFormat": "User CPU%: {{platform}}",
           "refId": "B",
           "step": 2
         }
@@ -540,7 +540,7 @@
           "expr": "ibmmq_qmgr_queue_manager_file_system_in_use_bytes",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "QMgr file system - in use [{{qmgr}}]",
+          "legendFormat": "QMgr file system - in use [{{qmgr}}/{{platform}}]",
           "metric": "ibmmq_qmgr_queue_manager_file_system_bytes_in_use_MB",
           "refId": "A",
           "step": 2
@@ -549,7 +549,7 @@
           "expr": "ibmmq_qmgr_log_file_system_in_use_bytes",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "Log file system - in use [{{qmgr}}]",
+          "legendFormat": "Log file system - in use [{{qmgr}}/{{platform}}]",
           "metric": "ibmmq_qmgr_log_file_system_in_use_bytes",
           "refId": "B",
           "step": 2
@@ -1157,5 +1157,5 @@
   "timezone": "browser",
   "title": "MQ Prometheus",
   "uid": "yBfT2bDik",
-  "version": 24
+  "version": 28
 }

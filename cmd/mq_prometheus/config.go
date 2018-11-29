@@ -46,6 +46,8 @@ type mqExporterConfig struct {
 	httpMetricPath string
 	logLevel       string
 	namespace      string
+
+	locale string
 }
 
 const (
@@ -90,6 +92,12 @@ func initConfig() error {
 	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
 
 	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of checking channel status")
+
+	// The locale ought to be discoverable from the environment, but making it an explicit config
+	// parameter for now to aid testing, to override, and to ensure it's given in the MQ-known format
+	// such as "Fr_FR"
+	flag.StringVar(&config.locale, "locale", "", "Locale for translated metric descriptions")
+
 	flag.BoolVar(&config.qStatus, "ibmmq.qStatus", false, "Add queue status polling")
 	flag.Parse()
 
