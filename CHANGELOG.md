@@ -1,5 +1,5 @@
 # Changelog
-## xxxxx 2018
+## November 2018
 
 * Added "platform" as a tag/label in Prometheus and JSON exporters
 
