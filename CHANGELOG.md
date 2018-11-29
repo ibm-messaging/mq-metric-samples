@@ -1,4 +1,8 @@
 # Changelog
+## xxxxx 2018
+
+* Added "platform" as a tag/label in Prometheus and JSON exporters
+
 ## November 2018
 
 * Updated the JSON monitor sample to support channel status reporting

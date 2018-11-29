@@ -41,6 +41,4 @@ ARGS="$ARGS -log.level=error"
 # You probably also want to do something with the stdout from the program,
 # such as sending it to a monitoring solution that understands the format.
 
-# The "grep" is used to remove the line printed by the mqmetric package
-# that shows which queues are going to be monitored.
-exec /usr/local/bin/mqgo/mq_json $ARGS | grep -v "Monitored Queues:"
+exec /usr/local/bin/mqgo/mq_json $ARGS 

@@ -57,6 +57,7 @@ var (
 	channelStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	qStatusGaugeMap       = make(map[string]*prometheus.GaugeVec)
 	lastPoll              = time.Now()
+	platformString        string
 )
 
 /*
@@ -67,6 +68,8 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 
 	log.Infof("IBMMQ Describe started")
 
+	platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)
+	log.Infof("Platform is %s", platformString)
 	for _, cl := range e.metrics.Classes {
 		for _, ty := range cl.Types {
 			for _, elem := range ty.Elements {
@@ -163,9 +166,12 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						f := mqmetric.Normalise(elem, key, value)
 						g := gaugeMap[makeKey(elem)]
 						if key == mqmetric.QMgrMapKey {
-							g.With(prometheus.Labels{"qmgr": config.qMgrName}).Set(f)
+							g.With(prometheus.Labels{"qmgr": config.qMgrName,
+								"platform": platformString}).Set(f)
 						} else {
-							g.With(prometheus.Labels{"qmgr": config.qMgrName, "queue": key}).Set(f)
+							g.With(prometheus.Labels{"qmgr": config.qMgrName,
+								"queue":    key,
+								"platform": platformString}).Set(f)
 						}
 					}
 				}
@@ -208,6 +214,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					g.With(prometheus.Labels{
 						"qmgr":                     strings.TrimSpace(config.qMgrName),
 						"channel":                  chlName,
+						"platform":                 platformString,
 						mqmetric.ATTR_CHL_TYPE:     strings.TrimSpace(chlTypeString),
 						mqmetric.ATTR_CHL_RQMNAME:  strings.TrimSpace(rqmname),
 						mqmetric.ATTR_CHL_CONNNAME: strings.TrimSpace(connName),
@@ -224,8 +231,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
 
 					g.With(prometheus.Labels{
-						"qmgr":  strings.TrimSpace(config.qMgrName),
-						"queue": qName}).Set(f)
+						"qmgr":     strings.TrimSpace(config.qMgrName),
+						"platform": platformString,
+						"queue":    qName}).Set(f)
 				}
 			}
 		}
@@ -265,9 +273,11 @@ func allocateGauges() {
 }
 
 func allocateChannelStatusGauges() {
+	// These attributes do not (currently) have an NLS translated description
 	mqmetric.ChannelInitAttributes()
 	for _, attr := range mqmetric.ChannelStatus.Attributes {
-		g := newMqGaugeVecObj(attr.MetricName, attr.Description, "channel")
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "channel")
 		channelStatusGaugeMap[attr.MetricName] = g
 	}
 }
@@ -275,7 +285,8 @@ func allocateChannelStatusGauges() {
 func allocateQStatusGauges() {
 	mqmetric.QueueInitAttributes()
 	for _, attr := range mqmetric.QueueStatus.Attributes {
-		g := newMqGaugeVecObj(attr.MetricName, attr.Description, "queue")
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "queue")
 		qStatusGaugeMap[attr.MetricName] = g
 	}
 }
@@ -301,8 +312,8 @@ with both the queue and qmgr name; for the qmgr-wide entries, we
 only need the single label.
 */
 func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
-	queueLabelNames := []string{"queue", "qmgr"}
-	qmgrLabelNames := []string{"qmgr"}
+	queueLabelNames := []string{"queue", "qmgr", "platform"}
+	qmgrLabelNames := []string{"qmgr", "platform"}
 
 	labels := qmgrLabelNames
 	prefix := "qmgr_"
@@ -319,11 +330,15 @@ func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 		prefix = ""
 	}
 
+	description := elem.DescriptionNLS
+	if description == "" {
+		description = elem.Description
+	}
 	gaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: config.namespace,
 			Name:      prefix + elem.MetricName,
-			Help:      elem.Description,
+			Help:      description,
 		},
 		labels,
 	)
@@ -345,7 +360,7 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 	// There can be several channels active of the same name. They can be independently
 	// identified by the MCAJobName attribute along with connName. So those are set as labels
 	// on the gauge. The remote qmgr is also useful information to know.
-	channelLabels := []string{"qmgr", objectType,
+	channelLabels := []string{"qmgr", "platform", objectType,
 		mqmetric.ATTR_CHL_TYPE,
 		mqmetric.ATTR_CHL_RQMNAME,
 		mqmetric.ATTR_CHL_CONNNAME,
@@ -353,7 +368,7 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the published stats
-	genericLabels := []string{"qmgr", objectType}
+	genericLabels := []string{"qmgr", "platform", objectType}
 
 	switch objectType {
 	case "channel":
