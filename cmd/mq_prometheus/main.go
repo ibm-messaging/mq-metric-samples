@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -69,6 +70,16 @@ func main() {
 
 		mqmetric.SetLocale(config.locale)
 		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, wildcardResource, config.metaPrefix)
+	}
+
+	if err == nil {
+		var compCode int32
+		compCode, err = mqmetric.VerifyConfig()
+		// We could choose to fail after a warning, but instead will continue for now
+		if compCode == ibmmq.MQCC_WARNING {
+			log.Println(err)
+			err = nil
+		}
 	}
 
 	// Once everything has been discovered, and the subscriptions

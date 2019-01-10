@@ -46,7 +46,8 @@ contains the prereq packages at a suitable version in the `vendor` tree
 ```
 
 ## Configuring MQ
-It is convenient to run the monitor program as a queue manager service.
+It is convenient to run the monitor program as a queue manager service whenever
+possible.
 
 This directory contains an MQSC script to define the service. In fact, the
 service definition points at a simple script which sets up any
@@ -60,6 +61,13 @@ Edit the MQSC script and the shell script to point at appropriate directories
 where the program exists, and where you want to put stdout/stderr.
 Ensure that the ID running the queue manager has permission to access
 the programs and output files.
+
+If you cannot run the monitor as a service, for example when
+trying to monitor the MQ Appliance which does not support
+service definitions, then you can run as 
+an MQ client connecting remotely. Setting the `ibmmq.client` property
+to `true` forces client connections. Then all the usual MQ configuration
+comes into play (MQSERVER environment variable, use of CCDT files etc).
 
 The monitor listens for calls from Prometheus on a TCP port. The default
 port, reserved for this use in the Prometheus list, is 9157. If you

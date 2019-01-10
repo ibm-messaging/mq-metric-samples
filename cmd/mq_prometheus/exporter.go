@@ -343,7 +343,7 @@ func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 		labels,
 	)
 
-	log.Infof("Created gauge for '%s%s' from '%s'", prefix, elem.MetricName,elem.Description)
+	log.Infof("Created gauge for '%s%s' from '%s'", prefix, elem.MetricName, elem.Description)
 	return gaugeVec
 }
 
@@ -387,6 +387,6 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		labels,
 	)
 
-	log.Infof("Created gauge for '%s%s' ", prefix, name )
+	log.Infof("Created gauge for '%s%s' ", prefix, name)
 	return gaugeVec
 }
