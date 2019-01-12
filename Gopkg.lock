@@ -55,8 +55,8 @@
     "ibmmq",
     "mqmetric"
   ]
-  revision = "72cbde800c319e3d9b69ad7a215c939e105f2dcb"
-  version = "v3.3.2"
+  revision = "d87272d4909cc37f263e698c3bb7e49c2f64ef28"
+  version = "v3.3.3"
 
 [[projects]]
   name = "github.com/influxdata/influxdb"
@@ -145,6 +145,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "73bd2a01e39e2e048f7099bb84b3b164d3c205019d2e7752d880f4f98b30fd5b"
+  inputs-digest = "dde0890ffa6fa337dbdc19502ced07825f2098fc99d3109f57a0ac388aa9983d"
   solver-name = "gps-cdcl"
   solver-version = 1
