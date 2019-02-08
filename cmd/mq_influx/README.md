@@ -28,8 +28,10 @@ supporting alternative database collection protocols.
 
 * You also need access to the InfluxDB Go client interface.
 
-  The command `go get -u github.com/influxdata/influxdb/client/v2` should pull
-  down the client code and its dependencies.
+  The command `go get -u github.com/influxdata/influxdb1-client/v2` should pull
+  down the client code and its dependencies. Although this package will automatically
+  download the correct component via `dep ensure` or make use of the existing `vendor`
+  directory.
 
 * The error logger package may need to be explicitly downloaded
 

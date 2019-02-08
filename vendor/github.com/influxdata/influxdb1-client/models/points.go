@@ -1,5 +1,5 @@
 // Package models implements basic objects used throughout the TICK stack.
-package models // import "github.com/influxdata/influxdb/models"
+package models // import "github.com/influxdata/influxdb1-client/models"
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/influxdata/influxdb/pkg/escape"
+	"github.com/influxdata/influxdb1-client/pkg/escape"
 )
 
 type escapeSet struct {
@@ -335,7 +335,6 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 			continue
 		}
 
-		// lines which start with '#' are comments
 		start := skipWhitespace(block, 0)
 
 		// If line is all whitespace, just skip it
@@ -343,6 +342,7 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 			continue
 		}
 
+		// lines which start with '#' are comments
 		if block[start] == '#' {
 			continue
 		}
@@ -368,7 +368,7 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 }
 
 func parsePoint(buf []byte, defaultTime time.Time, precision string) (Point, error) {
-	// scan the first block which is measurement[,tag1=value1,tag2=value=2...]
+	// scan the first block which is measurement[,tag1=value1,tag2=value2...]
 	pos, key, err := scanKey(buf, 0)
 	if err != nil {
 		return nil, err
@@ -1940,28 +1940,80 @@ func NewTags(m map[string]string) Tags {
 	return a
 }
 
-// Keys returns the list of keys for a tag set.
-func (a Tags) Keys() []string {
-	if len(a) == 0 {
-		return nil
-	}
-	keys := make([]string, len(a))
-	for i, tag := range a {
-		keys[i] = string(tag.Key)
-	}
-	return keys
+// HashKey hashes all of a tag's keys.
+func (a Tags) HashKey() []byte {
+	return a.AppendHashKey(nil)
 }
 
-// Values returns the list of values for a tag set.
-func (a Tags) Values() []string {
+func (a Tags) needsEscape() bool {
+	for i := range a {
+		t := &a[i]
+		for j := range tagEscapeCodes {
+			c := &tagEscapeCodes[j]
+			if bytes.IndexByte(t.Key, c.k[0]) != -1 || bytes.IndexByte(t.Value, c.k[0]) != -1 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// AppendHashKey appends the result of hashing all of a tag's keys and values to dst and returns the extended buffer.
+func (a Tags) AppendHashKey(dst []byte) []byte {
+	// Empty maps marshal to empty bytes.
 	if len(a) == 0 {
-		return nil
+		return dst
 	}
-	values := make([]string, len(a))
-	for i, tag := range a {
-		values[i] = string(tag.Value)
+
+	// Type invariant: Tags are sorted
+
+	sz := 0
+	var escaped Tags
+	if a.needsEscape() {
+		var tmp [20]Tag
+		if len(a) < len(tmp) {
+			escaped = tmp[:len(a)]
+		} else {
+			escaped = make(Tags, len(a))
+		}
+
+		for i := range a {
+			t := &a[i]
+			nt := &escaped[i]
+			nt.Key = escapeTag(t.Key)
+			nt.Value = escapeTag(t.Value)
+			sz += len(nt.Key) + len(nt.Value)
+		}
+	} else {
+		sz = a.Size()
+		escaped = a
 	}
-	return values
+
+	sz += len(escaped) + (len(escaped) * 2) // separators
+
+	// Generate marshaled bytes.
+	if cap(dst)-len(dst) < sz {
+		nd := make([]byte, len(dst), len(dst)+sz)
+		copy(nd, dst)
+		dst = nd
+	}
+	buf := dst[len(dst) : len(dst)+sz]
+	idx := 0
+	for i := range escaped {
+		k := &escaped[i]
+		if len(k.Value) == 0 {
+			continue
+		}
+		buf[idx] = ','
+		idx++
+		copy(buf[idx:], k.Key)
+		idx += len(k.Key)
+		buf[idx] = '='
+		idx++
+		copy(buf[idx:], k.Value)
+		idx += len(k.Value)
+	}
+	return dst[:len(dst)+idx]
 }
 
 // String returns the string representation of the tags.
@@ -2080,18 +2132,6 @@ func (a *Tags) SetString(key, value string) {
 	a.Set([]byte(key), []byte(value))
 }
 
-// Delete removes a tag by key.
-func (a *Tags) Delete(key []byte) {
-	for i, t := range *a {
-		if bytes.Equal(t.Key, key) {
-			copy((*a)[i:], (*a)[i+1:])
-			(*a)[len(*a)-1] = Tag{}
-			*a = (*a)[:len(*a)-1]
-			return
-		}
-	}
-}
-
 // Map returns a map representation of the tags.
 func (a Tags) Map() map[string]string {
 	m := make(map[string]string, len(a))
@@ -2099,96 +2139,6 @@ func (a Tags) Map() map[string]string {
 		m[string(t.Key)] = string(t.Value)
 	}
 	return m
-}
-
-// Merge merges the tags combining the two. If both define a tag with the
-// same key, the merged value overwrites the old value.
-// A new map is returned.
-func (a Tags) Merge(other map[string]string) Tags {
-	merged := make(map[string]string, len(a)+len(other))
-	for _, t := range a {
-		merged[string(t.Key)] = string(t.Value)
-	}
-	for k, v := range other {
-		merged[k] = v
-	}
-	return NewTags(merged)
-}
-
-// HashKey hashes all of a tag's keys.
-func (a Tags) HashKey() []byte {
-	return a.AppendHashKey(nil)
-}
-
-func (a Tags) needsEscape() bool {
-	for i := range a {
-		t := &a[i]
-		for j := range tagEscapeCodes {
-			c := &tagEscapeCodes[j]
-			if bytes.IndexByte(t.Key, c.k[0]) != -1 || bytes.IndexByte(t.Value, c.k[0]) != -1 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// AppendHashKey appends the result of hashing all of a tag's keys and values to dst and returns the extended buffer.
-func (a Tags) AppendHashKey(dst []byte) []byte {
-	// Empty maps marshal to empty bytes.
-	if len(a) == 0 {
-		return dst
-	}
-
-	// Type invariant: Tags are sorted
-
-	sz := 0
-	var escaped Tags
-	if a.needsEscape() {
-		var tmp [20]Tag
-		if len(a) < len(tmp) {
-			escaped = tmp[:len(a)]
-		} else {
-			escaped = make(Tags, len(a))
-		}
-
-		for i := range a {
-			t := &a[i]
-			nt := &escaped[i]
-			nt.Key = escapeTag(t.Key)
-			nt.Value = escapeTag(t.Value)
-			sz += len(nt.Key) + len(nt.Value)
-		}
-	} else {
-		sz = a.Size()
-		escaped = a
-	}
-
-	sz += len(escaped) + (len(escaped) * 2) // separators
-
-	// Generate marshaled bytes.
-	if cap(dst)-len(dst) < sz {
-		nd := make([]byte, len(dst), len(dst)+sz)
-		copy(nd, dst)
-		dst = nd
-	}
-	buf := dst[len(dst) : len(dst)+sz]
-	idx := 0
-	for i := range escaped {
-		k := &escaped[i]
-		if len(k.Value) == 0 {
-			continue
-		}
-		buf[idx] = ','
-		idx++
-		copy(buf[idx:], k.Key)
-		idx += len(k.Key)
-		buf[idx] = '='
-		idx++
-		copy(buf[idx:], k.Value)
-		idx += len(k.Value)
-	}
-	return dst[:len(dst)+idx]
 }
 
 // CopyTags returns a shallow copy of tags.

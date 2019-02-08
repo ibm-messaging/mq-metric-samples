@@ -59,14 +59,14 @@
   version = "v3.3.3"
 
 [[projects]]
-  name = "github.com/influxdata/influxdb"
+  branch = "master"
+  name = "github.com/influxdata/influxdb1-client"
   packages = [
-    "client/v2",
     "models",
-    "pkg/escape"
+    "pkg/escape",
+    "v2"
   ]
-  revision = "a2ba6e7654fb078f8a3f5add1f8d935df38161bd"
-  version = "v1.6.4"
+  revision = "16c852ea613fa2d42fcdccc9a8b0802a8bdc6140"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -145,6 +145,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dde0890ffa6fa337dbdc19502ced07825f2098fc99d3109f57a0ac388aa9983d"
+  inputs-digest = "4a217f01e18bef677e772762020ac902dfedfacb566f6b0845c97ba3067672ef"
   solver-name = "gps-cdcl"
   solver-version = 1

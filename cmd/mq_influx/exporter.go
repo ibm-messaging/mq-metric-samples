@@ -29,7 +29,7 @@ import (
 	"time"
 
 	"github.com/ibm-messaging/mq-golang/mqmetric"
-	client "github.com/influxdata/influxdb/client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 	log "github.com/sirupsen/logrus"
 )
 
