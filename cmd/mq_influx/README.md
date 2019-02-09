@@ -21,25 +21,26 @@ create a data source in Grafana called "MQ Influx" that points at your
 database server, and then import the JSON file.
 
 ## Building
-* This github repository contains both the monitoring program and
-the ibmmq package that links to the core MQ application interface. It
-also contains the mqmetric package used as a common component for
-supporting alternative database collection protocols.
+* You need to have the MQ client libraries installed first.
+* Set up an environment for compiling Go programs
+```
+  export GOPATH=~/go (or wherever you want to put it)
+  export GOROOT=/usr/lib/golang  (or wherever you have installed it)
+  mkdir -p $GOPATH/src
+  cd $GOPATH/src
+```
+* Clone this GitHub repository for the monitoring programs into your GOPATH. The repository
+contains the prereq packages at a suitable version in the `vendor` tree
+```
+  git clone https://github.com/ibm-message/mq-metric-samples ibm-messaging/mq-metric-samples
+```
+* From the root of your GOPATH you can then compile the code
+```
+  cd $GOPATH
+  export CGO_LDFLAGS_ALLOW='-Wl,-rpath.*'
+  go build -o bin/mq_influx ibm-messaging/mq-metric-samples/cmd/mq_influx/*.go
+```
 
-* You also need access to the InfluxDB Go client interface.
-
-  The command `go get -u github.com/influxdata/influxdb1-client/v2` should pull
-  down the client code and its dependencies. Although this package will automatically
-  download the correct component via `dep ensure` or make use of the existing `vendor`
-  directory.
-
-* The error logger package may need to be explicitly downloaded
-
-  On my system, I also had to forcibly download the logger package,
-  using `go get -u github.com/sirupsen/logrus`.
-
-Run `go build -o <directory>/mq_influx cmd/mq_influx/*.go` to compile
-the program and put it to a specific directory.
 
 ## Configuring MQ
 It is convenient to run the monitor program as a queue manager service.
