@@ -96,7 +96,10 @@ func Collect() error {
 	}
 
 	// Process all the publications that have arrived
-	mqmetric.ProcessPublications()
+	err = mqmetric.ProcessPublications()
+	if err != nil {
+		log.Fatalf("Error processing publications: %v", err)
+	}
 
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too

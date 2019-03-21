@@ -19,12 +19,16 @@ package main
 */
 
 import (
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	log "github.com/sirupsen/logrus"
 )
+
+var BuildStamp string
+var GitCommit string
 
 func initLog() {
 	level, err := log.ParseLevel(config.logLevel)
@@ -34,10 +38,25 @@ func initLog() {
 	log.SetLevel(level)
 }
 
+func printInfo(title string, stamp string, commit string) {
+	fmt.Println(title)
+	if stamp != "" {
+		fmt.Println("Build        : " + stamp)
+	}
+	if commit != "" {
+		fmt.Println("Commit Level : " + commit)
+	}
+	fmt.Println("")
+}
+
 func main() {
 	var err error
 
+	printInfo("IBM MQ metrics exporter for OpenTSDB monitoring", BuildStamp, GitCommit)
+
 	initConfig()
+	initLog()
+
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
@@ -47,9 +66,6 @@ func main() {
 		log.Errorln("Invalid value for interval parameter: ", err)
 		os.Exit(1)
 	}
-
-	initLog()
-	log.Infoln("Starting IBM MQ metrics exporter for OpenTSDB monitoring")
 
 	// Connect and open standard queues
 	err = mqmetric.InitConnection(config.qMgrName, config.replyQ, &config.cc)

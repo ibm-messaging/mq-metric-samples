@@ -1,6 +1,6 @@
 [[constraint]]
   name = "github.com/ibm-messaging/mq-golang"
-  version = "3.3.3"
+  version = "4.0.1"
 
 [prune]
   go-tests = true

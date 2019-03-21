@@ -119,7 +119,10 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// Deal with all the publications that have arrived
-	mqmetric.ProcessPublications()
+	err := mqmetric.ProcessPublications()
+	if err != nil {
+		log.Fatalf("Error processing publications: %v", err)
+	}
 
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too

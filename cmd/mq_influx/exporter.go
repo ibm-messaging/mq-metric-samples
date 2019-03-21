@@ -59,7 +59,10 @@ func Collect(c client.Client) error {
 	}
 
 	// Process all the publications that have arrived
-	mqmetric.ProcessPublications()
+	err = mqmetric.ProcessPublications()
+	if err != nil {
+		log.Fatalf("Error processing publications: %v", err)
+	}
 
 	// Have now processed all of the publications, and all the MQ-owned
 	// value fields and maps have been updated.

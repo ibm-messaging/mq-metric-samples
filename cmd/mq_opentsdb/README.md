@@ -33,13 +33,13 @@ database server, and then import the JSON file.
 * Clone this GitHub repository for the monitoring programs into your GOPATH. The repository
 contains the prereq packages at a suitable version in the `vendor` tree
 ```
-  git clone https://github.com/ibm-message/mq-metric-samples ibm-messaging/mq-metric-samples
+  git clone https://github.com/ibm-messaging/mq-metric-samples ibm-messaging/mq-metric-samples
 ```
 * From the root of your GOPATH you can then compile the code
 ```
   cd $GOPATH
   export CGO_LDFLAGS_ALLOW='-Wl,-rpath.*'
-  go build -o bin/mq_opentsdb ibm-messaging/mq-metric-samples/cmd/mq_opentsdb/*.go
+  go build -o bin/mq_opentsdb src/ibm-messaging/mq-metric-samples/cmd/mq_opentsdb/*.go
 ```
 
 ## Configuring MQ

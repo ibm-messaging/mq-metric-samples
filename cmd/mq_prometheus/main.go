@@ -19,6 +19,7 @@ package main
 */
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -28,6 +29,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var BuildStamp string
+var GitCommit string
+
 func initLog() {
 	level, err := log.ParseLevel(config.logLevel)
 	if err != nil {
@@ -36,18 +40,29 @@ func initLog() {
 	log.SetLevel(level)
 }
 
+func printInfo(title string, stamp string, commit string) {
+	fmt.Println(title)
+	if stamp != "" {
+		fmt.Println("Build        : " + stamp)
+	}
+	if commit != "" {
+		fmt.Println("Commit Level : " + commit)
+	}
+	fmt.Println("")
+}
+
 func main() {
 	var err error
 
+	printInfo("IBM MQ metrics exporter for Prometheus monitoring", BuildStamp, GitCommit)
+
 	err = initConfig()
+	initLog()
 
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
 	}
-
-	initLog()
-	log.Infoln("Starting IBM MQ metrics exporter for Prometheus monitoring")
 
 	if err == nil {
 		// Connect and open standard queues

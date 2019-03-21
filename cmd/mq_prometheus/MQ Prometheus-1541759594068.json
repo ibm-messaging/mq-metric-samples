@@ -88,7 +88,7 @@
           "step": 2
         },
         {
-          "expr": "ibmmq_queue_queue_depth_count{queue=~\"APP.*\"}",
+          "expr": "ibmmq_queue_depth{queue=~\"APP.*\"}",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Depth: {{queue}}",
@@ -96,15 +96,22 @@
           "step": 2
         },
         {
-          "expr": "ibmmq_queue_oldest_message_age_count{queue=~\"APP.*\"}",
+          "expr": "ibmmq_queue_oldest_message_age{queue=~\"APP.*\"}",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Oldest msg {{queue}}",
+          "legendFormat": "Oldest msg {{queue}}@{{qmgr}}",
           "refId": "D"
+        },
+        {
+          "expr": "ibmmq_queue_ol",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "E"
         }
       ],
       "thresholds": [],
       "timeFrom": "15m",
+      "timeRegions": [],
       "timeShift": null,
       "title": "Queue Activity",
       "tooltip": {
@@ -131,7 +138,7 @@
           "show": true
         },
         {
-          "format": "µs",
+          "format": "s",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -217,6 +224,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Messages",
       "tooltip": {
@@ -315,6 +323,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "CPU",
       "tooltip": {
@@ -405,6 +414,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Log write latency",
       "tooltip": {
@@ -525,6 +535,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "File system",
       "tooltip": {
@@ -608,6 +619,7 @@
       "targets": [
         {
           "expr": "ibmmq_qmgr_non_durable_subscriber_low_water_mark",
+          "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "ND Sub - low-water",
           "metric": "ibmmq_qmgr_non_durable_subscriber_low_water_mark",
@@ -616,6 +628,7 @@
         },
         {
           "expr": "ibmmq_qmgr_non_durable_subscriber_high_water_mark",
+          "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "ND Sub - high-water",
           "metric": "ibmmq_qmgr_non_durable_subscriber_high_water_mark",
@@ -624,6 +637,7 @@
         },
         {
           "expr": "ibmmq_qmgr_create_non_durable_subscription",
+          "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "ND MQSUB calls",
           "metric": "ibmmq_qmgr_create_non_durable_subscription",
@@ -633,6 +647,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Subscriptions",
       "tooltip": {
@@ -886,7 +901,7 @@
       ],
       "targets": [
         {
-          "expr": "ibmmq_channel_status_squash+0",
+          "expr": "ibmmq_channel_status_squash{qmgr!=\"QML3\"}+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -894,7 +909,7 @@
           "refId": "A"
         },
         {
-          "expr": "ibmmq_channel_status+0",
+          "expr": "ibmmq_channel_status{qmgr!=\"QML3\"}+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -952,6 +967,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Channel Messages",
       "tooltip": {
@@ -1115,5 +1131,5 @@
   "timezone": "browser",
   "title": "MQ Prometheus",
   "uid": "yBfT2bDik",
-  "version": 30
+  "version": 33
 }

@@ -26,6 +26,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var BuildStamp string
+var GitCommit string
+
 func initLog() {
 	level, err := log.ParseLevel(config.logLevel)
 	if err != nil {
@@ -37,10 +40,27 @@ func initLog() {
 	log.SetOutput(os.Stderr)
 }
 
+// Print this via the logger rather than direct to stdout so it can be
+// avoided if someone is using the stdout stream as the JSON input to a parser
+func printInfo(title string, stamp string, commit string) {
+	log.Infoln(title)
+	if stamp != "" {
+		log.Infoln("Build        : " + stamp)
+	}
+	if commit != "" {
+		log.Infoln("Commit Level : " + commit)
+	}
+	log.Println("")
+}
+
 func main() {
 	var err error
 
 	initConfig()
+	initLog()
+
+	printInfo("Starting IBM MQ metrics exporter for JSON", BuildStamp, GitCommit)
+
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
@@ -51,7 +71,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	initLog()
 	log.Infoln("Starting IBM MQ metrics exporter for JSON")
 
 	// Connect and open standard queues
