@@ -50,7 +50,7 @@ do
     chmod a+rx bin/*.sh
   fi
   if [ -r $srcdir/$m.mqsc ]
-    then
+  then
     cp $srcdir/*.mqsc bin
   fi
 done

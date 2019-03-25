@@ -5,16 +5,13 @@ the [IBM® MQ golang metric packages](https://github.com/ibm-messaging/mq-golang
 to provide a program that can be used with existing monitoring technologies
 such as Prometheus, AWS CloudWatch, etc.
 
-These samples were moved to this repository from
-the [IBM MQ golang metric packages repository](https://github.com/ibm-messaging/mq-golang).
-
 ## Health Warning
 
 This package is provided as-is with no guarantees of support or updates.
 There are also no guarantees of compatibility with any future versions of the package;
 interfaces and functions are subject to change based on any feedback.
 
-These samples use a specific version of the `mqmetric` and `ibmmq` golang packages.
+These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.
 Those packages are in the [mq-golang repository](https://github.com/ibm-messaging/mq-golang)
 and are also included in the `vendor` tree of this repository.
 
@@ -26,8 +23,8 @@ You will require the following programs:
 
 * [dep](https://golang.github.io/dep/) - Golang dependency management tool
 
-If using a version of Go from after 2017, you must set environment variables to permit some compile/link flags.
-This is due to a security fix in the compiler.
+To build the programs on Linux and MacOS, you must set an environment variable to permit some compile/link flags.
+This is due to security controls in the compiler.
 
 ```
 export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
