@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # © Copyright IBM Corporation 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,43 +12,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Script to build the monitor agent programs from within a Docker container
+# This simple script builds a Docker container whose purpose is simply
+# to compile the binary components of the monitoring programs, and then to copy those
+# programs to a local temporary directory.
+GOPATH="/go"
 
-export PATH="${PATH}:/usr/lib/go-${GOVERSION}/bin:/go/bin"
-export CGO_CFLAGS="-I/opt/mqm/inc/"
-export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
-
-# Which monitor programs are to be built. By default, build the complete set available.
-# It can be overridden by setting the value on the "docker run" command with
-# a "-e MONITORS=..." flag.
-if [ -z "$MONITORS" ]
+TAG="mq-metric-samples-gobuild"
+# Assume repo tags have been created in a sensible order
+VER=`git tag -l | sort | tail -1 | sed "s/^v//g"`
+if [ -z "$VER" ]
 then
-  cd $GOPATH/src/$ORG/$REPO
-  MONITORS=`ls cmd`
+  VER="latest"
 fi
+echo "Building container $TAG:$VER"
 
-# And do the builds into the bin directory
-cd $GOPATH
-for m in $MONITORS
-do
-  srcdir=src/$ORG/$REPO/cmd/$m
+# Build a container that has all the pieces needed to compile the Go programs for MQ
+docker build --build-arg GOPATH_ARG=$GOPATH -t $TAG:$VER .
+rc=$?
 
-  echo "Building $m"
-  if [ ! -z "$BUILD_EXTRA_INJECT" ]
-  then
-    BUILD_EXTRA_LDFLAGS="-ldflags"
-  fi
+# Set the userid we will run the container as
+uid=`id -u`
+gid=`id -g`
 
-  go build -o bin/$m $BUILD_EXTRA_LDFLAGS "$BUILD_EXTRA_INJECT"  $srcdir/*.go
+if [ $rc -eq 0 ]
+then
+  # Run the image to do the compilation and extract the files
+  # from it into a local directory mounted into the container.
+  OUTDIR=$HOME/tmp/mq-metric-samples/bin
+  rm -rf $OUTDIR
+  mkdir -p $OUTDIR
 
-  # Copy the supporting scripts into the output directory
-  if [ -r $srcdir/$m.sh ]
-  then
-    cp $srcdir/*.sh bin
-    chmod a+rx bin/*.sh
-  fi
-  if [ -r $srcdir/$m.mqsc ]
-  then
-    cp $srcdir/*.mqsc bin
-  fi
-done
+  # Get some variables to pass the build information into the compile steps
+  buildStamp=`date +%Y%m%d-%H%M%S`
+  gitCommit=`git rev-list -1 HEAD --abbrev-commit`
+
+  # Set this for any special status
+  extraInfo=""
+
+  # Add "-e MONITORS=..." to only compile a subset of the monitor programs
+  # Mount an output directory
+  # Delete the container once it's done its job
+  docker run --rm \
+          --user $uid:$gid \
+          -v $OUTDIR:$GOPATH/bin \
+          -e BUILD_EXTRA_INJECT="-X \"main.BuildStamp=$buildStamp $extraInfo\" -X \"main.GitCommit=$gitCommit\"" \
+          $TAG:$VER
+  echo "Compiled programs should now be in $OUTDIR"
+fi

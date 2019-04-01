@@ -53,7 +53,7 @@ monitor agent directory also has sample scripts, configuration files etc to help
 with getting the agent running in your specific environment.
 
 ## Using a Docker container to build the programs
-You can use the `buildMain.sh` script in this directory to build a Docker container that
+You can use the `buildMonitors.sh` script in this directory to build a Docker container that
 in turn will build the binary programs and copy them to a local directory.
 
 ## More information

@@ -62,11 +62,13 @@ RUN cd /opt/mqm \
  && rm -f ./*.tar.gz
 
 # Insert the script that will do the build
-COPY buildMonitors.sh $GOPATH
-RUN chmod 777 $GOPATH/buildMonitors.sh
+COPY buildInDocker.sh $GOPATH
+RUN chmod 777 $GOPATH/buildInDocker.sh
 
-# Copy the rest of the source tree from this directory into the container
+# Copy the rest of the source tree from this directory into the container and
+# make sure it's readable by the user running the container
 COPY . $GOPATH/src/$ORG/$REPO
+RUN chmod -R a+rx $GOPATH/src/$ORG/$REPO
 
 # Set the entrypoint to the script that will do the compilation
-ENTRYPOINT $GOPATH/buildMonitors.sh
+ENTRYPOINT $GOPATH/buildInDocker.sh
