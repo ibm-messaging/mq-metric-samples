@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2018
+  Copyright (c) IBM Corporation 2016, 2019
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -37,17 +37,21 @@ import (
 )
 
 type exporter struct {
-	mutex     sync.RWMutex
-	metrics   mqmetric.AllMetrics
-	chlStatus mqmetric.StatusSet
-	qStatus   mqmetric.StatusSet
+	mutex       sync.RWMutex
+	metrics     mqmetric.AllMetrics
+	chlStatus   mqmetric.StatusSet
+	qStatus     mqmetric.StatusSet
+	topicStatus mqmetric.StatusSet
+	qMgrStatus  mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
 	return &exporter{
-		metrics:   mqmetric.Metrics,
-		chlStatus: mqmetric.ChannelStatus,
-		qStatus:   mqmetric.QueueStatus,
+		metrics:     mqmetric.Metrics,
+		chlStatus:   mqmetric.ChannelStatus,
+		qStatus:     mqmetric.QueueStatus,
+		topicStatus: mqmetric.TopicStatus,
+		qMgrStatus:  mqmetric.QueueManagerStatus,
 	}
 }
 
@@ -56,6 +60,8 @@ var (
 	gaugeMap              = make(map[string]*prometheus.GaugeVec)
 	channelStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	qStatusGaugeMap       = make(map[string]*prometheus.GaugeVec)
+	topicStatusGaugeMap   = make(map[string]*prometheus.GaugeVec)
+	qMgrStatusGaugeMap    = make(map[string]*prometheus.GaugeVec)
 	lastPoll              = time.Now()
 	platformString        string
 )
@@ -84,6 +90,16 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	for _, attr := range e.qStatus.Attributes {
 		qStatusGaugeMap[attr.MetricName].Describe(ch)
 	}
+	for _, attr := range e.topicStatus.Attributes {
+		topicStatusGaugeMap[attr.MetricName].Describe(ch)
+	}
+
+	// DISPLAY QMSTATUS is not supported on z/OS
+	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+		for _, attr := range e.qMgrStatus.Attributes {
+			qMgrStatusGaugeMap[attr.MetricName].Describe(ch)
+		}
+	}
 }
 
 /*
@@ -104,6 +120,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		log.Debugf("Polling for object status")
 		lastPoll = thisPoll
 		pollStatus = true
+	} else {
+		log.Debugf("Skipping poll for object status")
 	}
 
 	// Clear out everything we know so far. In particular, replace
@@ -125,7 +143,10 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// If there has been sufficient interval since the last explicit poll for
-	// status, then do that collection too
+	// status, then do that collection too. Don't treat errors in this block
+	// as fatal - the previous section will have caught things like the qmgr
+	// going down. But here we may have unknown objects being referenced and while
+	// it may be worth logging the error, that should not be cause to exit.
 	if pollStatus {
 		for _, attr := range e.chlStatus.Attributes {
 			channelStatusGaugeMap[attr.MetricName].Reset()
@@ -133,12 +154,25 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.qStatus.Attributes {
 			qStatusGaugeMap[attr.MetricName].Reset()
 		}
+		for _, attr := range e.qMgrStatus.Attributes {
+			qMgrStatusGaugeMap[attr.MetricName].Reset()
+		}
+		for _, attr := range e.topicStatus.Attributes {
+			topicStatusGaugeMap[attr.MetricName].Reset()
+		}
 
 		err := mqmetric.CollectChannelStatus(config.monitoredChannels)
 		if err != nil {
 			log.Errorf("Error collecting channel status: %v", err)
 		} else {
 			log.Debugf("Collected all channel status")
+		}
+
+		err = mqmetric.CollectTopicStatus(config.monitoredTopics)
+		if err != nil {
+			log.Errorf("Error collecting topic status: %v", err)
+		} else {
+			log.Debugf("Collected all topic status")
 		}
 
 		if config.qStatus {
@@ -149,6 +183,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				log.Debugf("Collected all queue status")
 			}
 		}
+
+		if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+			err := mqmetric.CollectQueueManagerStatus()
+			if err != nil {
+				log.Errorf("Error collecting queue manager status: %v", err)
+			} else {
+				log.Debugf("Collected all queue manager status")
+			}
+		}
+
 	}
 
 	// Have now processed all of the publications, and all the MQ-owned
@@ -197,7 +241,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	if pollStatus {
 		for _, attr := range e.chlStatus.Attributes {
 			for key, value := range attr.Values {
-				if value.IsInt64 {
+				if value.IsInt64 && !attr.Pseudo {
 					g := channelStatusGaugeMap[attr.MetricName]
 
 					f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
@@ -228,8 +272,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 		for _, attr := range e.qStatus.Attributes {
 			for key, value := range attr.Values {
-				if value.IsInt64 {
+				if value.IsInt64 && !attr.Pseudo {
 					qName := e.qStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+					log.Debugf("queue status - key: %s qName: %s metric: %s", key, qName, attr.MetricName)
 					g := qStatusGaugeMap[attr.MetricName]
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
 
@@ -240,20 +285,74 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				}
 			}
 		}
+
+		for _, attr := range e.topicStatus.Attributes {
+			log.Debugf("topic status - metric: %s points=%d", attr.MetricName, len(attr.Values))
+			for key, value := range attr.Values {
+				log.Debugf("topic status - key: %s metric: %s", key, attr.MetricName)
+				if value.IsInt64 && !attr.Pseudo {
+					topicString := e.topicStatus.Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
+					topicType := e.topicStatus.Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
+					g := topicStatusGaugeMap[attr.MetricName]
+					f := mqmetric.TopicNormalise(attr, value.ValueInt64)
+
+					g.With(prometheus.Labels{
+						"qmgr":     strings.TrimSpace(config.qMgrName),
+						"platform": platformString,
+						"type":     topicType,
+						"topic":    topicString}).Set(f)
+				}
+			}
+		}
+
+		if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+			for _, attr := range e.qMgrStatus.Attributes {
+				for _, value := range attr.Values {
+					if value.IsInt64 && !attr.Pseudo {
+						g := qMgrStatusGaugeMap[attr.MetricName]
+						f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+
+						g.With(prometheus.Labels{
+							"qmgr":     strings.TrimSpace(config.qMgrName),
+							"platform": platformString}).Set(f)
+					}
+				}
+			}
+		}
 	}
 
 	// Then put the channel info back to Prometheus
 	// We do this even if we have not polled for new status, so that Grafana's "instant"
 	// view will still show up the most recently known values
 	for _, attr := range e.chlStatus.Attributes {
-		g := channelStatusGaugeMap[attr.MetricName]
-		log.Debugf("Reporting gauge for %s", attr.MetricName)
-		g.Collect(ch)
+		if !attr.Pseudo {
+			g := channelStatusGaugeMap[attr.MetricName]
+			log.Debugf("Reporting chanl gauge for %s", attr.MetricName)
+			g.Collect(ch)
+		}
 	}
 	for _, attr := range e.qStatus.Attributes {
-		g := qStatusGaugeMap[attr.MetricName]
-		log.Debugf("Reporting gauge for %s", attr.MetricName)
-		g.Collect(ch)
+		if !attr.Pseudo {
+			g := qStatusGaugeMap[attr.MetricName]
+			log.Debugf("Reporting queue gauge for %s", attr.MetricName)
+			g.Collect(ch)
+		}
+	}
+	for _, attr := range e.topicStatus.Attributes {
+		if !attr.Pseudo {
+			g := topicStatusGaugeMap[attr.MetricName]
+			log.Debugf("Reporting topic gauge for %s", attr.MetricName)
+			g.Collect(ch)
+		}
+	}
+	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+		for _, attr := range e.qMgrStatus.Attributes {
+			if !attr.Pseudo {
+				g := qMgrStatusGaugeMap[attr.MetricName]
+				log.Debugf("Reporting qmgr  gauge for %s", attr.MetricName)
+				g.Collect(ch)
+			}
+		}
 	}
 
 }
@@ -291,6 +390,24 @@ func allocateQStatusGauges() {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "queue")
 		qStatusGaugeMap[attr.MetricName] = g
+	}
+}
+
+func allocateTopicStatusGauges() {
+	mqmetric.TopicInitAttributes()
+	for _, attr := range mqmetric.TopicStatus.Attributes {
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "topic")
+		topicStatusGaugeMap[attr.MetricName] = g
+	}
+}
+
+func allocateQMgrStatusGauges() {
+	mqmetric.QueueManagerInitAttributes()
+	for _, attr := range mqmetric.QueueManagerStatus.Attributes {
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "qmgr")
+		qMgrStatusGaugeMap[attr.MetricName] = g
 	}
 }
 
@@ -369,15 +486,25 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		mqmetric.ATTR_CHL_CONNNAME,
 		mqmetric.ATTR_CHL_JOBNAME}
 
+	qmgrLabels := []string{"qmgr", "platform"}
+
+	// With topic status, need to know if type is "pub" or "sub"
+	topicLabels := []string{"qmgr", "platform", objectType, "type"}
+
 	// Adding the polling queue status options means we can use this block for
-	// additional attributes. They should have the same labels as the published stats
-	genericLabels := []string{"qmgr", "platform", objectType}
+	// additional attributes. They should have the same labels as the stats generated
+	// through resource publications.
+	queueLabels := []string{"qmgr", "platform", objectType}
 
 	switch objectType {
 	case "channel":
 		labels = channelLabels
+	case "topic":
+		labels = topicLabels
 	case "queue":
-		labels = genericLabels
+		labels = queueLabels
+	case "qmgr":
+		labels = qmgrLabels
 	default:
 		log.Errorf("Tried to create gauge for unknown object type %s", objectType)
 	}

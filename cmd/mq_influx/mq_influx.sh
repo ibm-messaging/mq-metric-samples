@@ -33,7 +33,9 @@ ARGS="$ARGS -ibmmq.databaseAddress=$svr"
 ARGS="$ARGS -ibmmq.databaseUserID=$userid"
 ARGS="$ARGS -ibmmq.interval=$interval"
 ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
+ARGS="$ARGS -ibmmq.monitoredChannels=*"
 ARGS="$ARGS -ibmmq.pwFile=$passwordFile"
+ARGS="$ARGS -ibmmq.qStatus=true"
 ARGS="$ARGS -log.level=error"
 
 # Start via "exec" so the pid remains the same. The queue manager can

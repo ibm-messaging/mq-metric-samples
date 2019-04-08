@@ -13,7 +13,7 @@ such as Grafana.
 You can see data such as disk or CPU usage, queue depths, and MQI call
 counts. Channel status is also reported.
 
-An example Grafana dashboard is included, to show how queries might
+Example Grafana dashboards are included, to show how queries might
 be constructed. To use the dashboard,
 create a data source in Grafana called "MQ Prometheus" that points at your
 database server, and then import the JSON file. This dashboard was
@@ -186,12 +186,6 @@ that you can see when running the amqsrua sample program, but with some
 minor modifications to match the required style.
 
 The channel metrics all begin with `channel`.
-
-**Note**: Recent updates to the Prometheus collector have changed the name of queue-level
-metrics. Instead of beginning `object_`, they now begin with `"queue_`. Dashboards building
-on this collector will need to change to use the new names. The change was done because
-of the inclusion of channels as an object type, and for future options with other
-object types.
 
 ### z/OS Support
 Because the DIS QSTATUS and DIS CHSTATUS commands can be used on z/OS, the Prometheus monitor can now

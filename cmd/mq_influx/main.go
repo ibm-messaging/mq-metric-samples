@@ -55,7 +55,7 @@ func main() {
 
 	printInfo("IBM MQ metrics exporter for InfluxDB monitoring", BuildStamp, GitCommit)
 
-	initConfig()
+	err = initConfig()
 	initLog()
 
 	if config.qMgrName == "" {
@@ -77,8 +77,16 @@ func main() {
 
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
+
 	if err == nil {
-		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, true, "")
+		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, true, config.metaPrefix)
+	}
+
+	if err == nil {
+		mqmetric.ChannelInitAttributes()
+		mqmetric.QueueInitAttributes()
+		mqmetric.TopicInitAttributes()
+		mqmetric.QueueManagerInitAttributes()
 	}
 
 	// Go into main loop for sending data to database

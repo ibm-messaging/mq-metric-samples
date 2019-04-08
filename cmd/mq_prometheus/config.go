@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2018
+  Copyright (c) IBM Corporation 2016, 2019
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ type mqExporterConfig struct {
 	monitoredQueuesFile   string
 	monitoredChannels     string
 	monitoredChannelsFile string
+	monitoredTopics       string
+	monitoredTopicsFile   string
 	metaPrefix            string
 	pollInterval          string
 	pollIntervalDuration  time.Duration
@@ -79,6 +81,9 @@ func initConfig() error {
 	flag.StringVar(&config.monitoredChannels, "ibmmq.monitoredChannels", "", "Patterns of channels to monitor")
 	flag.StringVar(&config.monitoredChannelsFile, "ibmmq.monitoredChannelsFile", "", "File with patterns of channels to monitor")
 
+	flag.StringVar(&config.monitoredTopics, "ibmmq.monitoredTopics", "", "Patterns of topics to monitor")
+	flag.StringVar(&config.monitoredTopicsFile, "ibmmq.monitoredTopicsFile", "", "File with patterns of topics to monitor")
+
 	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
 
 	flag.StringVar(&config.cc.UserId, "ibmmq.userid", "", "UserId for MQ connection")
@@ -91,7 +96,7 @@ func initConfig() error {
 	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
 	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
 
-	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of checking channel status")
+	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of issuing status checks")
 
 	// The locale ought to be discoverable from the environment, but making it an explicit config
 	// parameter for now to aid testing, to override, and to ensure it's given in the MQ-known format
@@ -120,6 +125,15 @@ func initConfig() error {
 			config.monitoredChannels, err = mqmetric.ReadPatterns(config.monitoredChannelsFile)
 			if err != nil {
 				err = fmt.Errorf("Failed to parse monitored channels file - %v", err)
+			}
+		}
+	}
+
+	if err == nil {
+		if config.monitoredTopicsFile != "" {
+			config.monitoredTopics, err = mqmetric.ReadPatterns(config.monitoredTopicsFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored topics file - %v", err)
 			}
 		}
 	}
@@ -154,6 +168,8 @@ func initConfig() error {
 			err = fmt.Errorf("Invalid value for monitored channels: %v", err)
 		}
 	}
+
+	// Do not use VerifyPatterns for monitoredTopics as they follow a very different style
 
 	return err
 }

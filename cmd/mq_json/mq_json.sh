@@ -30,7 +30,9 @@ interval="5"
 ARGS="-ibmmq.queueManager=$qMgr"
 ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
 ARGS="$ARGS -ibmmq.monitoredChannels=$channels"
+ARGS="$ARGS -ibmmq.monitoredTopics=#"
 ARGS="$ARGS -ibmmq.interval=$interval"
+ARGS="$ARGS -ibmmq.qStatus=true"
 ARGS="$ARGS -log.level=error"
 
 # Start via "exec" so the pid remains the same.
@@ -41,4 +43,4 @@ ARGS="$ARGS -log.level=error"
 # You probably also want to do something with the stdout from the program,
 # such as sending it to a monitoring solution that understands the format.
 
-exec /usr/local/bin/mqgo/mq_json $ARGS 
+exec /usr/local/bin/mqgo/mq_json $ARGS

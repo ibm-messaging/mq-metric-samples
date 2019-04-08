@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2018
+  Copyright (c) IBM Corporation 2016, 2019
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -59,6 +59,9 @@ func main() {
 	err = initConfig()
 	initLog()
 
+	// Print this because it's easy to get the escapes wrong from a shell script with wildcarded topics ('#')
+	log.Debugf("Monitored topics are '%s'", config.monitoredTopics)
+
 	if config.qMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
@@ -107,6 +110,10 @@ func main() {
 		log.Debugf("ChannelGauges allocated")
 		allocateQStatusGauges()
 		log.Debugf("Queue  Gauges allocated")
+		allocateTopicStatusGauges()
+		log.Debugf("Topic  Gauges allocated")
+		allocateQMgrStatusGauges()
+		log.Debugf("QMgr   Gauges allocated")
 	}
 
 	// Go into main loop for handling requests from Prometheus

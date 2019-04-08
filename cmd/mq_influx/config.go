@@ -21,6 +21,7 @@ package main
 import (
 	"bufio"
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 
@@ -29,10 +30,18 @@ import (
 )
 
 type mqInfluxConfig struct {
-	qMgrName            string
-	replyQ              string
-	monitoredQueues     string
-	monitoredQueuesFile string
+	qMgrName string
+	replyQ   string
+
+	monitoredQueues       string
+	monitoredQueuesFile   string
+	monitoredChannels     string
+	monitoredChannelsFile string
+	monitoredTopics       string
+	monitoredTopicsFile   string
+
+	metaPrefix string
+	qStatus    bool
 
 	cc mqmetric.ConnectionConfig
 
@@ -53,14 +62,22 @@ var config mqInfluxConfig
 /*
 initConfig parses the command line parameters.
 */
-func initConfig() {
+func initConfig() error {
+	var err error
 
 	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
 	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
 	flag.StringVar(&config.monitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
 	flag.StringVar(&config.monitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
+	flag.StringVar(&config.monitoredChannels, "ibmmq.monitoredChannels", "", "Patterns of channels to monitor")
+	flag.StringVar(&config.monitoredChannelsFile, "ibmmq.monitoredChannelsFile", "", "File with patterns of channels to monitor")
+
+	flag.StringVar(&config.monitoredTopics, "ibmmq.monitoredTopics", "", "Patterns of topics to monitor")
+	flag.StringVar(&config.monitoredTopicsFile, "ibmmq.monitoredTopicsFile", "", "File with patterns of topics to monitor")
 
 	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
+	flag.StringVar(&config.metaPrefix, "metaPrefix", "", "Override path to monitoring resource topic")
+	flag.BoolVar(&config.qStatus, "ibmmq.qStatus", false, "Add queue status polling")
 
 	flag.StringVar(&config.databaseName, "ibmmq.databaseName", "", "Name of database")
 	flag.StringVar(&config.databaseAddress, "ibmmq.databaseAddress", "", "Address of database eg http://example.com:8086")
@@ -73,11 +90,49 @@ func initConfig() {
 
 	flag.Parse()
 
-	if config.monitoredQueuesFile != "" {
-		var err error
-		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+	if len(flag.Args()) > 0 {
+		err = fmt.Errorf("Extra command line parameters given")
+		flag.PrintDefaults()
+	}
+
+	if err == nil {
+		if config.monitoredQueuesFile != "" {
+			config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
+			if err != nil {
+				log.Errorf("Failed to parse monitored queues file - %v", err)
+			}
+		}
+	}
+
+	if err == nil {
+		if config.monitoredChannelsFile != "" {
+			config.monitoredChannels, err = mqmetric.ReadPatterns(config.monitoredChannelsFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored channels file - %v", err)
+			}
+		}
+	}
+
+	if err == nil {
+		if config.monitoredTopicsFile != "" {
+			config.monitoredTopics, err = mqmetric.ReadPatterns(config.monitoredTopicsFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored topics file - %v", err)
+			}
+		}
+	}
+
+	if err == nil {
+		err = mqmetric.VerifyPatterns(config.monitoredQueues)
 		if err != nil {
-			log.Errorf("Failed to parse monitored queues file - %v", err)
+			err = fmt.Errorf("Invalid value for monitored queues: %v", err)
+		}
+	}
+
+	if err == nil {
+		err = mqmetric.VerifyPatterns(config.monitoredChannels)
+		if err != nil {
+			err = fmt.Errorf("Invalid value for monitored channels: %v", err)
 		}
 	}
 
@@ -103,4 +158,6 @@ func initConfig() {
 		}
 		config.password = strings.TrimSpace(p)
 	}
+
+	return err
 }

@@ -104,12 +104,25 @@ func Collect() error {
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too
 	if pollStatus {
-		err := mqmetric.CollectChannelStatus(config.monitoredChannels)
+		err := mqmetric.CollectQueueManagerStatus()
+		if err != nil {
+			log.Errorf("Error collecting queue manager status: %v", err)
+		} else {
+			log.Debugf("Collected all queue manager status")
+		}
+		err = mqmetric.CollectChannelStatus(config.monitoredChannels)
 		if err != nil {
 			log.Errorf("Error collecting channel status: %v", err)
 		} else {
 			log.Debugf("Collected all channel status")
 		}
+		err = mqmetric.CollectTopicStatus(config.monitoredTopics)
+		if err != nil {
+			log.Errorf("Error collecting topic status: %v", err)
+		} else {
+			log.Debugf("Collected all topic status")
+		}
+
 		if config.qStatus {
 			err = mqmetric.CollectQueueStatus(config.monitoredQueues)
 			if err != nil {
@@ -193,9 +206,9 @@ func Collect() error {
 						chlName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
 						connName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
 						jobName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
-						key := chlName + "/" + connName + "/" + jobName + "/" + rqmName
+						key1 := chlName + "/" + connName + "/" + jobName + "/" + rqmName
 
-						if pt, ok = ptMap[key]; !ok {
+						if pt, ok = ptMap[key1]; !ok {
 							pt = pointsStruct{}
 							pt.ObjectType = "channel"
 							pt.Tags = make(map[string]string)
@@ -211,7 +224,7 @@ func Collect() error {
 
 						}
 						pt.Metric[fixup(attr.MetricName)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
-						ptMap[key] = pt
+						ptMap[key1] = pt
 					}
 				}
 
@@ -219,9 +232,9 @@ func Collect() error {
 					for key, value := range attr.Values {
 						if value.IsInt64 {
 							qName := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
-							key := qName
+							key1 := qName
 
-							if pt, ok = ptMap[key]; !ok {
+							if pt, ok = ptMap[key1]; !ok {
 								pt = pointsStruct{}
 								pt.ObjectType = "queue"
 								pt.Metric = make(map[string]float64)
@@ -232,7 +245,53 @@ func Collect() error {
 							}
 
 							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueNormalise(attr, value.ValueInt64)
-							ptMap[key] = pt
+							ptMap[key1] = pt
+						}
+					}
+				}
+
+				for _, attr := range mqmetric.TopicStatus.Attributes {
+					for key, value := range attr.Values {
+						if value.IsInt64 {
+							topicName := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
+							topicStatusType := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
+							key1 := mqmetric.TopicKey(topicName, topicStatusType)
+
+							if pt, ok = ptMap[key1]; !ok {
+								pt = pointsStruct{}
+								pt.ObjectType = "topic"
+								pt.Metric = make(map[string]float64)
+								pt.Tags = make(map[string]string)
+								pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+								pt.Tags["topic"] = topicName
+								pt.Tags["platform"] = platformString
+								pt.Tags["type"] = topicStatusType
+							}
+
+							pt.Metric[fixup(attr.MetricName)] = mqmetric.TopicNormalise(attr, value.ValueInt64)
+							ptMap[key1] = pt
+						}
+					}
+				}
+
+				for _, attr := range mqmetric.QueueManagerStatus.Attributes {
+					for key, value := range attr.Values {
+						if value.IsInt64 {
+							qMgrName := mqmetric.QueueManagerStatus.Attributes[mqmetric.ATTR_QMGR_NAME].Values[key].ValueString
+
+							key1 := qMgrName
+
+							if pt, ok = ptMap[key1]; !ok {
+								pt = pointsStruct{}
+								pt.ObjectType = "qmgr"
+								pt.Metric = make(map[string]float64)
+								pt.Tags = make(map[string]string)
+								pt.Tags["qmgr"] = strings.TrimSpace(qMgrName)
+								pt.Tags["platform"] = platformString
+							}
+
+							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+							ptMap[key1] = pt
 						}
 					}
 				}

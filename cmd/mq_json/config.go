@@ -35,6 +35,8 @@ type mqTTYConfig struct {
 
 	monitoredChannels     string
 	monitoredChannelsFile string
+	monitoredTopics       string
+	monitoredTopicsFile   string
 	qStatus               bool
 
 	metaPrefix           string
@@ -69,6 +71,8 @@ func initConfig() error {
 
 	flag.StringVar(&config.monitoredChannels, "ibmmq.monitoredChannels", "", "Patterns of channels to monitor")
 	flag.StringVar(&config.monitoredChannelsFile, "ibmmq.monitoredChannelsFile", "", "File with patterns of channels to monitor")
+	flag.StringVar(&config.monitoredTopics, "ibmmq.monitoredTopics", "", "Patterns of topics to monitor")
+	flag.StringVar(&config.monitoredTopicsFile, "ibmmq.monitoredTopicsFile", "", "File with patterns of topics to monitor")
 
 	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
 
@@ -108,6 +112,15 @@ func initConfig() error {
 	}
 
 	if err == nil {
+		if config.monitoredTopicsFile != "" {
+			config.monitoredTopics, err = mqmetric.ReadPatterns(config.monitoredTopicsFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored topics file - %v", err)
+			}
+		}
+	}
+
+	if err == nil {
 		if config.cc.UserId != "" && config.cc.Password == "" {
 			// TODO: If stdin is a tty, then disable echo. Done differently on Windows and Unix
 			scanner := bufio.NewScanner(os.Stdin)
@@ -137,6 +150,8 @@ func initConfig() error {
 			err = fmt.Errorf("Invalid value for monitored channels: %v", err)
 		}
 	}
+
+	// Do not use VerifyPatterns for monitoredTopics as they follow a very different style
 
 	return err
 

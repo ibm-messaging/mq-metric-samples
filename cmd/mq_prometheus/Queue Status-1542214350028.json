@@ -1,34 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_MQ_PROMETHEUS",
-      "label": "MQ Prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.3.1"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -45,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 4,
   "links": [],
   "panels": [
     {
@@ -53,7 +23,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MQ_PROMETHEUS}",
+      "datasource": "MQ Prometheus",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -88,19 +58,20 @@
           "expr": "ibmmq_queue_qtime_short",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "QTime Short: {{queue}}",
+          "legendFormat": "QTime Short: {{queue}}@{{qmgr}}",
           "refId": "A"
         },
         {
           "expr": "ibmmq_queue_qtime_long",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "QTime Long: {{queue}}",
+          "legendFormat": "QTime Long: {{queue}}@{{qmgr}}",
           "refId": "B"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Message Lifetime",
       "tooltip": {
@@ -144,7 +115,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MQ_PROMETHEUS}",
+      "datasource": "MQ Prometheus",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -179,7 +150,7 @@
           "expr": "ibmmq_queue_oldest_message_age",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Oldest msg: {{queue}}",
+          "legendFormat": "Oldest msg: {{queue}}@{{qmgr}}",
           "refId": "A"
         },
         {
@@ -192,6 +163,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Oldest message",
       "tooltip": {
@@ -235,15 +207,107 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MQ_PROMETHEUS}",
+      "datasource": "MQ Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 8,
-        "w": 8,
+        "h": 7,
+        "w": 12,
         "x": 0,
         "y": 9
       },
-      "id": 6,
+      "id": 10,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "ibmmq_queue_time_since_get",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "Since Get: {{queue}}@{{qmgr}}",
+          "refId": "A"
+        },
+        {
+          "expr": "ibmmq_queue_time_since_put",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "Since Put: {{queue}}@{{qmgr}}",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Put/Get Activity",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "MQ Prometheus",
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 8,
       "legend": {
         "avg": false,
         "current": false,
@@ -267,24 +331,18 @@
       "steppedLine": true,
       "targets": [
         {
-          "expr": "ibmmq_queue_input_handles",
+          "expr": "ibmmq_queue_depth",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "IPPROCS: {{queue}}",
+          "legendFormat": "Depth: {{queue}}@{{qmgr}}",
           "refId": "A"
-        },
-        {
-          "expr": "ibmmq_queue_output_handles",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "OPPROCS: {{queue}}",
-          "refId": "B"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
-      "title": "Object handles",
+      "title": "Queue Depth",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -326,15 +384,15 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MQ_PROMETHEUS}",
+      "datasource": "MQ Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 8,
-        "w": 14,
-        "x": 10,
-        "y": 9
+        "h": 6,
+        "w": 9,
+        "x": 15,
+        "y": 16
       },
-      "id": 8,
+      "id": 6,
       "legend": {
         "avg": false,
         "current": false,
@@ -358,17 +416,25 @@
       "steppedLine": true,
       "targets": [
         {
-          "expr": "ibmmq_queue_depth",
+          "expr": "ibmmq_queue_input_handles",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Depth: {{queue}}",
+          "legendFormat": "IPPROCS: {{queue}}@{{qmgr}}",
           "refId": "A"
+        },
+        {
+          "expr": "ibmmq_queue_output_handles",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "OPPROCS: {{queue}}@{{qmgr}}",
+          "refId": "B"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
-      "title": "Queue Depth",
+      "title": "Object handles",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -384,11 +450,12 @@
       },
       "yaxes": [
         {
+          "decimals": 0,
           "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -414,8 +481,8 @@
     "list": []
   },
   "time": {
-    "from": "2018-11-14T16:36:34.030Z",
-    "to": "2018-11-14T16:48:01.416Z"
+    "from": "2019-04-02T07:23:43.953Z",
+    "to": "2019-04-02T07:29:29.145Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -445,5 +512,5 @@
   "timezone": "",
   "title": "Queue Status",
   "uid": "_C4UncBmz",
-  "version": 5
+  "version": 14
 }
