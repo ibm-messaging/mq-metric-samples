@@ -103,17 +103,7 @@ func main() {
 	// Once everything has been discovered, and the subscriptions
 	// created, allocate the Prometheus gauges for each resource
 	if err == nil {
-		log.Debugf("About to allocate gauges")
-		allocateGauges()
-		log.Debugf("PubSub Gauges allocated")
-		allocateChannelStatusGauges()
-		log.Debugf("ChannelGauges allocated")
-		allocateQStatusGauges()
-		log.Debugf("Queue  Gauges allocated")
-		allocateTopicStatusGauges()
-		log.Debugf("Topic  Gauges allocated")
-		allocateQMgrStatusGauges()
-		log.Debugf("QMgr   Gauges allocated")
+		allocateAllGauges()
 	}
 
 	// Go into main loop for handling requests from Prometheus

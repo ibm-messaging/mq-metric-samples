@@ -42,6 +42,7 @@ type exporter struct {
 	chlStatus   mqmetric.StatusSet
 	qStatus     mqmetric.StatusSet
 	topicStatus mqmetric.StatusSet
+	subStatus   mqmetric.StatusSet
 	qMgrStatus  mqmetric.StatusSet
 }
 
@@ -51,6 +52,7 @@ func newExporter() *exporter {
 		chlStatus:   mqmetric.ChannelStatus,
 		qStatus:     mqmetric.QueueStatus,
 		topicStatus: mqmetric.TopicStatus,
+		subStatus:   mqmetric.SubStatus,
 		qMgrStatus:  mqmetric.QueueManagerStatus,
 	}
 }
@@ -61,6 +63,7 @@ var (
 	channelStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	qStatusGaugeMap       = make(map[string]*prometheus.GaugeVec)
 	topicStatusGaugeMap   = make(map[string]*prometheus.GaugeVec)
+	subStatusGaugeMap     = make(map[string]*prometheus.GaugeVec)
 	qMgrStatusGaugeMap    = make(map[string]*prometheus.GaugeVec)
 	lastPoll              = time.Now()
 	platformString        string
@@ -92,6 +95,9 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	}
 	for _, attr := range e.topicStatus.Attributes {
 		topicStatusGaugeMap[attr.MetricName].Describe(ch)
+	}
+	for _, attr := range e.subStatus.Attributes {
+		subStatusGaugeMap[attr.MetricName].Describe(ch)
 	}
 
 	// DISPLAY QMSTATUS is not supported on z/OS
@@ -160,6 +166,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.topicStatus.Attributes {
 			topicStatusGaugeMap[attr.MetricName].Reset()
 		}
+		for _, attr := range e.subStatus.Attributes {
+			subStatusGaugeMap[attr.MetricName].Reset()
+		}
 
 		err := mqmetric.CollectChannelStatus(config.monitoredChannels)
 		if err != nil {
@@ -173,6 +182,13 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			log.Errorf("Error collecting topic status: %v", err)
 		} else {
 			log.Debugf("Collected all topic status")
+		}
+
+		err = mqmetric.CollectSubStatus("*")
+		if err != nil {
+			log.Errorf("Error collecting subscription status: %v", err)
+		} else {
+			log.Debugf("Collected all subscription status")
 		}
 
 		if config.qStatus {
@@ -287,9 +303,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		for _, attr := range e.topicStatus.Attributes {
-			log.Debugf("topic status - metric: %s points=%d", attr.MetricName, len(attr.Values))
 			for key, value := range attr.Values {
-				log.Debugf("topic status - key: %s metric: %s", key, attr.MetricName)
 				if value.IsInt64 && !attr.Pseudo {
 					topicString := e.topicStatus.Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
 					topicType := e.topicStatus.Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
@@ -301,6 +315,28 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						"platform": platformString,
 						"type":     topicType,
 						"topic":    topicString}).Set(f)
+				}
+			}
+		}
+
+		for _, attr := range e.subStatus.Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 && !attr.Pseudo {
+					subId := e.subStatus.Attributes[mqmetric.ATTR_SUB_ID].Values[key].ValueString
+					subName := e.subStatus.Attributes[mqmetric.ATTR_SUB_NAME].Values[key].ValueString
+					subType := int(e.subStatus.Attributes[mqmetric.ATTR_SUB_TYPE].Values[key].ValueInt64)
+					subTypeString := strings.Replace(ibmmq.MQItoString("SUBTYPE", subType), "MQSUBTYPE_", "", -1)
+					topicString := e.subStatus.Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
+					g := subStatusGaugeMap[attr.MetricName]
+					f := mqmetric.SubNormalise(attr, value.ValueInt64)
+
+					g.With(prometheus.Labels{
+						"qmgr":         strings.TrimSpace(config.qMgrName),
+						"platform":     platformString,
+						"subid":        subId,
+						"subscription": subName,
+						"type":         subTypeString,
+						"topic":        topicString}).Set(f)
 				}
 			}
 		}
@@ -345,6 +381,13 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			g.Collect(ch)
 		}
 	}
+	for _, attr := range e.subStatus.Attributes {
+		if !attr.Pseudo {
+			g := subStatusGaugeMap[attr.MetricName]
+			log.Debugf("Reporting subscription gauge for %s", attr.MetricName)
+			g.Collect(ch)
+		}
+	}
 	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
 		for _, attr := range e.qMgrStatus.Attributes {
 			if !attr.Pseudo {
@@ -355,6 +398,22 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
+}
+
+func allocateAllGauges() {
+	log.Debugf("About to allocate gauges")
+	allocateGauges()
+	log.Debugf("PubSub Gauges allocated")
+	allocateChannelStatusGauges()
+	log.Debugf("ChannelGauges allocated")
+	allocateQStatusGauges()
+	log.Debugf("Queue  Gauges allocated")
+	allocateTopicStatusGauges()
+	log.Debugf("Topic  Gauges allocated")
+	allocateSubStatusGauges()
+	log.Debugf("Subscription Gauges allocated")
+	allocateQMgrStatusGauges()
+	log.Debugf("QMgr   Gauges allocated")
 }
 
 /*
@@ -399,6 +458,15 @@ func allocateTopicStatusGauges() {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "topic")
 		topicStatusGaugeMap[attr.MetricName] = g
+	}
+}
+
+func allocateSubStatusGauges() {
+	mqmetric.SubInitAttributes()
+	for _, attr := range mqmetric.SubStatus.Attributes {
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "subscription")
+		subStatusGaugeMap[attr.MetricName] = g
 	}
 }
 
@@ -490,7 +558,7 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 
 	// With topic status, need to know if type is "pub" or "sub"
 	topicLabels := []string{"qmgr", "platform", objectType, "type"}
-
+	subLabels := []string{"qmgr", "platform", objectType, "subid", "topic", "type"}
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
@@ -501,6 +569,8 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		labels = channelLabels
 	case "topic":
 		labels = topicLabels
+	case "subscription":
+		labels = subLabels
 	case "queue":
 		labels = queueLabels
 	case "qmgr":

@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2018
+  Copyright (c) IBM Corporation 2016, 2019
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -117,6 +117,12 @@ func Collect() error {
 			log.Debugf("Collected all channel status")
 		}
 		err = mqmetric.CollectTopicStatus(config.monitoredTopics)
+		if err != nil {
+			log.Errorf("Error collecting topic status: %v", err)
+		} else {
+			log.Debugf("Collected all topic status")
+		}
+		err = mqmetric.CollectSubStatus("*")
 		if err != nil {
 			log.Errorf("Error collecting topic status: %v", err)
 		} else {
@@ -288,6 +294,36 @@ func Collect() error {
 								pt.Tags = make(map[string]string)
 								pt.Tags["qmgr"] = strings.TrimSpace(qMgrName)
 								pt.Tags["platform"] = platformString
+							}
+
+							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+							ptMap[key1] = pt
+						}
+					}
+				}
+
+				for _, attr := range mqmetric.SubStatus.Attributes {
+					for key, value := range attr.Values {
+						if value.IsInt64 {
+							subId := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_ID].Values[key].ValueString
+							subName := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_NAME].Values[key].ValueString
+							subType := int(mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_TYPE].Values[key].ValueInt64)
+							subTypeString := strings.Replace(ibmmq.MQItoString("SUBTYPE", subType), "MQSUBTYPE_", "", -1)
+							topicString := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
+
+							key1 := subId
+
+							if pt, ok = ptMap[key1]; !ok {
+								pt = pointsStruct{}
+								pt.ObjectType = "subscription"
+								pt.Metric = make(map[string]float64)
+								pt.Tags = make(map[string]string)
+								pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+								pt.Tags["platform"] = platformString
+								pt.Tags["subid"] = subId
+								pt.Tags["subscription"] = subName
+								pt.Tags["type"] = subTypeString
+								pt.Tags["topic"] = topicString
 							}
 
 							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
