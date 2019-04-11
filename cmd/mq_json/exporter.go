@@ -104,33 +104,33 @@ func Collect() error {
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too
 	if pollStatus {
-		err := mqmetric.CollectQueueManagerStatus()
-		if err != nil {
-			log.Errorf("Error collecting queue manager status: %v", err)
-		} else {
-			log.Debugf("Collected all queue manager status")
-		}
-		err = mqmetric.CollectChannelStatus(config.monitoredChannels)
-		if err != nil {
-			log.Errorf("Error collecting channel status: %v", err)
-		} else {
-			log.Debugf("Collected all channel status")
-		}
-		err = mqmetric.CollectTopicStatus(config.monitoredTopics)
-		if err != nil {
-			log.Errorf("Error collecting topic status: %v", err)
-		} else {
-			log.Debugf("Collected all topic status")
-		}
-		err = mqmetric.CollectSubStatus("*")
-		if err != nil {
-			log.Errorf("Error collecting topic status: %v", err)
-		} else {
-			log.Debugf("Collected all topic status")
-		}
+		if config.cf.UseStatus {
+			err := mqmetric.CollectQueueManagerStatus()
+			if err != nil {
+				log.Errorf("Error collecting queue manager status: %v", err)
+			} else {
+				log.Debugf("Collected all queue manager status")
+			}
+			err = mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
+			if err != nil {
+				log.Errorf("Error collecting channel status: %v", err)
+			} else {
+				log.Debugf("Collected all channel status")
+			}
+			err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
+			if err != nil {
+				log.Errorf("Error collecting topic status: %v", err)
+			} else {
+				log.Debugf("Collected all topic status")
+			}
+			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
+			if err != nil {
+				log.Errorf("Error collecting topic status: %v", err)
+			} else {
+				log.Debugf("Collected all topic status")
+			}
 
-		if config.qStatus {
-			err = mqmetric.CollectQueueStatus(config.monitoredQueues)
+			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 			if err != nil {
 				log.Errorf("Error collecting queue status: %v", err)
 			} else {
@@ -170,7 +170,7 @@ func Collect() error {
 							pt.Tags = make(map[string]string)
 							pt.Metric = make(map[string]float64)
 
-							pt.Tags["qmgr"] = config.qMgrName
+							pt.Tags["qmgr"] = config.cf.QMgrName
 							pt.ObjectType = "queueManager"
 							pt.Tags["platform"] = platformString
 							if key != mqmetric.QMgrMapKey {
@@ -220,7 +220,7 @@ func Collect() error {
 							pt.Tags = make(map[string]string)
 							pt.Metric = make(map[string]float64)
 
-							pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+							pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
 							pt.Tags["channel"] = chlName
 							pt.Tags["platform"] = platformString
 							pt.Tags[mqmetric.ATTR_CHL_TYPE] = strings.TrimSpace(chlTypeString)
@@ -245,7 +245,7 @@ func Collect() error {
 								pt.ObjectType = "queue"
 								pt.Metric = make(map[string]float64)
 								pt.Tags = make(map[string]string)
-								pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+								pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
 								pt.Tags["queue"] = qName
 								pt.Tags["platform"] = platformString
 							}
@@ -268,7 +268,7 @@ func Collect() error {
 								pt.ObjectType = "topic"
 								pt.Metric = make(map[string]float64)
 								pt.Tags = make(map[string]string)
-								pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+								pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
 								pt.Tags["topic"] = topicName
 								pt.Tags["platform"] = platformString
 								pt.Tags["type"] = topicStatusType
@@ -318,7 +318,7 @@ func Collect() error {
 								pt.ObjectType = "subscription"
 								pt.Metric = make(map[string]float64)
 								pt.Tags = make(map[string]string)
-								pt.Tags["qmgr"] = strings.TrimSpace(config.qMgrName)
+								pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
 								pt.Tags["platform"] = platformString
 								pt.Tags["subid"] = subId
 								pt.Tags["subscription"] = subName

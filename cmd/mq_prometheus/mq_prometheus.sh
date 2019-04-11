@@ -22,8 +22,16 @@ queues="APP.*,MYQ.*"
 channels="TO.*,SYSTEM.DEF.SVRCONN"
 
 # See config.go for all recognised flags
+ARGS="-ibmmq.queueManager=$qMgr"
+ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
+ARGS="$ARGS -ibmmq.monitoredChannels=$channels"
+ARGS="$ARGS -ibmmq.monitoredTopics=#"
+ARGS="$ARGS -ibmmq.monitoredSubscriptions=*"
+
+ARGS="$ARGS -ibmmq.useStatus=true"
+ARGS="$ARGS -log.level=error"
 
 # Start via "exec" so the pid remains the same. The queue manager can
 # then check the existence of the service and use the MQ_SERVER_PID value
 # to kill it on shutdown.
-exec /usr/local/bin/mqgo/mq_prometheus -ibmmq.queueManager=$qMgr -ibmmq.monitoredQueues="$queues" -ibmmq.monitoredTopics="#" -ibmmq.monitoredChannels="$channels" -log.level=error -ibmmq.qStatus=true
+exec /usr/local/bin/mqgo/mq_prometheus $ARGS

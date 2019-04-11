@@ -60,18 +60,18 @@ func main() {
 	initLog()
 
 	// Print this because it's easy to get the escapes wrong from a shell script with wildcarded topics ('#')
-	log.Debugf("Monitored topics are '%s'", config.monitoredTopics)
+	log.Debugf("Monitored topics are '%s'", config.cf.MonitoredTopics)
 
-	if config.qMgrName == "" {
+	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
 	}
 
 	if err == nil {
 		// Connect and open standard queues
-		err = mqmetric.InitConnection(config.qMgrName, config.replyQ, &config.cc)
+		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cc)
 		if err == nil {
-			log.Infoln("Connected to queue manager ", config.qMgrName)
+			log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 			defer mqmetric.EndConnection()
 		}
 	}
@@ -82,12 +82,12 @@ func main() {
 		// Do we need to expand wildcarded queue names
 		// or use the wildcard as-is in the subscriptions
 		wildcardResource := true
-		if config.metaPrefix != "" {
+		if config.cf.MetaPrefix != "" {
 			wildcardResource = false
 		}
 
 		mqmetric.SetLocale(config.locale)
-		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, wildcardResource, config.metaPrefix)
+		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, wildcardResource, config.cf.MetaPrefix)
 	}
 
 	if err == nil {

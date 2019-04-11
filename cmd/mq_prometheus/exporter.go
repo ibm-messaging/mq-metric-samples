@@ -170,29 +170,29 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			subStatusGaugeMap[attr.MetricName].Reset()
 		}
 
-		err := mqmetric.CollectChannelStatus(config.monitoredChannels)
-		if err != nil {
-			log.Errorf("Error collecting channel status: %v", err)
-		} else {
-			log.Debugf("Collected all channel status")
-		}
+		if config.cf.UseStatus {
+			err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
+			if err != nil {
+				log.Errorf("Error collecting channel status: %v", err)
+			} else {
+				log.Debugf("Collected all channel status")
+			}
 
-		err = mqmetric.CollectTopicStatus(config.monitoredTopics)
-		if err != nil {
-			log.Errorf("Error collecting topic status: %v", err)
-		} else {
-			log.Debugf("Collected all topic status")
-		}
+			err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
+			if err != nil {
+				log.Errorf("Error collecting topic status: %v", err)
+			} else {
+				log.Debugf("Collected all topic status")
+			}
 
-		err = mqmetric.CollectSubStatus("*")
-		if err != nil {
-			log.Errorf("Error collecting subscription status: %v", err)
-		} else {
-			log.Debugf("Collected all subscription status")
-		}
+			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
+			if err != nil {
+				log.Errorf("Error collecting subscription status: %v", err)
+			} else {
+				log.Debugf("Collected all subscription status")
+			}
 
-		if config.qStatus {
-			err = mqmetric.CollectQueueStatus(config.monitoredQueues)
+			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 			if err != nil {
 				log.Errorf("Error collecting queue status: %v", err)
 			} else {
@@ -229,10 +229,10 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						f := mqmetric.Normalise(elem, key, value)
 						g := gaugeMap[makeKey(elem)]
 						if key == mqmetric.QMgrMapKey {
-							g.With(prometheus.Labels{"qmgr": config.qMgrName,
+							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
 								"platform": platformString}).Set(f)
 						} else {
-							g.With(prometheus.Labels{"qmgr": config.qMgrName,
+							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
 								"queue":    key,
 								"platform": platformString}).Set(f)
 						}
@@ -275,7 +275,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					jobName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
 
 					g.With(prometheus.Labels{
-						"qmgr":                     strings.TrimSpace(config.qMgrName),
+						"qmgr":                     strings.TrimSpace(config.cf.QMgrName),
 						"channel":                  chlName,
 						"platform":                 platformString,
 						mqmetric.ATTR_CHL_TYPE:     strings.TrimSpace(chlTypeString),
@@ -295,7 +295,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
 
 					g.With(prometheus.Labels{
-						"qmgr":     strings.TrimSpace(config.qMgrName),
+						"qmgr":     strings.TrimSpace(config.cf.QMgrName),
 						"platform": platformString,
 						"queue":    qName}).Set(f)
 				}
@@ -311,7 +311,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					f := mqmetric.TopicNormalise(attr, value.ValueInt64)
 
 					g.With(prometheus.Labels{
-						"qmgr":     strings.TrimSpace(config.qMgrName),
+						"qmgr":     strings.TrimSpace(config.cf.QMgrName),
 						"platform": platformString,
 						"type":     topicType,
 						"topic":    topicString}).Set(f)
@@ -331,7 +331,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					f := mqmetric.SubNormalise(attr, value.ValueInt64)
 
 					g.With(prometheus.Labels{
-						"qmgr":         strings.TrimSpace(config.qMgrName),
+						"qmgr":         strings.TrimSpace(config.cf.QMgrName),
 						"platform":     platformString,
 						"subid":        subId,
 						"subscription": subName,
@@ -349,7 +349,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
 
 						g.With(prometheus.Labels{
-							"qmgr":     strings.TrimSpace(config.qMgrName),
+							"qmgr":     strings.TrimSpace(config.cf.QMgrName),
 							"platform": platformString}).Set(f)
 					}
 				}

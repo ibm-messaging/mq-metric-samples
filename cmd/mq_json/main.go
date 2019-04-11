@@ -61,7 +61,7 @@ func main() {
 
 	printInfo("Starting IBM MQ metrics exporter for JSON", BuildStamp, GitCommit)
 
-	if config.qMgrName == "" {
+	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
 	}
@@ -74,9 +74,9 @@ func main() {
 	log.Infoln("Starting IBM MQ metrics exporter for JSON")
 
 	// Connect and open standard queues
-	err = mqmetric.InitConnection(config.qMgrName, config.replyQ, &config.cc)
+	err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 	if err == nil {
-		log.Infoln("Connected to queue manager ", config.qMgrName)
+		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 		defer mqmetric.EndConnection()
 	}
 
@@ -86,10 +86,10 @@ func main() {
 		// Do we need to expand wildcarded queue names
 		// or use the wildcard as-is in the subscriptions
 		wildcardResource := true
-		if config.metaPrefix != "" {
+		if config.cf.MetaPrefix != "" {
 			wildcardResource = false
 		}
-		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, wildcardResource, config.metaPrefix)
+		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, wildcardResource, config.cf.MetaPrefix)
 	}
 
 	// Go into main loop for sending data to stdout
@@ -99,7 +99,6 @@ func main() {
 			Collect()
 			time.Sleep(d)
 		}
-
 	}
 
 	if err != nil {

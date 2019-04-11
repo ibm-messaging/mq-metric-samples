@@ -1,3 +1,4 @@
+#!/bin/bash
 # © Copyright IBM Corporation 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,24 +16,39 @@
 # This simple script builds a Docker container whose purpose is simply
 # to compile the binary components of the monitoring programs, and then to copy those
 # programs to a local temporary directory.
+
+function latestSemVer {
+  (for x in $*
+  do
+    echo $x | sed "s/^v//g"
+  done) | sort -n | tail -1
+}
+
 GOPATH="/go"
 
 TAG="mq-metric-samples-gobuild"
-# Assume repo tags have been created in a sensible order
-VER=`git tag -l | sort | tail -1 | sed "s/^v//g"`
+# Assume repo tags have been created in a sensible order. Find the mq-golang
+# version in the dep file (it's the only dependency explicitly listed for now)
+# and the current Git tag for this repo. Then pick the latest version to create
+# the Docker tag
+VERDEP=`cat Gopkg.toml | awk '/version/ {print $3}' | sed "s/\"//g" `
+VERREPO=`git tag -l | sort | tail -1 `
+
+VER=`latestSemVer $VERDEP $VERREPO`
 if [ -z "$VER" ]
 then
   VER="latest"
 fi
+# echo "VERDEP=$VERDEP VERREPO=$VERREPO"
 echo "Building container $TAG:$VER"
-
-# Build a container that has all the pieces needed to compile the Go programs for MQ
-docker build --build-arg GOPATH_ARG=$GOPATH -t $TAG:$VER .
-rc=$?
 
 # Set the userid we will run the container as
 uid=`id -u`
 gid=`id -g`
+
+# Build a container that has all the pieces needed to compile the Go programs for MQ
+docker build --build-arg GOPATH_ARG=$GOPATH -t $TAG:$VER .
+rc=$?
 
 if [ $rc -eq 0 ]
 then
