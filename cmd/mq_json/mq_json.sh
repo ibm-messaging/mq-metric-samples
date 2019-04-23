@@ -25,7 +25,7 @@ channels="TO.*,SYSTEM.DEF.SVRCONN"
 
 # And other parameters that may be needed
 # See config.go for all recognised flags
-interval="5"
+interval="5s"
 
 ARGS="-ibmmq.queueManager=$qMgr"
 ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
@@ -33,7 +33,7 @@ ARGS="$ARGS -ibmmq.monitoredChannels=$channels"
 ARGS="$ARGS -ibmmq.monitoredTopics=#"
 ARGS="$ARGS -ibmmq.monitoredSubscriptions=*"
 ARGS="$ARGS -ibmmq.interval=$interval"
-ARGS="$ARGS -ibmmq.qStatus=true"
+ARGS="$ARGS -ibmmq.useStatus=true"
 ARGS="$ARGS -log.level=error"
 
 # Start via "exec" so the pid remains the same.

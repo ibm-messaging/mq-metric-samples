@@ -57,15 +57,15 @@
   version = "v1.3.1"
 
 [[projects]]
-  digest = "1:6b003d00277e9f214fc2877c85eaca2974d9784fa6b3705e9c519b7b1b251a54"
+  digest = "1:c8ca35238a853765043323fa0f916f45d0ecbac738534a85f3435c4c0c64448a"
   name = "github.com/ibm-messaging/mq-golang"
   packages = [
     "ibmmq",
     "mqmetric",
   ]
   pruneopts = "NUT"
-  revision = "3274638418033cf9686427ca41bf991a7b8d83f9"
-  version = "v4.0.4"
+  revision = "efb519665b9b1d443f7968ba4e489af7e2dda45c"
+  version = "v4.0.5"
 
 [[projects]]
   branch = "master"

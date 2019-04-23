@@ -32,7 +32,7 @@ var BuildStamp string
 var GitCommit string
 
 func initLog() {
-	level, err := log.ParseLevel(config.logLevel)
+	level, err := log.ParseLevel(config.cf.LogLevel)
 	if err != nil {
 		level = log.InfoLevel
 	}
@@ -58,20 +58,20 @@ func main() {
 	err = initConfig()
 	initLog()
 
-	if config.qMgrName == "" {
+	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(1)
 	}
-	d, err := time.ParseDuration(config.interval + "s")
+	d, err := time.ParseDuration(config.interval)
 	if err != nil {
 		log.Errorln("Invalid value for interval parameter: ", err)
 		os.Exit(1)
 	}
 
 	// Connect and open standard queues
-	err = mqmetric.InitConnection(config.qMgrName, config.replyQ, &config.cc)
+	err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 	if err == nil {
-		log.Infoln("Connected to queue manager ", config.qMgrName)
+		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 		defer mqmetric.EndConnection()
 	}
 
@@ -79,7 +79,7 @@ func main() {
 	// subscribe.
 
 	if err == nil {
-		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, true, config.metaPrefix)
+		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, true, config.cf.MetaPrefix)
 	}
 
 	if err == nil {

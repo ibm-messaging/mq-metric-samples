@@ -25,25 +25,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
+
 	log "github.com/sirupsen/logrus"
 )
 
 type mqInfluxConfig struct {
-	qMgrName string
-	replyQ   string
-
-	monitoredQueues       string
-	monitoredQueuesFile   string
-	monitoredChannels     string
-	monitoredChannelsFile string
-	monitoredTopics       string
-	monitoredTopicsFile   string
-
-	metaPrefix string
-	qStatus    bool
-
-	cc mqmetric.ConnectionConfig
+	cf cf.Config
 
 	databaseName    string
 	databaseAddress string
@@ -53,8 +41,6 @@ type mqInfluxConfig struct {
 
 	interval  string
 	maxErrors int
-
-	logLevel string
 }
 
 var config mqInfluxConfig
@@ -65,28 +51,14 @@ initConfig parses the command line parameters.
 func initConfig() error {
 	var err error
 
-	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
-	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
-	flag.StringVar(&config.monitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
-	flag.StringVar(&config.monitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
-	flag.StringVar(&config.monitoredChannels, "ibmmq.monitoredChannels", "", "Patterns of channels to monitor")
-	flag.StringVar(&config.monitoredChannelsFile, "ibmmq.monitoredChannelsFile", "", "File with patterns of channels to monitor")
-
-	flag.StringVar(&config.monitoredTopics, "ibmmq.monitoredTopics", "", "Patterns of topics to monitor")
-	flag.StringVar(&config.monitoredTopicsFile, "ibmmq.monitoredTopicsFile", "", "File with patterns of topics to monitor")
-
-	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
-	flag.StringVar(&config.metaPrefix, "metaPrefix", "", "Override path to monitoring resource topic")
-	flag.BoolVar(&config.qStatus, "ibmmq.qStatus", false, "Add queue status polling")
+	cf.InitConfig(&config.cf)
 
 	flag.StringVar(&config.databaseName, "ibmmq.databaseName", "", "Name of database")
 	flag.StringVar(&config.databaseAddress, "ibmmq.databaseAddress", "", "Address of database eg http://example.com:8086")
 	flag.StringVar(&config.userid, "ibmmq.databaseUserID", "", "UserID to access the database")
-	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
+	flag.StringVar(&config.interval, "ibmmq.interval", "10s", "How long between each collection")
 	flag.StringVar(&config.passwordFile, "ibmmq.pwFile", "", "Where is password help temporarily")
 	flag.IntVar(&config.maxErrors, "ibmmq.maxErrors", 100, "Maximum number of errors communicating with server before considered fatal")
-
-	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
 
 	flag.Parse()
 
@@ -96,67 +68,32 @@ func initConfig() error {
 	}
 
 	if err == nil {
-		if config.monitoredQueuesFile != "" {
-			config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
-			if err != nil {
-				log.Errorf("Failed to parse monitored queues file - %v", err)
-			}
-		}
-	}
-
-	if err == nil {
-		if config.monitoredChannelsFile != "" {
-			config.monitoredChannels, err = mqmetric.ReadPatterns(config.monitoredChannelsFile)
-			if err != nil {
-				err = fmt.Errorf("Failed to parse monitored channels file - %v", err)
-			}
-		}
-	}
-
-	if err == nil {
-		if config.monitoredTopicsFile != "" {
-			config.monitoredTopics, err = mqmetric.ReadPatterns(config.monitoredTopicsFile)
-			if err != nil {
-				err = fmt.Errorf("Failed to parse monitored topics file - %v", err)
-			}
-		}
-	}
-
-	if err == nil {
-		err = mqmetric.VerifyPatterns(config.monitoredQueues)
-		if err != nil {
-			err = fmt.Errorf("Invalid value for monitored queues: %v", err)
-		}
-	}
-
-	if err == nil {
-		err = mqmetric.VerifyPatterns(config.monitoredChannels)
-		if err != nil {
-			err = fmt.Errorf("Invalid value for monitored channels: %v", err)
-		}
+		err = cf.VerifyConfig(&config.cf)
 	}
 
 	// Read password from a file if there is a userid on the command line
 	// Delete the file after reading it.
-	if config.userid != "" {
-		config.userid = strings.TrimSpace(config.userid)
+	if err == nil {
+		if config.userid != "" {
+			config.userid = strings.TrimSpace(config.userid)
 
-		f, err := os.Open(config.passwordFile)
-		if err != nil {
-			log.Fatalf("Opening file %s: %s", f, err)
+			f, err := os.Open(config.passwordFile)
+			if err != nil {
+				log.Fatalf("Opening file %s: %s", f, err)
+			}
+
+			defer os.Remove(config.passwordFile)
+			defer f.Close()
+
+			scanner := bufio.NewScanner(f)
+			scanner.Scan()
+			p := scanner.Text()
+			err = scanner.Err()
+			if err != nil {
+				log.Fatalf("Reading file %s: %s", f, err)
+			}
+			config.password = strings.TrimSpace(p)
 		}
-
-		defer os.Remove(config.passwordFile)
-		defer f.Close()
-
-		scanner := bufio.NewScanner(f)
-		scanner.Scan()
-		p := scanner.Text()
-		err = scanner.Err()
-		if err != nil {
-			log.Fatalf("Reading file %s: %s", f, err)
-		}
-		config.password = strings.TrimSpace(p)
 	}
 
 	return err

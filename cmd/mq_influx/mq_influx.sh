@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This is used to start the IBM MQ monitoring service for InfluxDB  
+# This is used to start the IBM MQ monitoring service for InfluxDB
 
 # The queue manager name comes in from the service definition as the
 # only command line parameter
@@ -21,11 +21,11 @@ queues="APP.*,MYQ.*"
 # And other parameters that may be needed
 # See config.go for all recognised flags
 database="MQDB"
-userid="admin" 
+userid="admin"
 password="admin" # Probably get from an environment variable in reality
-passwordFile="/tmp/mqinfluxpw.$$.txt"           
+passwordFile="/tmp/mqinfluxpw.$$.txt"
 svr="http://klein.hursley.uk.ibm.com:8086"
-interval="10"
+interval="10s"
 
 ARGS="-ibmmq.queueManager=$qMgr"
 ARGS="$ARGS -ibmmq.databaseName=$database"
@@ -35,17 +35,17 @@ ARGS="$ARGS -ibmmq.interval=$interval"
 ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
 ARGS="$ARGS -ibmmq.monitoredChannels=*"
 ARGS="$ARGS -ibmmq.pwFile=$passwordFile"
-ARGS="$ARGS -ibmmq.qStatus=true"
+ARGS="$ARGS -ibmmq.useStatus=true"
 ARGS="$ARGS -log.level=error"
 
 # Start via "exec" so the pid remains the same. The queue manager can
 # then check the existence of the service and use the MQ_SERVER_PID value
 # to kill it on shutdown.
-# Using exec makes it harder to use stdin redirect, hence the use of 
+# Using exec makes it harder to use stdin redirect, hence the use of
 # a file to hold a password.  The program will delete the file immediately
 # after reading it.
 
 rm -f $passwordFile
-umask 077 
+umask 077
 echo $password > $passwordFile
 exec /usr/local/bin/mqgo/mq_influx  $ARGS

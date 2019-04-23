@@ -78,20 +78,20 @@ func Collect(c client.Client) error {
 	} else {
 		log.Debugf("Collected all queue manager status")
 	}
-	err = mqmetric.CollectChannelStatus(config.monitoredChannels)
+	err = mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 	if err != nil {
 		log.Errorf("Error collecting channel status: %v", err)
 	} else {
 		log.Debugf("Collected all channel status")
 	}
-	err = mqmetric.CollectTopicStatus(config.monitoredTopics)
+	err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
 	if err != nil {
 		log.Errorf("Error collecting topic status: %v", err)
 	} else {
 		log.Debugf("Collected all topic status")
 	}
-	if config.qStatus {
-		err = mqmetric.CollectQueueStatus(config.monitoredQueues)
+	if config.cf.UseStatus {
+		err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 		if err != nil {
 			log.Errorf("Error collecting queue status: %v", err)
 		} else {
@@ -125,7 +125,7 @@ func Collect(c client.Client) error {
 					for key, value := range elem.Values {
 						f := mqmetric.Normalise(elem, key, value)
 						tags := map[string]string{
-							"qmgr": config.qMgrName,
+							"qmgr": config.cf.QMgrName,
 						}
 
 						series = "qmgr"
@@ -159,7 +159,7 @@ func Collect(c client.Client) error {
 						jobName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
 
 						tags := map[string]string{
-							"qmgr": config.qMgrName,
+							"qmgr": config.cf.QMgrName,
 						}
 						tags["channel"] = chlName
 						tags["platform"] = platformString
@@ -187,7 +187,7 @@ func Collect(c client.Client) error {
 						qName := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
 
 						tags := map[string]string{
-							"qmgr": config.qMgrName,
+							"qmgr": config.cf.QMgrName,
 						}
 						tags["queue"] = qName
 						tags["platform"] = platformString
@@ -212,7 +212,7 @@ func Collect(c client.Client) error {
 						topicStatusType := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
 
 						tags := map[string]string{
-							"qmgr": config.qMgrName,
+							"qmgr": config.cf.QMgrName,
 						}
 						tags["topic"] = topicString
 						tags["platform"] = platformString

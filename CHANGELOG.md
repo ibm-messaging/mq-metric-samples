@@ -1,7 +1,12 @@
 # Changelog
 Newest updates are at the top of this file.
 
-## April 2019
+## April 23 2019
+* Update to use v4.0.5 of the mq-golang repository
+* Add ability to set timezone offset between collector and qmgr
+
+## April 08 2019
+* Add subscription status
 * Add topic and queue manager status support from latest mqmetric library
 * Add Grafana/Prometheus dashboards showing the newer metrics
 * Update InfluxDB collector to similar level as Prometheus/JSON

@@ -22,31 +22,23 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/mqmetric"
 	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
 	"os"
-	"time"
 )
 
 type mqExporterConfig struct {
-	pollInterval         string
-	pollIntervalDuration time.Duration
-
-	cf cf.Config
-	cc mqmetric.ConnectionConfig
+	cf cf.Config // Common configuration attributes for all collectors
 
 	httpListenPort string
 	httpMetricPath string
-	logLevel       string
 	namespace      string
 
 	locale string
 }
 
 const (
-	defaultPort         = "9157" // Reserved in the prometheus wiki for MQ
-	defaultNamespace    = "ibmmq"
-	defaultPollInterval = "0s" // CHSTATUS is done every time there's a pull from Prometheus
+	defaultPort      = "9157" // Reserved in the prometheus wiki for MQ
+	defaultNamespace = "ibmmq"
 )
 
 var config mqExporterConfig
@@ -67,10 +59,7 @@ func initConfig() error {
 	flag.StringVar(&config.httpListenPort, "ibmmq.httpListenPort", defaultPort, "HTTP Listener")
 	flag.StringVar(&config.httpMetricPath, "ibmmq.httpMetricPath", "/metrics", "Path to exporter metrics")
 
-	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
 	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
-
-	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of issuing status checks")
 
 	// The locale ought to be discoverable from the environment, but making it an explicit config
 	// parameter for now to aid testing, to override, and to ensure it's given in the MQ-known format
@@ -95,13 +84,6 @@ func initConfig() error {
 			fmt.Printf("Enter password: \n")
 			scanner.Scan()
 			config.cf.CC.Password = scanner.Text()
-		}
-	}
-
-	if err == nil {
-		config.pollIntervalDuration, err = time.ParseDuration(config.pollInterval)
-		if err != nil {
-			err = fmt.Errorf("Invalid value for interval parameter: %v", err)
 		}
 	}
 

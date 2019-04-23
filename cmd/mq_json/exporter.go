@@ -75,7 +75,7 @@ func Collect() error {
 	pollStatus := false
 	thisPoll := time.Now()
 	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.pollIntervalDuration {
+	if elapsed >= config.cf.PollIntervalDuration {
 		log.Debugf("Polling for object status")
 		lastPoll = thisPoll
 		pollStatus = true

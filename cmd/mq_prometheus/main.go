@@ -33,7 +33,7 @@ var BuildStamp string
 var GitCommit string
 
 func initLog() {
-	level, err := log.ParseLevel(config.logLevel)
+	level, err := log.ParseLevel(config.cf.LogLevel)
 	if err != nil {
 		level = log.InfoLevel
 	}
@@ -69,7 +69,7 @@ func main() {
 
 	if err == nil {
 		// Connect and open standard queues
-		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cc)
+		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 		if err == nil {
 			log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 			defer mqmetric.EndConnection()

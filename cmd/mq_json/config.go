@@ -24,24 +24,14 @@ import (
 	"fmt"
 	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
 	"os"
-	"time"
 )
 
 type mqTTYConfig struct {
-	pollInterval         string
-	pollIntervalDuration time.Duration
-
 	cf       cf.Config
 	interval string
-
-	logLevel string
 }
 
 var config mqTTYConfig
-
-const (
-	defaultPollInterval = "0s"
-)
 
 /*
 initConfig parses the command line parameters.
@@ -51,10 +41,7 @@ func initConfig() error {
 
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
-
-	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
-	flag.StringVar(&config.pollInterval, "pollInterval", defaultPollInterval, "Frequency of checking channel status")
+	flag.StringVar(&config.interval, "ibmmq.interval", "10s", "How long between each collection")
 
 	flag.Parse()
 
@@ -74,13 +61,6 @@ func initConfig() error {
 			fmt.Printf("Enter password: \n")
 			scanner.Scan()
 			config.cf.CC.Password = scanner.Text()
-		}
-	}
-
-	if err == nil {
-		config.pollIntervalDuration, err = time.ParseDuration(config.pollInterval)
-		if err != nil {
-			err = fmt.Errorf("Invalid value for interval parameter: %v", err)
 		}
 	}
 
