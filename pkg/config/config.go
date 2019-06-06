@@ -46,8 +46,7 @@ type Config struct {
 	MonitoredSubscriptions     string
 	MonitoredSubscriptionsFile string
 
-	UseStatus bool
-	LogLevel  string
+	LogLevel string
 
 	// This is used for DISPLAY xxSTATUS commands, but not the collection of published resource stats
 	pollInterval         string
@@ -80,8 +79,9 @@ func InitConfig(cm *Config) {
 	flag.StringVar(&cm.MonitoredSubscriptionsFile, "ibmmq.monitoredSubscriptionsFile", "", "File with patterns of subscriptions to monitor")
 
 	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
-	flag.BoolVar(&cm.UseStatus, "ibmmq.qStatus", false, "Add metrics from the QSTATUS fields")
-	flag.BoolVar(&cm.UseStatus, "ibmmq.useStatus", false, "Add metrics from all object STATUS fields")
+	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.qStatus", false, "Add metrics from the QSTATUS fields")
+	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.useStatus", false, "Add metrics from all object STATUS fields")
+	flag.BoolVar(&cm.CC.UsePublications, "ibmmq.usePublications", true, "Use resource publications. Set to false to monitor older Distributed platforms")
 
 	flag.StringVar(&cm.CC.UserId, "ibmmq.userid", "", "UserId for MQ connection")
 	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin
@@ -95,6 +95,16 @@ func InitConfig(cm *Config) {
 
 func VerifyConfig(cm *Config) error {
 	var err error
+
+	// If someone has explicitly said not to use publications, then they
+	// must require use of the xxSTATUS commands. So iverride that flag even if they
+	// have set UseStatus to false on the command line.
+	if err == nil {
+		if !cm.CC.UsePublications {
+			cm.CC.UseStatus = true
+		}
+	}
+
 	if err == nil {
 		if cm.MonitoredQueuesFile != "" {
 			cm.MonitoredQueues, err = mqmetric.ReadPatterns(cm.MonitoredQueuesFile)

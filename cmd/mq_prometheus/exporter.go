@@ -170,7 +170,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			subStatusGaugeMap[attr.MetricName].Reset()
 		}
 
-		if config.cf.UseStatus {
+		if config.cf.CC.UseStatus {
 			err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 			if err != nil {
 				log.Errorf("Error collecting channel status: %v", err)

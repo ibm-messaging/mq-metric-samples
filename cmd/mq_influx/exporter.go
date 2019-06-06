@@ -90,7 +90,7 @@ func Collect(c client.Client) error {
 	} else {
 		log.Debugf("Collected all topic status")
 	}
-	if config.cf.UseStatus {
+	if config.cf.CC.UseStatus {
 		err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 		if err != nil {
 			log.Errorf("Error collecting queue status: %v", err)

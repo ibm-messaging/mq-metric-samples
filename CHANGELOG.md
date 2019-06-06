@@ -1,6 +1,10 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### May 23 2019
+* Update to use v4.0.6 of the mq-golang repository
+* Permit limited monitoring of pre-V9 Distributed platforms
+
 ## April 23 2019
 * Update to use v4.0.5 of the mq-golang repository
 * Add ability to set timezone offset between collector and qmgr

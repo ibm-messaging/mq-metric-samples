@@ -104,7 +104,7 @@ func Collect() error {
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too
 	if pollStatus {
-		if config.cf.UseStatus {
+		if config.cf.CC.UseStatus {
 			err := mqmetric.CollectQueueManagerStatus()
 			if err != nil {
 				log.Errorf("Error collecting queue manager status: %v", err)

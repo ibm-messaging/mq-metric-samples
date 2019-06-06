@@ -325,7 +325,12 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "alias": "/% Depth/",
+          "yaxis": 2
+        }
+      ],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": true,
@@ -336,6 +341,21 @@
           "intervalFactor": 1,
           "legendFormat": "Depth: {{queue}}@{{qmgr}}",
           "refId": "A"
+        },
+        {
+          "expr": "(100 * ibmmq_queue_depth) / ibmmq_queue_attribute_max_depth",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "% Depth: {{queue}}@{{qmgr}}",
+          "refId": "C"
+        },
+        {
+          "expr": "ibmmq_queue_attribute_max_depth",
+          "format": "time_series",
+          "hide": true,
+          "intervalFactor": 1,
+          "legendFormat": "% Max Depth: {{queue}}@{{qmgr}}",
+          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -366,11 +386,11 @@
           "show": true
         },
         {
-          "format": "short",
+          "format": "percent",
           "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
+          "max": "100",
+          "min": "0",
           "show": true
         }
       ],
@@ -473,7 +493,7 @@
       }
     }
   ],
-  "refresh": false,
+  "refresh": "10s",
   "schemaVersion": 16,
   "style": "dark",
   "tags": [],
@@ -481,8 +501,8 @@
     "list": []
   },
   "time": {
-    "from": "2019-04-02T07:23:43.953Z",
-    "to": "2019-04-02T07:29:29.145Z"
+    "from": "now-15m",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -512,5 +532,5 @@
   "timezone": "",
   "title": "Queue Status",
   "uid": "_C4UncBmz",
-  "version": 14
+  "version": 20
 }
