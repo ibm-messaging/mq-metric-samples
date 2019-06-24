@@ -37,23 +37,27 @@ import (
 )
 
 type exporter struct {
-	mutex       sync.RWMutex
-	metrics     mqmetric.AllMetrics
-	chlStatus   mqmetric.StatusSet
-	qStatus     mqmetric.StatusSet
-	topicStatus mqmetric.StatusSet
-	subStatus   mqmetric.StatusSet
-	qMgrStatus  mqmetric.StatusSet
+	mutex         sync.RWMutex
+	metrics       mqmetric.AllMetrics
+	chlStatus     mqmetric.StatusSet
+	qStatus       mqmetric.StatusSet
+	topicStatus   mqmetric.StatusSet
+	subStatus     mqmetric.StatusSet
+	qMgrStatus    mqmetric.StatusSet
+	usageBpStatus mqmetric.StatusSet
+	usagePsStatus mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
 	return &exporter{
-		metrics:     mqmetric.Metrics,
-		chlStatus:   mqmetric.ChannelStatus,
-		qStatus:     mqmetric.QueueStatus,
-		topicStatus: mqmetric.TopicStatus,
-		subStatus:   mqmetric.SubStatus,
-		qMgrStatus:  mqmetric.QueueManagerStatus,
+		metrics:       mqmetric.Metrics,
+		chlStatus:     mqmetric.ChannelStatus,
+		qStatus:       mqmetric.QueueStatus,
+		topicStatus:   mqmetric.TopicStatus,
+		subStatus:     mqmetric.SubStatus,
+		qMgrStatus:    mqmetric.QueueManagerStatus,
+		usageBpStatus: mqmetric.UsageBpStatus,
+		usagePsStatus: mqmetric.UsagePsStatus,
 	}
 }
 
@@ -65,8 +69,12 @@ var (
 	topicStatusGaugeMap   = make(map[string]*prometheus.GaugeVec)
 	subStatusGaugeMap     = make(map[string]*prometheus.GaugeVec)
 	qMgrStatusGaugeMap    = make(map[string]*prometheus.GaugeVec)
+	usageBpStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
+	usagePsStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	lastPoll              = time.Now()
+	lastQueueDiscovery    = time.Now()
 	platformString        string
+	counter               = 0
 )
 
 /*
@@ -104,6 +112,13 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
 		for _, attr := range e.qMgrStatus.Attributes {
 			qMgrStatusGaugeMap[attr.MetricName].Describe(ch)
+		}
+	} else {
+		for _, attr := range e.usageBpStatus.Attributes {
+			usageBpStatusGaugeMap[attr.MetricName].Describe(ch)
+		}
+		for _, attr := range e.usagePsStatus.Attributes {
+			usagePsStatusGaugeMap[attr.MetricName].Describe(ch)
 		}
 	}
 }
@@ -209,6 +224,25 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 
+		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+			err = mqmetric.CollectUsageStatus()
+			if err != nil {
+				log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+			} else {
+				log.Debugf("Collected allbuffer pool/pageset status")
+			}
+		}
+	}
+
+	thisDiscovery := time.Now()
+	elapsed = thisDiscovery.Sub(lastQueueDiscovery)
+	if config.cf.RediscoverDuration > 0 {
+		if elapsed >= config.cf.RediscoverDuration {
+			s := config.cf.MonitoredQueues
+			log.Debugf("Doing queue rediscovery")
+			err = mqmetric.RediscoverAndSubscribe(s, true, "")
+			lastQueueDiscovery = thisDiscovery
+		}
 	}
 
 	// Have now processed all of the publications, and all the MQ-owned
@@ -290,9 +324,10 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			for key, value := range attr.Values {
 				if value.IsInt64 && !attr.Pseudo {
 					qName := e.qStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
-					log.Debugf("queue status - key: %s qName: %s metric: %s", key, qName, attr.MetricName)
+
 					g := qStatusGaugeMap[attr.MetricName]
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
+					log.Debugf("queue status - key: %s qName: %s metric: %s val: %v", key, qName, attr.MetricName, f)
 
 					g.With(prometheus.Labels{
 						"qmgr":     strings.TrimSpace(config.cf.QMgrName),
@@ -355,6 +390,44 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				}
 			}
 		}
+
+		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+			for _, attr := range e.usageBpStatus.Attributes {
+				for key, value := range attr.Values {
+					bpId := e.usageBpStatus.Attributes[mqmetric.ATTR_BP_ID].Values[key].ValueString
+					bpLocation := e.usageBpStatus.Attributes[mqmetric.ATTR_BP_LOCATION].Values[key].ValueString
+					bpClass := e.usageBpStatus.Attributes[mqmetric.ATTR_BP_CLASS].Values[key].ValueString
+					if value.IsInt64 && !attr.Pseudo {
+						g := usageBpStatusGaugeMap[attr.MetricName]
+						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+
+						g.With(prometheus.Labels{
+							"bufferpool": bpId,
+							"location":   bpLocation,
+							"pageclass":  bpClass,
+							"qmgr":       strings.TrimSpace(config.cf.QMgrName),
+							"platform":   platformString}).Set(f)
+					}
+				}
+			}
+
+			for _, attr := range e.usagePsStatus.Attributes {
+				for key, value := range attr.Values {
+					psId := e.usagePsStatus.Attributes[mqmetric.ATTR_PS_ID].Values[key].ValueString
+					bpId := e.usagePsStatus.Attributes[mqmetric.ATTR_PS_BPID].Values[key].ValueString
+					if value.IsInt64 && !attr.Pseudo {
+						g := usagePsStatusGaugeMap[attr.MetricName]
+						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+
+						g.With(prometheus.Labels{
+							"pageset":    psId,
+							"bufferpool": bpId,
+							"qmgr":       strings.TrimSpace(config.cf.QMgrName),
+							"platform":   platformString}).Set(f)
+					}
+				}
+			}
+		}
 	}
 
 	// Then put the channel info back to Prometheus
@@ -398,6 +471,23 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
+	if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+		for _, attr := range e.usageBpStatus.Attributes {
+			if !attr.Pseudo {
+				g := usageBpStatusGaugeMap[attr.MetricName]
+				log.Debugf("Reporting BPool gauge for %s", attr.MetricName)
+				g.Collect(ch)
+			}
+		}
+		for _, attr := range e.usagePsStatus.Attributes {
+			if !attr.Pseudo {
+				g := usagePsStatusGaugeMap[attr.MetricName]
+				log.Debugf("Reporting Pageset gauge for %s", attr.MetricName)
+				g.Collect(ch)
+			}
+		}
+	}
+
 }
 
 func allocateAllGauges() {
@@ -414,6 +504,8 @@ func allocateAllGauges() {
 	log.Debugf("Subscription Gauges allocated")
 	allocateQMgrStatusGauges()
 	log.Debugf("QMgr   Gauges allocated")
+	allocateUsageStatusGauges()
+	log.Debugf("BP/PS  Gauges allocated")
 }
 
 /*
@@ -479,6 +571,20 @@ func allocateQMgrStatusGauges() {
 	}
 }
 
+func allocateUsageStatusGauges() {
+	mqmetric.UsageInitAttributes()
+	for _, attr := range mqmetric.UsageBpStatus.Attributes {
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "bufferpool")
+		usageBpStatusGaugeMap[attr.MetricName] = g
+	}
+	for _, attr := range mqmetric.UsagePsStatus.Attributes {
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "pageset")
+		usagePsStatusGaugeMap[attr.MetricName] = g
+	}
+}
+
 /*
 makeKey uses the 3 parts of a resource's name to build a unique string.
 The "/" character cannot be part of a name, so is a convenient way
@@ -531,7 +637,7 @@ func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 		labels,
 	)
 
-	log.Infof("Created gauge for '%s%s' from '%s'", prefix, elem.MetricName, elem.Description)
+	log.Debugf("Created gauge for '%s%s' from '%s'", prefix, elem.MetricName, elem.Description)
 	return gaugeVec
 }
 
@@ -559,6 +665,8 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 	// With topic status, need to know if type is "pub" or "sub"
 	topicLabels := []string{"qmgr", "platform", objectType, "type"}
 	subLabels := []string{"qmgr", "platform", objectType, "subid", "topic", "type"}
+	bpLabels := []string{"qmgr", "platform", objectType, "location", "pageclass"}
+	psLabels := []string{"qmgr", "platform", objectType, "bufferpool"}
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
@@ -575,6 +683,10 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		labels = queueLabels
 	case "qmgr":
 		labels = qmgrLabels
+	case "bufferpool":
+		labels = bpLabels
+	case "pageset":
+		labels = psLabels
 	default:
 		log.Errorf("Tried to create gauge for unknown object type %s", objectType)
 	}
@@ -587,6 +699,6 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		labels,
 	)
 
-	log.Infof("Created gauge for '%s%s' ", prefix, name)
+	log.Debugf("Created gauge for '%s%s' ", prefix, name)
 	return gaugeVec
 }

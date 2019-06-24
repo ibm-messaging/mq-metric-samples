@@ -13,6 +13,7 @@ qMgr=$1
 # It is a set of names or patterns ('*' only at the end, to match how MQ works),
 # separated by commas. When no queues match a pattern, it is reported but
 # is not fatal.
+# The set can also include negative patterns such as "!SYSTEM.*".
 queues="APP.*,MYQ.*"
 
 # An alternative is to have a file containing the patterns, and named
@@ -27,9 +28,15 @@ ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
 ARGS="$ARGS -ibmmq.monitoredChannels=$channels"
 ARGS="$ARGS -ibmmq.monitoredTopics=#"
 ARGS="$ARGS -ibmmq.monitoredSubscriptions=*"
+ARGS="$ARGS -rediscoverInterval=1h"
 
 ARGS="$ARGS -ibmmq.useStatus=true"
 ARGS="$ARGS -log.level=error"
+
+# This may help with some issues if the program has a SEGV. It
+# allows Go to do a better stack trace.
+export MQS_NO_SYNC_SIGNAL_HANDLING=true
+
 
 # Start via "exec" so the pid remains the same. The queue manager can
 # then check the existence of the service and use the MQ_SERVER_PID value

@@ -52,12 +52,17 @@ type Config struct {
 	pollInterval         string
 	PollIntervalDuration time.Duration
 
+	// How frequently should we redrive the list of known queues from the wildcards
+	rediscoverInterval string
+	RediscoverDuration time.Duration
+
 	CC mqmetric.ConnectionConfig
 }
 
 const (
-	defaultPollInterval = "0s"
-	defaultTZOffset     = "0h"
+	defaultPollInterval       = "0s"
+	defaultTZOffset           = "0h"
+	defaultRediscoverInterval = "1h"
 )
 
 func InitConfig(cm *Config) {
@@ -90,6 +95,7 @@ func InitConfig(cm *Config) {
 
 	flag.StringVar(&cm.TZOffsetString, "ibmmq.tzOffset", defaultTZOffset, "Time difference between collector and queue manager")
 	flag.StringVar(&cm.pollInterval, "pollInterval", defaultPollInterval, "Frequency of issuing object status checks")
+	flag.StringVar(&cm.rediscoverInterval, "rediscoverInterval", defaultRediscoverInterval, "Frequency of expanding wildcards for monitored queues")
 
 }
 
@@ -142,7 +148,7 @@ func VerifyConfig(cm *Config) error {
 	}
 
 	if err == nil {
-		err = mqmetric.VerifyPatterns(cm.MonitoredQueues)
+		err = mqmetric.VerifyQueuePatterns(cm.MonitoredQueues)
 		if err != nil {
 			err = fmt.Errorf("Invalid value for monitored queues: %v", err)
 		}
@@ -159,7 +165,7 @@ func VerifyConfig(cm *Config) error {
 	if err == nil {
 		offset, err := time.ParseDuration(cm.TZOffsetString)
 		if err != nil {
-			err = fmt.Errorf("Invalid value for interval parameter: %v", err)
+			err = fmt.Errorf("Invalid value for time offset parameter: %v", err)
 		} else {
 			cm.CC.TZOffsetSecs = offset.Seconds()
 		}
@@ -168,7 +174,14 @@ func VerifyConfig(cm *Config) error {
 	if err == nil {
 		cm.PollIntervalDuration, err = time.ParseDuration(cm.pollInterval)
 		if err != nil {
-			err = fmt.Errorf("Invalid value for interval parameter: %v", err)
+			err = fmt.Errorf("Invalid value for poll interval parameter: %v", err)
+		}
+	}
+
+	if err == nil {
+		cm.RediscoverDuration, err = time.ParseDuration(cm.rediscoverInterval)
+		if err != nil {
+			err = fmt.Errorf("Invalid value for rediscovery interval parameter: %v", err)
 		}
 	}
 

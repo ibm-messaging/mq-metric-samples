@@ -1,10 +1,18 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jun 24 2019
+* Update to use v4.0.7 of the mq-golang repository
+* Enable time-based re-expansion of queue wildcards while monitors are running
+  * `-rediscoverInterval=30m` Default is `1h`. Can be set to 0 to disable.
+  * Supported in the Prometheus and JSON monitors
+* Show z/OS pageset/bufferpool data
+  * Supported in the Prometheus and JSON monitors
+
 ### Jun 06 2019
 * Update to use v4.0.6 of the mq-golang repository
 * Permit limited monitoring of pre-V9 Distributed platforms
-* Add queue_attribute_max_depth to permit %full calculation
+* Add `queue_attribute_max_depth` to permit %full calculation
 
 ## April 23 2019
 * Update to use v4.0.5 of the mq-golang repository

@@ -35,10 +35,11 @@ import (
 )
 
 var (
-	first          = true
-	errorCount     = 0
-	lastPoll       = time.Now()
-	platformString = ""
+	first              = true
+	errorCount         = 0
+	lastPoll           = time.Now()
+	lastQueueDiscovery = time.Now()
+	platformString     = ""
 )
 
 const (
@@ -125,9 +126,9 @@ func Collect() error {
 			}
 			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
 			if err != nil {
-				log.Errorf("Error collecting topic status: %v", err)
+				log.Errorf("Error collecting subscription status: %v", err)
 			} else {
-				log.Debugf("Collected all topic status")
+				log.Debugf("Collected all subscription status")
 			}
 
 			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
@@ -136,6 +137,25 @@ func Collect() error {
 			} else {
 				log.Debugf("Collected all queue status")
 			}
+
+			if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+				err = mqmetric.CollectUsageStatus()
+				if err != nil {
+					log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+				} else {
+					log.Debugf("Collected all buffer pool/pageset status")
+				}
+			}
+		}
+	}
+
+	thisDiscovery := time.Now()
+	elapsed = thisDiscovery.Sub(lastQueueDiscovery)
+	if config.cf.RediscoverDuration > 0 {
+		if elapsed >= config.cf.RediscoverDuration {
+			s := config.cf.MonitoredQueues
+			err = mqmetric.RediscoverAndSubscribe(s, true, "")
+			lastQueueDiscovery = thisDiscovery
 		}
 	}
 
@@ -212,7 +232,7 @@ func Collect() error {
 						chlName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
 						connName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
 						jobName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
-						key1 := chlName + "/" + connName + "/" + jobName + "/" + rqmName
+						key1 := "channel/" + chlName + "/" + connName + "/" + jobName + "/" + rqmName
 
 						if pt, ok = ptMap[key1]; !ok {
 							pt = pointsStruct{}
@@ -238,7 +258,7 @@ func Collect() error {
 					for key, value := range attr.Values {
 						if value.IsInt64 {
 							qName := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
-							key1 := qName
+							key1 := "queue/" + qName
 
 							if pt, ok = ptMap[key1]; !ok {
 								pt = pointsStruct{}
@@ -261,7 +281,7 @@ func Collect() error {
 						if value.IsInt64 {
 							topicName := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
 							topicStatusType := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
-							key1 := mqmetric.TopicKey(topicName, topicStatusType)
+							key1 := "topic/" + mqmetric.TopicKey(topicName, topicStatusType)
 
 							if pt, ok = ptMap[key1]; !ok {
 								pt = pointsStruct{}
@@ -285,7 +305,7 @@ func Collect() error {
 						if value.IsInt64 {
 							qMgrName := mqmetric.QueueManagerStatus.Attributes[mqmetric.ATTR_QMGR_NAME].Values[key].ValueString
 
-							key1 := qMgrName
+							key1 := "qmgr/" + qMgrName
 
 							if pt, ok = ptMap[key1]; !ok {
 								pt = pointsStruct{}
@@ -311,7 +331,7 @@ func Collect() error {
 							subTypeString := strings.Replace(ibmmq.MQItoString("SUBTYPE", subType), "MQSUBTYPE_", "", -1)
 							topicString := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
 
-							key1 := subId
+							key1 := "subscription/" + subId
 
 							if pt, ok = ptMap[key1]; !ok {
 								pt = pointsStruct{}
@@ -326,11 +346,61 @@ func Collect() error {
 								pt.Tags["topic"] = topicString
 							}
 
-							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+							pt.Metric[fixup(attr.MetricName)] = mqmetric.SubNormalise(attr, value.ValueInt64)
 							ptMap[key1] = pt
 						}
 					}
 				}
+
+				if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+					for _, attr := range mqmetric.UsageBpStatus.Attributes {
+						for key, value := range attr.Values {
+							bpId := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_ID].Values[key].ValueString
+							bpLocation := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_LOCATION].Values[key].ValueString
+							bpClass := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_CLASS].Values[key].ValueString
+							if value.IsInt64 && !attr.Pseudo {
+								key1 := "bufferpool/" + bpId
+								if pt, ok = ptMap[key1]; !ok {
+									pt = pointsStruct{}
+									pt.ObjectType = "bufferpool"
+									pt.Metric = make(map[string]float64)
+									pt.Tags = make(map[string]string)
+									pt.Tags["bufferpool"] = bpId
+									pt.Tags["location"] = bpLocation
+									pt.Tags["pageclass"] = bpClass
+									pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
+									pt.Tags["platform"] = platformString
+								}
+								pt.Metric[fixup(attr.MetricName)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
+								ptMap[key1] = pt
+							}
+						}
+					}
+
+					for _, attr := range mqmetric.UsagePsStatus.Attributes {
+						for key, value := range attr.Values {
+							psId := mqmetric.UsagePsStatus.Attributes[mqmetric.ATTR_PS_ID].Values[key].ValueString
+							bpId := mqmetric.UsagePsStatus.Attributes[mqmetric.ATTR_PS_BPID].Values[key].ValueString
+							if value.IsInt64 && !attr.Pseudo {
+								key1 := "pageset/" + psId
+								if pt, ok = ptMap[key1]; !ok {
+									pt = pointsStruct{}
+									pt.ObjectType = "pageset"
+									pt.Metric = make(map[string]float64)
+									pt.Tags = make(map[string]string)
+									pt.Tags["pageset"] = psId
+									pt.Tags["bufferpool"] = bpId
+									pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
+									pt.Tags["platform"] = platformString
+								}
+								pt.Metric[fixup(attr.MetricName)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
+								ptMap[key1] = pt
+							}
+
+						}
+					}
+				}
+
 			}
 
 			for _, pt := range ptMap {
