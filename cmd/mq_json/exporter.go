@@ -194,7 +194,9 @@ func Collect() error {
 							pt.ObjectType = "queueManager"
 							pt.Tags["platform"] = platformString
 							if key != mqmetric.QMgrMapKey {
+								usageString := getUsageString(key)
 								pt.Tags["queue"] = key
+								pt.Tags["usage"] = usageString
 								pt.ObjectType = "queue"
 							}
 						}
@@ -258,6 +260,8 @@ func Collect() error {
 					for key, value := range attr.Values {
 						if value.IsInt64 {
 							qName := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+							usageString := getUsageString(key)
+
 							key1 := "queue/" + qName
 
 							if pt, ok = ptMap[key1]; !ok {
@@ -267,6 +271,7 @@ func Collect() error {
 								pt.Tags = make(map[string]string)
 								pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
 								pt.Tags["queue"] = qName
+								pt.Tags["usage"] = usageString
 								pt.Tags["platform"] = platformString
 							}
 
@@ -415,6 +420,20 @@ func Collect() error {
 
 	return err
 
+}
+
+func getUsageString(key string) string {
+	usageString := ""
+	if valuesMap, ok := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_USAGE]; ok {
+		if usage, ok := valuesMap.Values[key]; ok {
+			if usage.ValueInt64 == int64(ibmmq.MQUS_TRANSMISSION) {
+				usageString = "XMITQ"
+			} else {
+				usageString = "NORMAL"
+			}
+		}
+	}
+	return usageString
 }
 
 func fixup(s1 string) string {

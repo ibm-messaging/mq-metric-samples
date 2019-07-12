@@ -266,8 +266,17 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
 								"platform": platformString}).Set(f)
 						} else {
+							usage := ""
+							if usageAttr, ok := e.qStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+								if usageAttr.ValueInt64 == 1 {
+									usage = "XMITQ"
+								} else {
+									usage = "NORMAL"
+								}
+							}
 							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
 								"queue":    key,
+								"usage":    usage,
 								"platform": platformString}).Set(f)
 						}
 					}
@@ -324,6 +333,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			for key, value := range attr.Values {
 				if value.IsInt64 && !attr.Pseudo {
 					qName := e.qStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+					usage := "NORMAL"
+					if usageAttr, ok := e.qStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+						if usageAttr.ValueInt64 == 1 {
+							usage = "XMITQ"
+						} else {
+							usage = "NORMAL"
+						}
+					}
 
 					g := qStatusGaugeMap[attr.MetricName]
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
@@ -332,6 +349,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					g.With(prometheus.Labels{
 						"qmgr":     strings.TrimSpace(config.cf.QMgrName),
 						"platform": platformString,
+						"usage":    usage,
 						"queue":    qName}).Set(f)
 				}
 			}
@@ -606,7 +624,7 @@ with both the queue and qmgr name; for the qmgr-wide entries, we
 only need the single label.
 */
 func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
-	queueLabelNames := []string{"queue", "qmgr", "platform"}
+	queueLabelNames := []string{"queue", "qmgr", "platform", "usage"}
 	qmgrLabelNames := []string{"qmgr", "platform"}
 
 	labels := qmgrLabelNames
@@ -670,7 +688,7 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
-	queueLabels := []string{"qmgr", "platform", objectType}
+	queueLabels := []string{"qmgr", "platform", objectType, "usage"}
 
 	switch objectType {
 	case "channel":

@@ -1,6 +1,12 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jul 11 2019
+* Update to use v4.0.8 of the mq-golang repository
+* Enable use of USAGE queue attribute
+  * Supported in the Prometheus and JSON monitors
+* Don't give a visible error from setmqenv if queue manager remote
+
 ### Jun 24 2019
 * Update to use v4.0.7 of the mq-golang repository
 * Enable time-based re-expansion of queue wildcards while monitors are running

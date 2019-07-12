@@ -19,17 +19,18 @@ package main
 */
 
 import (
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
 	"github.com/influxdata/influxdb1-client/v2"
 	log "github.com/sirupsen/logrus"
 )
 
 var BuildStamp string
 var GitCommit string
+var BuildPlatform string
 
 func initLog() {
 	level, err := log.ParseLevel(config.cf.LogLevel)
@@ -38,22 +39,12 @@ func initLog() {
 	}
 	log.SetLevel(level)
 }
-func printInfo(title string, stamp string, commit string) {
-	fmt.Println(title)
-	if stamp != "" {
-		fmt.Println("Build        : " + stamp)
-	}
-	if commit != "" {
-		fmt.Println("Commit Level : " + commit)
-	}
-	fmt.Println("")
-}
 
 func main() {
 	var err error
 	var c client.Client
 
-	printInfo("IBM MQ metrics exporter for InfluxDB monitoring", BuildStamp, GitCommit)
+	cf.PrintInfo("IBM MQ metrics exporter for InfluxDB monitoring", BuildStamp, GitCommit, BuildPlatform)
 
 	err = initConfig()
 	initLog()

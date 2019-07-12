@@ -28,6 +28,7 @@ import (
 
 var BuildStamp string
 var GitCommit string
+var BuildPlatform string
 
 func initLog() {
 	level, err := log.ParseLevel(config.cf.LogLevel)
@@ -42,13 +43,16 @@ func initLog() {
 
 // Print this via the logger rather than direct to stdout so it can be
 // avoided if someone is using the stdout stream as the JSON input to a parser
-func printInfo(title string, stamp string, commit string) {
+func printInfo(title string, stamp string, commit string, buildPlatform string) {
 	log.Infoln(title)
 	if stamp != "" {
-		log.Infoln("Build        : " + stamp)
+		log.Infoln("Build         : " + stamp)
 	}
 	if commit != "" {
-		log.Infoln("Commit Level : " + commit)
+		log.Infoln("Commit Level  : " + commit)
+	}
+	if buildPlatform != "" {
+		log.Infoln("Build Platform: " + buildPlatform)
 	}
 	log.Println("")
 }
@@ -59,7 +63,7 @@ func main() {
 	initConfig()
 	initLog()
 
-	printInfo("Starting IBM MQ metrics exporter for JSON", BuildStamp, GitCommit)
+	printInfo("Starting IBM MQ metrics exporter for JSON", BuildStamp, GitCommit, BuildPlatform)
 
 	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")

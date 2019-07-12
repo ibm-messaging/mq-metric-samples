@@ -7,7 +7,12 @@
 qMgr=$1
 
 # Set the environment to ensure we pick up libmqm.so etc
-. /opt/mqm/bin/setmqenv -m $qMgr -k
+# If this is a client connection, then deal with no known qmgr of the given name.
+. /opt/mqm/bin/setmqenv -m $qMgr -k >/dev/null 2>&1
+if [ $? -ne 0 ]
+then
+  . /opt/mqm/bin/setmqenv -s -k
+fi
 
 # A list of queues to be monitored is given here.
 # It is a set of names or patterns ('*' only at the end, to match how MQ works),

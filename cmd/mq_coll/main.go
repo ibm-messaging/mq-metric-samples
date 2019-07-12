@@ -19,16 +19,17 @@ package main
 */
 
 import (
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
 var BuildStamp string
 var GitCommit string
+var BuildPlatform string
 
 func initLog() {
 	level, err := log.ParseLevel(config.logLevel)
@@ -41,21 +42,10 @@ func initLog() {
 	log.SetOutput(os.Stderr)
 }
 
-func printInfo(title string, stamp string, commit string) {
-	fmt.Println(title)
-	if stamp != "" {
-		fmt.Println("Build        : " + stamp)
-	}
-	if commit != "" {
-		fmt.Println("Commit Level : " + commit)
-	}
-	fmt.Println("")
-}
-
 func main() {
 	var err error
 
-	printInfo("IBM MQ metrics exporter for collectd", BuildStamp, GitCommit)
+	cf.PrintInfo("IBM MQ metrics exporter for collectd", BuildStamp, GitCommit, BuildPlatform)
 
 	initConfig()
 	initLog()

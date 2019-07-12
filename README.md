@@ -17,10 +17,12 @@ and are also included in the `vendor` tree of this repository.
 
 ## Getting started
 
-### Sample requirements
+### Requirements
 
 You will require the following programs:
 
+* Go compiler. This should be at least version 10. If you see an error similar to "ld: NULL not defined"
+then it is likely you need to upgrade your compiler.
 * [dep](https://golang.github.io/dep/) - Golang dependency management tool
 
 To build the programs on Linux and MacOS, you must set an environment variable to permit some compile/link flags.
@@ -54,7 +56,8 @@ with getting the agent running in your specific environment.
 
 ## Using a Docker container to build the programs
 You can use the `buildMonitors.sh` script in this directory to build a Docker container that
-in turn will build the binary programs and copy them to a local directory.
+in turn will build the binary programs and copy them to a local directory. That script also
+sets some extra version-related flags that will be shown when the program starts.
 
 ## More information
 Each of the sample monitor programs has its own README file describing the

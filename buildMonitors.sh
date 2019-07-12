@@ -61,6 +61,9 @@ then
   # Get some variables to pass the build information into the compile steps
   buildStamp=`date +%Y%m%d-%H%M%S`
   gitCommit=`git rev-list -1 HEAD --abbrev-commit`
+  hw=`uname -i`
+  os=`uname -s`
+  bp="$os/$hw"
 
   # Set this for any special status
   extraInfo=""
@@ -71,7 +74,7 @@ then
   docker run --rm \
           --user $uid:$gid \
           -v $OUTDIR:$GOPATH/bin \
-          -e BUILD_EXTRA_INJECT="-X \"main.BuildStamp=$buildStamp $extraInfo\" -X \"main.GitCommit=$gitCommit\"" \
+          -e BUILD_EXTRA_INJECT="-X \"main.BuildStamp=$buildStamp $extraInfo\" -X \"main.BuildPlatform=$bp\" -X \"main.GitCommit=$gitCommit\"" \
           $TAG:$VER
   echo "Compiled programs should now be in $OUTDIR"
 fi

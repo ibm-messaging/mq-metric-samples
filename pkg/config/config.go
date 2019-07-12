@@ -187,3 +187,17 @@ func VerifyConfig(cm *Config) error {
 
 	return err
 }
+
+func PrintInfo(title string, stamp string, commit string, buildPlatform string) {
+	fmt.Println(title)
+	if stamp != "" {
+		fmt.Println("Build         : " + stamp)
+	}
+	if commit != "" {
+		fmt.Println("Commit Level  : " + commit)
+	}
+	if buildPlatform != "" {
+		fmt.Println("Build Platform: " + buildPlatform)
+	}
+	fmt.Println("")
+}

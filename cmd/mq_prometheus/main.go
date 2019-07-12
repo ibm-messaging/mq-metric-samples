@@ -19,18 +19,19 @@ package main
 */
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 var BuildStamp string
 var GitCommit string
+var BuildPlatform string
 
 func initLog() {
 	level, err := log.ParseLevel(config.cf.LogLevel)
@@ -40,21 +41,10 @@ func initLog() {
 	log.SetLevel(level)
 }
 
-func printInfo(title string, stamp string, commit string) {
-	fmt.Println(title)
-	if stamp != "" {
-		fmt.Println("Build        : " + stamp)
-	}
-	if commit != "" {
-		fmt.Println("Commit Level : " + commit)
-	}
-	fmt.Println("")
-}
-
 func main() {
 	var err error
 
-	printInfo("IBM MQ metrics exporter for Prometheus monitoring", BuildStamp, GitCommit)
+	cf.PrintInfo("IBM MQ metrics exporter for Prometheus monitoring", BuildStamp, GitCommit, BuildPlatform)
 
 	err = initConfig()
 	initLog()
