@@ -32,14 +32,6 @@ var BuildStamp string
 var GitCommit string
 var BuildPlatform string
 
-func initLog() {
-	level, err := log.ParseLevel(config.cf.LogLevel)
-	if err != nil {
-		level = log.InfoLevel
-	}
-	log.SetLevel(level)
-}
-
 func main() {
 	var err error
 	var c client.Client
@@ -47,7 +39,6 @@ func main() {
 	cf.PrintInfo("IBM MQ metrics exporter for InfluxDB monitoring", BuildStamp, GitCommit, BuildPlatform)
 
 	err = initConfig()
-	initLog()
 
 	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")

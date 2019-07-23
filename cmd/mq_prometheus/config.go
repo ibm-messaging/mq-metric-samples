@@ -87,5 +87,14 @@ func initConfig() error {
 		}
 	}
 
+	if err == nil && config.cf.CC.UseResetQStats {
+		fmt.Println("Warning: Data from 'RESET QSTATS' has been requested.")
+		fmt.Println("Ensure no other monitoring applications are also using that command.\n")
+	}
+
+	if err == nil {
+		cf.InitLog(config.cf)
+	}
+
 	return err
 }

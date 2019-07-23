@@ -33,21 +33,12 @@ var BuildStamp string
 var GitCommit string
 var BuildPlatform string
 
-func initLog() {
-	level, err := log.ParseLevel(config.cf.LogLevel)
-	if err != nil {
-		level = log.InfoLevel
-	}
-	log.SetLevel(level)
-}
-
 func main() {
 	var err error
 
 	cf.PrintInfo("IBM MQ metrics exporter for Prometheus monitoring", BuildStamp, GitCommit, BuildPlatform)
 
 	err = initConfig()
-	initLog()
 
 	// Print this because it's easy to get the escapes wrong from a shell script with wildcarded topics ('#')
 	log.Debugf("Monitored topics are '%s'", config.cf.MonitoredTopics)
@@ -106,7 +97,7 @@ func main() {
 			w.Write(landingPage())
 		})
 
-		log.Infoln("Listening on", config.httpListenPort)
+		log.Infoln("Listening on port", config.httpListenPort)
 		log.Fatal(http.ListenAndServe(":"+config.httpListenPort, nil))
 
 	}

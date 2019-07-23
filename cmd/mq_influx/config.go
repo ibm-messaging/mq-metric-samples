@@ -96,5 +96,8 @@ func initConfig() error {
 		}
 	}
 
+	if err == nil {
+		cf.InitLog(config.cf)
+	}
 	return err
 }

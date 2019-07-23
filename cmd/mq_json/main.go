@@ -30,17 +30,6 @@ var BuildStamp string
 var GitCommit string
 var BuildPlatform string
 
-func initLog() {
-	level, err := log.ParseLevel(config.cf.LogLevel)
-	if err != nil {
-		level = log.InfoLevel
-	}
-	log.SetLevel(level)
-	// Since this program prints its data to stdout, need any
-	// log info to go elsewhere.
-	log.SetOutput(os.Stderr)
-}
-
 // Print this via the logger rather than direct to stdout so it can be
 // avoided if someone is using the stdout stream as the JSON input to a parser
 func printInfo(title string, stamp string, commit string, buildPlatform string) {
@@ -61,7 +50,6 @@ func main() {
 	var err error
 
 	initConfig()
-	initLog()
 
 	printInfo("Starting IBM MQ metrics exporter for JSON", BuildStamp, GitCommit, BuildPlatform)
 
@@ -73,6 +61,10 @@ func main() {
 	if err != nil {
 		log.Errorln("Invalid value for interval parameter: ", err)
 		os.Exit(1)
+	}
+
+	if config.cf.CC.UseResetQStats {
+		log.Warnln("Warning: Data from 'RESET QSTATS' has been requested. Ensure no other monitoring applications are also using that command.")
 	}
 
 	log.Infoln("Starting IBM MQ metrics exporter for JSON")

@@ -23,6 +23,7 @@ import (
 	"flag"
 	"fmt"
 	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -62,6 +63,15 @@ func initConfig() error {
 			scanner.Scan()
 			config.cf.CC.Password = scanner.Text()
 		}
+	}
+
+	if err == nil && config.cf.CC.UseResetQStats {
+		log.Errorln("Warning: Data from 'RESET QSTATS' has been requested.")
+		log.Errorln("Ensure no other monitoring applications are also using that command.\n")
+	}
+
+	if err == nil {
+		cf.InitLog(config.cf)
 	}
 
 	return err

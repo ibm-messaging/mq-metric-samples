@@ -25,6 +25,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -87,6 +88,7 @@ func InitConfig(cm *Config) {
 	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.qStatus", false, "Add metrics from the QSTATUS fields")
 	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.useStatus", false, "Add metrics from all object STATUS fields")
 	flag.BoolVar(&cm.CC.UsePublications, "ibmmq.usePublications", true, "Use resource publications. Set to false to monitor older Distributed platforms")
+	flag.BoolVar(&cm.CC.UseResetQStats, "ibmmq.resetQStatus", false, "Use RESET QSTATS on z/OS queue managers")
 
 	flag.StringVar(&cm.CC.UserId, "ibmmq.userid", "", "UserId for MQ connection")
 	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin
@@ -103,10 +105,18 @@ func VerifyConfig(cm *Config) error {
 	var err error
 
 	// If someone has explicitly said not to use publications, then they
-	// must require use of the xxSTATUS commands. So iverride that flag even if they
+	// must require use of the xxSTATUS commands. So override that flag even if they
 	// have set UseStatus to false on the command line.
 	if err == nil {
 		if !cm.CC.UsePublications {
+			cm.CC.UseStatus = true
+		}
+	}
+
+	// RESET QSTATS does not strictly require use of the status commands
+	// but it is based on the same cycle so force that option here
+	if err == nil {
+		if cm.CC.UseResetQStats {
 			cm.CC.UseStatus = true
 		}
 	}
@@ -200,4 +210,17 @@ func PrintInfo(title string, stamp string, commit string, buildPlatform string) 
 		fmt.Println("Build Platform: " + buildPlatform)
 	}
 	fmt.Println("")
+}
+
+func InitLog(cm Config) {
+	level, err := log.ParseLevel(cm.LogLevel)
+	if err != nil {
+		level = log.InfoLevel
+	}
+	log.SetLevel(level)
+	logger := new(mqmetric.Logger)
+	logger.Debug = log.Debugf
+	logger.Info = log.Infof
+	logger.Error = log.Errorf
+	mqmetric.SetLogger(logger)
 }

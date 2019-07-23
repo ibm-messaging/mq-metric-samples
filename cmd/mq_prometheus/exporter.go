@@ -229,7 +229,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			if err != nil {
 				log.Errorf("Error collecting bufferpool/pageset status: %v", err)
 			} else {
-				log.Debugf("Collected allbuffer pool/pageset status")
+				log.Debugf("Collected all buffer pool/pageset status")
 			}
 		}
 	}
