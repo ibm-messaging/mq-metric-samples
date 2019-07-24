@@ -88,7 +88,7 @@ func InitConfig(cm *Config) {
 	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.qStatus", false, "Add metrics from the QSTATUS fields")
 	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.useStatus", false, "Add metrics from all object STATUS fields")
 	flag.BoolVar(&cm.CC.UsePublications, "ibmmq.usePublications", true, "Use resource publications. Set to false to monitor older Distributed platforms")
-	flag.BoolVar(&cm.CC.UseResetQStats, "ibmmq.resetQStatus", false, "Use RESET QSTATS on z/OS queue managers")
+	flag.BoolVar(&cm.CC.UseResetQStats, "ibmmq.resetQStats", false, "Use RESET QSTATS on z/OS queue managers")
 
 	flag.StringVar(&cm.CC.UserId, "ibmmq.userid", "", "UserId for MQ connection")
 	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin

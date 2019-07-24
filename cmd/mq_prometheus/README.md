@@ -193,7 +193,14 @@ support showing some
 limited information from a z/OS queue manager. There is nothing special needed to configure it, beyond the client
 connectivity that allows an application to connect to the z/OS system.
 
-The `-ibmmq.qStatus` parameter must be set to `true` to use the DIS QSTATUS command
+The `-ibmmq.useStatus` parameter must be set to `true` to use the DIS QSTATUS command.
+
+There is also support for using the RESET QSTATS command on z/OS. This needs to be explicitly enabled
+by setting the `-ibmmq.resetQStats` flag to true. While this option allows tracking of the number
+of messages put/got to a queue (which is otherwise unavailable from z/OS queue manager status queries), it
+should not be used if there are any other active monitoring solutions that are already using that command.
+Only one monitor program can reliably use RESET QSTATS on a particular queue manager, to avoid the information
+being split between them.
 
 ### Channel Metrics on z/OS
 On z/OS, there is no guaranteed way to distinguish between multiple instances of the
