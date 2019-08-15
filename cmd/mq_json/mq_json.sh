@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This is used to start an IBM MQ monitoring service for JSON-formatted output
 

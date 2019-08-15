@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This is used to start the IBM MQ monitoring service for OpenTSDB
 
