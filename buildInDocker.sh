@@ -30,6 +30,9 @@ then
   MONITORS=`ls cmd`
 fi
 
+echo "Using compiler:"
+go version
+
 # And do the builds into the bin directory
 cd $GOPATH
 for m in $MONITORS

@@ -1,3 +1,5 @@
+package ibmmq
+
 /*
   Copyright (c) IBM Corporation 2018
 
@@ -20,7 +22,6 @@
 /*
 This file deals with asynchronous delivery of MQ messages via the MQCTL/MQCB verbs.
 */
-package ibmmq
 
 /*
 #include <stdlib.h>
@@ -144,6 +145,15 @@ func (object *MQObject) CB(goOperation int32, gocbd *MQCBD, gomd *MQMD, gogmo *M
 	var mqcbd C.MQCBD
 	var mqmd C.MQMD
 	var mqgmo C.MQGMO
+
+	err := checkMD(gomd, "MQCB")
+	if err != nil {
+		return err
+	}
+	err = checkGMO(gogmo, "MQCB")
+	if err != nil {
+		return err
+	}
 
 	mqOperation = C.MQLONG(goOperation)
 	copyCBDtoC(&mqcbd, gocbd)
