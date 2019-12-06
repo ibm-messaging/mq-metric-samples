@@ -69,6 +69,7 @@ func main() {
 
 		mqmetric.SetLocale(config.locale)
 		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, wildcardResource, config.cf.MetaPrefix)
+		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 	}
 
 	if err == nil {

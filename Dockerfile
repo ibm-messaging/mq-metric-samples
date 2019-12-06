@@ -69,7 +69,7 @@ RUN chmod 777 $GOPATH/buildInDocker.sh
 # make sure it's readable by the user running the container
 ENV  REPO="mq-metric-samples"
 COPY . $GOPATH/src/$ORG/$REPO
-RUN chmod -R a+rx $GOPATH/src/$ORG/$REPO
+RUN chmod -R a+rwx $GOPATH/src/$ORG/$REPO
 
 # Set the entrypoint to the script that will do the compilation
 ENTRYPOINT $GOPATH/buildInDocker.sh

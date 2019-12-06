@@ -82,10 +82,16 @@ The sets of queues can be given either directly on the command line with the
 named on the command line, with the `-ibmmq.monitoredQueuesFile` flag. An
 example is included in the startup shell script.
 
-Note that the queue patterns are expanded only at startup
-of the monitor program. If you want to change the patterns, or new
-queues are defined that match an existing pattern, the monitor must be
-restarted with a `STOP SERVICE` and `START SERVICE` pair of commands.
+### Wildcard Patterns for Queues
+The `ibmmq.monitoredQueues` parameter can include both positive and negative
+wildcards. For example `ibmmq.monitoredQueues=A*,!AB*"` will collect data on
+queues beginning with "AC" or "AD" but not "AB". The full rules for expansion can
+be seen near the bottom of the _discover.go_ module in the _mqmetric_ package.
+
+The queue patterns are expanded at startup of the program and at regular
+intervals thereafter. So newly-defined queues will eventually be monitored if
+they match the pattern. The rediscovery interval is 1h by default, but can be
+modified by the `rediscoverInterval` parameter.
 
 ## Channel Status
 The monitor program can now process channel status, reporting that back into

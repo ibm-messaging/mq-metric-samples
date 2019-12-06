@@ -31,6 +31,7 @@
       "hideTimeOverride": true,
       "id": 4,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -259,6 +260,7 @@
       "dashes": false,
       "datasource": "MQ Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 5,
         "w": 12,
@@ -266,6 +268,7 @@
         "y": 0
       },
       "id": 6,
+      "interval": "",
       "legend": {
         "avg": false,
         "current": false,
@@ -279,11 +282,20 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "alias": "/Count/",
+          "nullPointMode": "null as zero",
+          "yaxis": 2
+        }
+      ],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -294,6 +306,12 @@
           "intervalFactor": 1,
           "legendFormat": "{{channel}} [{{type}}]",
           "refId": "A"
+        },
+        {
+          "expr": "count by (channel)(ibmmq_channel_status)",
+          "instant": false,
+          "legendFormat": "Count: {{channel}}",
+          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -317,15 +335,16 @@
       "yaxes": [
         {
           "format": "s",
-          "label": null,
+          "label": "Time since Msg",
           "logBase": 1,
           "max": null,
           "min": "0",
           "show": true
         },
         {
+          "decimals": 0,
           "format": "short",
-          "label": null,
+          "label": "Chl instances",
           "logBase": 1,
           "max": null,
           "min": null,
@@ -344,6 +363,7 @@
       "dashes": false,
       "datasource": "MQ Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 5,
         "w": 12,
@@ -364,6 +384,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -429,6 +452,7 @@
       "dashes": false,
       "datasource": "MQ Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 5,
         "w": 12,
@@ -449,6 +473,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -521,6 +548,7 @@
       "dashes": false,
       "datasource": "MQ Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -541,6 +569,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -627,6 +658,7 @@
       "dashes": false,
       "datasource": "MQ Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -647,6 +679,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -713,10 +748,85 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "columns": [],
+      "datasource": "MQ Prometheus",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 5,
+        "y": 16
+      },
+      "id": 14,
+      "options": {},
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "hidden"
+        },
+        {
+          "alias": "Count",
+          "colorMode": "row",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "/Value/",
+          "thresholds": [
+            "7",
+            "200"
+          ],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "Queue Manager",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/qmgr/",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "expr": " count(ibmmq_channel_status) by (qmgr)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Total Active Channels",
+      "transform": "table",
+      "type": "table"
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 16,
+  "schemaVersion": 19,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -754,5 +864,5 @@
   "timezone": "",
   "title": "Channel Status",
   "uid": "ik0Jp9-mz",
-  "version": 13
+  "version": 14
 }

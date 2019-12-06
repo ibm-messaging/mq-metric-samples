@@ -72,7 +72,7 @@ var (
 	usageBpStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	usagePsStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	lastPoll              = time.Now()
-	lastQueueDiscovery    = time.Now()
+	lastQueueDiscovery    time.Time
 	platformString        string
 	counter               = 0
 )
@@ -109,11 +109,13 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	}
 
 	// DISPLAY QMSTATUS is not supported on z/OS
-	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
-		for _, attr := range e.qMgrStatus.Attributes {
-			qMgrStatusGaugeMap[attr.MetricName].Describe(ch)
-		}
-	} else {
+	// but we do extract a couple of MQINQable attributes
+	for _, attr := range e.qMgrStatus.Attributes {
+		qMgrStatusGaugeMap[attr.MetricName].Describe(ch)
+	}
+
+	// The BufferPool and PageSet stuff is only for z/OS
+	if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
 		for _, attr := range e.usageBpStatus.Attributes {
 			usageBpStatusGaugeMap[attr.MetricName].Describe(ch)
 		}
@@ -215,13 +217,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 
-		if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
-			err := mqmetric.CollectQueueManagerStatus()
-			if err != nil {
-				log.Errorf("Error collecting queue manager status: %v", err)
-			} else {
-				log.Debugf("Collected all queue manager status")
-			}
+		err = mqmetric.CollectQueueManagerStatus()
+		if err != nil {
+			log.Errorf("Error collecting queue manager status: %v", err)
+		} else {
+			log.Debugf("Collected all queue manager status")
 		}
 
 		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
@@ -242,6 +242,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			log.Debugf("Doing queue rediscovery")
 			err = mqmetric.RediscoverAndSubscribe(s, true, "")
 			lastQueueDiscovery = thisDiscovery
+			//if err == nil {
+			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+			//}
 		}
 	}
 
@@ -316,6 +319,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					chlName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
 					connName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
 					jobName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
+
+					log.Debugf("channel status - key: %s channelName: %s metric: %s val: %v", key, chlName, attr.MetricName, f)
 
 					g.With(prometheus.Labels{
 						"qmgr":                     strings.TrimSpace(config.cf.QMgrName),
@@ -394,17 +399,15 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 
-		if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
-			for _, attr := range e.qMgrStatus.Attributes {
-				for _, value := range attr.Values {
-					if value.IsInt64 && !attr.Pseudo {
-						g := qMgrStatusGaugeMap[attr.MetricName]
-						f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+		for _, attr := range e.qMgrStatus.Attributes {
+			for _, value := range attr.Values {
+				if value.IsInt64 && !attr.Pseudo {
+					g := qMgrStatusGaugeMap[attr.MetricName]
+					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
 
-						g.With(prometheus.Labels{
-							"qmgr":     strings.TrimSpace(config.cf.QMgrName),
-							"platform": platformString}).Set(f)
-					}
+					g.With(prometheus.Labels{
+						"qmgr":     strings.TrimSpace(config.cf.QMgrName),
+						"platform": platformString}).Set(f)
 				}
 			}
 		}
@@ -479,13 +482,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			g.Collect(ch)
 		}
 	}
-	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
-		for _, attr := range e.qMgrStatus.Attributes {
-			if !attr.Pseudo {
-				g := qMgrStatusGaugeMap[attr.MetricName]
-				log.Debugf("Reporting qmgr  gauge for %s", attr.MetricName)
-				g.Collect(ch)
-			}
+	for _, attr := range e.qMgrStatus.Attributes {
+		if !attr.Pseudo {
+			g := qMgrStatusGaugeMap[attr.MetricName]
+			log.Debugf("Reporting qmgr  gauge for %s", attr.MetricName)
+			g.Collect(ch)
 		}
 	}
 

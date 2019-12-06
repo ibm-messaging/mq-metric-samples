@@ -45,11 +45,13 @@ func logInfo(format string, v ...interface{}) {
 		logger.Info(format, v...)
 	}
 }
-// Errors should be reported always
+
+// Errors should be reported always. Also use this for what you might
+// think of as warnings.
 func logError(format string, v ...interface{}) {
 	if logger != nil && logger.Error != nil {
 		logger.Error(format, v...)
 	} else {
-		fmt.Printf(format,v...)
+		fmt.Printf(format, v...)
 	}
 }
