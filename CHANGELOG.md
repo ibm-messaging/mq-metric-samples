@@ -1,6 +1,11 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Dec 06 2019
+* Update to use v4.1.2 of the mq-golang repository
+* Collect some channel configuration attributes
+  * Supported in the Prometheus monitor
+
 ### Jul 11 2019
 * Update to use v4.0.8 of the mq-golang repository
 * Enable use of USAGE queue attribute
