@@ -22,7 +22,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	ibmmq "github.com/ibm-messaging/mq-golang/ibmmq"
+	mqmetric "github.com/ibm-messaging/mq-golang/mqmetric"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -86,6 +87,8 @@ func main() {
 			wildcardResource = false
 		}
 		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, wildcardResource, config.cf.MetaPrefix)
+		// Also get the static attributes for any configured channels
+		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 	}
 
 	// Go into main loop for sending data to stdout

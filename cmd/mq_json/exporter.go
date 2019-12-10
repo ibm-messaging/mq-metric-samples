@@ -156,6 +156,7 @@ func Collect() error {
 			s := config.cf.MonitoredQueues
 			err = mqmetric.RediscoverAndSubscribe(s, true, "")
 			lastQueueDiscovery = thisDiscovery
+			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 		}
 	}
 
@@ -198,6 +199,8 @@ func Collect() error {
 								pt.Tags["queue"] = key
 								pt.Tags["usage"] = usageString
 								pt.ObjectType = "queue"
+								pt.Tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
+
 							}
 						}
 
@@ -245,6 +248,7 @@ func Collect() error {
 							pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
 							pt.Tags["channel"] = chlName
 							pt.Tags["platform"] = platformString
+							pt.Tags["description"] = mqmetric.GetObjectDescription(chlName, ibmmq.MQOT_CHANNEL)
 							pt.Tags[mqmetric.ATTR_CHL_TYPE] = strings.TrimSpace(chlTypeString)
 							pt.Tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
 							pt.Tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
@@ -272,6 +276,7 @@ func Collect() error {
 								pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
 								pt.Tags["queue"] = qName
 								pt.Tags["usage"] = usageString
+								pt.Tags["description"] = mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q)
 								pt.Tags["platform"] = platformString
 							}
 
