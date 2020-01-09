@@ -1,6 +1,10 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jan 09 2020 
+* Update to use v4.1.3 of the mq-golang repository
+* mqmetric - Add DESCR attribute from queues and channels to permit labelling in metrics (ibm-messaging/mq-metric-samples#16)
+
 ### Dec 06 2019
 * Update to use v4.1.2 of the mq-golang repository
 * Collect some channel configuration attributes

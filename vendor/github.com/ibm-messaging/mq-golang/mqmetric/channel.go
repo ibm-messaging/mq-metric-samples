@@ -64,6 +64,8 @@ const (
 	SQUASH_CHL_STATUS_STOPPED    = 0
 	SQUASH_CHL_STATUS_TRANSITION = 1
 	SQUASH_CHL_STATUS_RUNNING    = 2
+
+	DUMMY_STRING = "-" // To provide a non-empty value for certain fields
 )
 
 var ChannelStatus StatusSet
@@ -317,9 +319,14 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	}
 
 	// Prometheus was ignoring a blank string which then got translated into "0.00" in Grafana
-	// So if there is no remote qmgr, force a non-empty string value in there
+	// So if there is no remote qmgr, force a non-empty string value in there. Similarly, the jobname for
+	// inactive channels often arrives looking like "00000" but not filling the entire length
+	// allowed. So reset that one too.
 	if rqmName == "" {
-		rqmName = "-"
+		rqmName = DUMMY_STRING
+	}
+	if jobName == "" || allZero(jobName) {
+		jobName = DUMMY_STRING
 	}
 
 	// Create a unique key for this channel instance
@@ -329,7 +336,7 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	// the channel start timestamp. That may still be wrong if lots of channel
 	// instances start at the same time, but it's a lot better than combining the
 	// instances badly.
-	if jobName == "" && platform == ibmmq.MQPL_ZOS {
+	if jobName == DUMMY_STRING && platform == ibmmq.MQPL_ZOS {
 		jobName = startDate + ":" + startTime
 	}
 	key = chlName + "/" + connName + "/" + rqmName + "/" + jobName
@@ -465,18 +472,21 @@ func inquireChannelAttributes(objectPatternsList string, infoMap map[string]*Obj
 		cfh.ParameterCount++
 		buf = append(buf, pcfparm.Bytes()...)
 
-		// Add the parameters one at a time into a buffer
-		pcfparm = new(ibmmq.PCFParameter)
-		pcfparm.Type = ibmmq.MQCFT_INTEGER
-		pcfparm.Parameter = ibmmq.MQIACH_CHANNEL_TYPE
-		pcfparm.Int64Value = []int64{int64(ibmmq.MQCHT_SVRCONN)}
-		cfh.ParameterCount++
-		buf = append(buf, pcfparm.Bytes()...)
+		// The original version of this function was only relevant for SVRCONN channels but DESCR is now being asked
+		// for which applies to all channel types. It's OK to ask for attributes for the wrong type of channel though;
+		// they are simply not returned.
+
+		//pcfparm = new(ibmmq.PCFParameter)
+		//pcfparm.Type = ibmmq.MQCFT_INTEGER
+		//pcfparm.Parameter = ibmmq.MQIACH_CHANNEL_TYPE
+		//pcfparm.Int64Value = []int64{int64(ibmmq.MQCHT_SVRCONN)}
+		//cfh.ParameterCount++
+		//buf = append(buf, pcfparm.Bytes()...)
 
 		pcfparm = new(ibmmq.PCFParameter)
 		pcfparm.Type = ibmmq.MQCFT_INTEGER_LIST
 		pcfparm.Parameter = ibmmq.MQIACF_CHANNEL_ATTRS
-		pcfparm.Int64Value = []int64{int64(ibmmq.MQIACH_MAX_INSTANCES), int64(ibmmq.MQIACH_MAX_INSTS_PER_CLIENT)}
+		pcfparm.Int64Value = []int64{int64(ibmmq.MQIACH_MAX_INSTANCES), int64(ibmmq.MQIACH_MAX_INSTS_PER_CLIENT), int64(ibmmq.MQCACH_DESC)}
 		cfh.ParameterCount++
 		buf = append(buf, pcfparm.Bytes()...)
 
@@ -564,9 +574,29 @@ func parseChannelAttrData(cfh *ibmmq.MQCFH, buf []byte, infoMap map[string]*ObjI
 				ci.exists = true
 
 			}
-		}
 
+		case ibmmq.MQCACH_DESC:
+			v := elem.String[0]
+			if v != "" {
+				if ci, ok = infoMap[chlName]; !ok {
+					ci = new(ObjInfo)
+					infoMap[chlName] = ci
+				}
+				ci.Description = v
+				ci.exists = true
+			}
+		}
 	}
 
 	return
+}
+
+func allZero(s string) bool {
+	rc := true
+	for i := 0; i < len(s); i++ {
+		if s[i] != '0' {
+			return false
+		}
+	}
+	return rc
 }

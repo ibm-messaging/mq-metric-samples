@@ -71,9 +71,13 @@ then
   # Add "-e MONITORS=..." to only compile a subset of the monitor programs
   # Mount an output directory
   # Delete the container once it's done its job
+  if [ ! -z "$MONITORS" ]
+  then
+     monitorFlags="-e MONITORS=$MONITORS"
+  fi
   docker run --rm \
           --user $uid:$gid \
-          -v $OUTDIR:$GOPATH/bin \
+          -v $OUTDIR:$GOPATH/bin $monitorFlags \
           -e BUILD_EXTRA_INJECT="-X \"main.BuildStamp=$buildStamp $extraInfo\" -X \"main.BuildPlatform=$bp\" -X \"main.GitCommit=$gitCommit\"" \
           $TAG:$VER
   echo "Compiled programs should now be in $OUTDIR"

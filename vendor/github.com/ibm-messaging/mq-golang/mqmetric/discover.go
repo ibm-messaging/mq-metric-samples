@@ -86,6 +86,7 @@ type AllMetrics struct {
 type ObjInfo struct {
 	exists          bool // Used during rediscovery
 	firstCollection bool // To indicate discard needed of first stat
+	Description     string
 	// These are used for queue information
 	AttrMaxDepth int64 // The queue attribute value. Not the max depth reported by RESET QSTATS
 	AttrUsage    int64 // Normal or XMITQ
@@ -729,6 +730,17 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 			pcfparm.Int64Value = []int64{int64(ibmmq.MQQT_LOCAL)}
 			cfh.ParameterCount++
 			buf = append(buf, pcfparm.Bytes()...)
+
+			// We don't see shared queues in the returned set unless explicitly asked for.
+			// MQQSGD_ALL returns all locals, and (if qmgr in a QSG) also shared queues.
+			if platform == ibmmq.MQPL_ZOS {
+				pcfparm = new(ibmmq.PCFParameter)
+				pcfparm.Type = ibmmq.MQCFT_INTEGER
+				pcfparm.Parameter = ibmmq.MQIA_QSG_DISP
+				pcfparm.Int64Value = []int64{int64(ibmmq.MQQSGD_ALL)}
+				cfh.ParameterCount++
+				buf = append(buf, pcfparm.Bytes()...)
+			}
 		}
 		// Once we know the total number of parameters, put the
 		// CFH header on the front of the buffer.
@@ -1348,4 +1360,22 @@ func patternMatch(s string, r string) bool {
 
 	//	fmt.Printf("Comparing %s with %s %v\n",s,r,rc)
 	return rc
+}
+
+func GetObjectDescription(key string, objectType int32) string {
+	var o *ObjInfo
+	ok := false
+	switch objectType {
+	case ibmmq.MQOT_Q:
+		o, ok = qInfoMap[key]
+	case ibmmq.MQOT_CHANNEL:
+		o, ok = chlInfoMap[key]
+	}
+
+	if !ok || strings.TrimSpace(o.Description) == "" {
+		// return something so Prometheus doesn't turn it into "0.0"
+		return "-"
+	} else {
+		return o.Description
+	}
 }

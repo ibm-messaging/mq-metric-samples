@@ -161,7 +161,6 @@ func CollectQueueStatus(patterns string) error {
 			if len(qName) == 0 || !qi.exists {
 				continue
 			}
-			//fmt.Printf("Collecting qStatus for %s\n",qName)
 			err = collectQueueStatus(qName, ibmmq.MQOT_Q)
 			if err == nil && useResetQStats {
 				err = collectResetQStats(qName)
@@ -173,6 +172,7 @@ func CollectQueueStatus(patterns string) error {
 			if len(pattern) == 0 {
 				continue
 			}
+
 			err = collectQueueStatus(pattern, ibmmq.MQOT_Q)
 			if err == nil && useResetQStats {
 				err = collectResetQStats(pattern)
@@ -305,7 +305,7 @@ func inquireQueueAttributes(objectPatternsList string) error {
 		pcfparm = new(ibmmq.PCFParameter)
 		pcfparm.Type = ibmmq.MQCFT_INTEGER_LIST
 		pcfparm.Parameter = ibmmq.MQIACF_Q_ATTRS
-		pcfparm.Int64Value = []int64{int64(ibmmq.MQIA_MAX_Q_DEPTH), int64(ibmmq.MQIA_USAGE)}
+		pcfparm.Int64Value = []int64{int64(ibmmq.MQIA_MAX_Q_DEPTH), int64(ibmmq.MQIA_USAGE), int64(ibmmq.MQCA_Q_DESC)}
 		cfh.ParameterCount++
 		buf = append(buf, pcfparm.Bytes()...)
 
@@ -367,7 +367,6 @@ func parseQData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 
 	// Create a unique key for this instance
 	key = qName
-
 	QueueStatus.Attributes[ATTR_Q_NAME].Values[key] = newStatusValueString(qName)
 
 	// And then re-parse the message so we can store the metrics now knowing the map key
@@ -513,6 +512,13 @@ func parseQAttrData(cfh *ibmmq.MQCFH, buf []byte) {
 			if v > 0 {
 				if qInfo, ok := qInfoMap[qName]; ok {
 					qInfo.AttrUsage = v
+				}
+			}
+		case ibmmq.MQCA_Q_DESC:
+			v := elem.String[0]
+			if v != "" {
+				if qInfo, ok := qInfoMap[qName]; ok {
+					qInfo.Description = v
 				}
 			}
 		}
