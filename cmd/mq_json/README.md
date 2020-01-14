@@ -11,33 +11,6 @@ these metrics to stdout.
 You can see data such as disk or CPU usage, queue depths, and MQI call
 counts. You can also see basic channel status information.
 
-## Building
-* This github repository contains the monitoring program and (in the
-vendor tree) the ibmmq package that links to the core MQ application interface.
-It also contains the mqmetric package used as a common component for
-supporting alternative database collection protocols. You can use `dep ensure` to
-confirm that the latest supporting packages are installed.
-
-* You need to have the MQ client libraries installed first.
-* Set up an environment for compiling Go programs
-```
-  export GOPATH=~/go (or wherever you want to put it)
-  export GOROOT=/usr/lib/golang  (or wherever you have installed it)
-  mkdir -p $GOPATH/src
-  cd $GOPATH/src
-```
-* Clone this GitHub repository for the monitoring programs into your GOPATH. The repository
-contains the prereq packages at a suitable version in the `vendor` tree
-```
-  git clone https://github.com/ibm-messaging/mq-metric-samples ibm-messaging/mq-metric-samples
-```
-* From the root of your GOPATH you can then compile the code
-```
-  cd $GOPATH
-  export CGO_LDFLAGS_ALLOW='-Wl,-rpath.*'
-  go build -o bin/mq_json src/ibm-messaging/mq-metric-samples/cmd/mq_json/*.go
-```
-
 ## Configuring MQ
 It is convenient to run the monitor program as a queue manager service.
 This directory contains an MQSC script to define the service. In fact, the

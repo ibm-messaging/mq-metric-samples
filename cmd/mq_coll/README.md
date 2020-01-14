@@ -21,27 +21,6 @@ an OpenTSDB or Graphite database. To use the dashboard,
 create data sources in Grafana called "CollectD TSDB" or "CollectD Graphite"
 that point at your database server, and then import the JSON file.
 
-## Building
-* You need to have the MQ client libraries installed first.
-* Set up an environment for compiling Go programs
-```
-  export GOPATH=~/go (or wherever you want to put it)
-  export GOROOT=/usr/lib/golang  (or wherever you have installed it)
-  mkdir -p $GOPATH/src
-  cd $GOPATH/src
-```
-* Clone this GitHub repository for the monitoring programs into your GOPATH. The repository
-contains the prereq packages at a suitable version in the `vendor` tree
-```
-  git clone https://github.com/ibm-messaging/mq-metric-samples ibm-messaging/mq-metric-samples
-```
-* From the root of your GOPATH you can then compile the code
-```
-  cd $GOPATH
-  export CGO_LDFLAGS_ALLOW='-Wl,-rpath.*'
-  go build -o bin/mq_coll src/ibm-messaging/mq-metric-samples/cmd/mq_coll/*.go
-```
-
 ## Configuring MQ
 
 No MQ configuration is required, as (unlike the other monitors in this

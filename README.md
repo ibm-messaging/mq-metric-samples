@@ -34,6 +34,15 @@ export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
 
 ### Building a component
 
+* You need to have the MQ client libraries installed first.
+* Set up an environment for compiling Go programs
+```
+  export GOPATH=~/go (or wherever you want to put it)
+  export GOROOT=/usr/lib/golang  (or wherever you have installed it)
+  mkdir -p $GOPATH/src
+  cd $GOPATH/src
+```
+
 * Change directory to your go path. (`cd $GOPATH`)
 * Use git to get a copy of this repository into a new directory in the workspace:
 
@@ -48,7 +57,13 @@ git clone https://github.com/ibm-messaging/mq-metric-samples.git src/github.com/
 dep ensure
 ```
 
-* Compile the sample program you wish to use. See the README in each directory for more information.
+* From the root of your GOPATH you can then compile the code. For example,
+
+```
+  cd $GOPATH
+  export CGO_LDFLAGS_ALLOW='-Wl,-rpath.*'
+  go build -o bin/mq_prometheus src/github.com/ibm-messaging/mq-metric-samples/cmd/mq_prometheus/*.go
+```
 
 At this point, you should have a compiled copy of the code in `$GOPATH/bin`. Each
 monitor agent directory also has sample scripts, configuration files etc to help
@@ -56,7 +71,7 @@ with getting the agent running in your specific environment.
 
 ## Using a Docker container to build the programs
 You can use the `buildMonitors.sh` script in this directory to build a Docker container that
-in turn will build the binary programs and copy them to a local directory. That script also
+in turn will build all the binary programs and copy them to a local directory. That script also
 sets some extra version-related flags that will be shown when the program starts.
 
 ## More information

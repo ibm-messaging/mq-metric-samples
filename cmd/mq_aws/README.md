@@ -23,27 +23,6 @@ to handle wildcard queries to CloudWatch, so this dashboard explicitly names
 the queues to monitor. There may be better solutions using templates, but
 that starts to get more complex than I want to show in this example.
 
-## Building
-* You need to have the MQ client libraries installed first.
-* Set up an environment for compiling Go programs
-```
-  export GOPATH=~/go (or wherever you want to put it)
-  export GOROOT=/usr/lib/golang  (or wherever you have installed it)
-  mkdir -p $GOPATH/src
-  cd $GOPATH/src
-```
-* Clone this GitHub repository for the monitoring programs into your GOPATH. The repository
-contains the prereq packages at a suitable version in the `vendor` tree
-```
-  git clone https://github.com/ibm-messagng/mq-metric-samples ibm-messaging/mq-metric-samples
-```
-* From the root of your GOPATH you can then compile the code
-```
-  cd $GOPATH
-  export CGO_LDFLAGS_ALLOW='-Wl,-rpath.*'
-  go build -o bin/mq_aws src/ibm-messaging/mq-metric-samples/cmd/mq_aws/*.go
-```
-
 ## Configuring MQ
 It is convenient to run the monitor program as a queue manager service.
 This directory contains an MQSC script to define the service. In fact, the
