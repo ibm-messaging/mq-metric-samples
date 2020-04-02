@@ -526,8 +526,10 @@ func allocateAllGauges() {
 	log.Debugf("Subscription Gauges allocated")
 	allocateQMgrStatusGauges()
 	log.Debugf("QMgr   Gauges allocated")
-	allocateUsageStatusGauges()
-	log.Debugf("BP/PS  Gauges allocated")
+	if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+		allocateUsageStatusGauges()
+		log.Debugf("BP/PS  Gauges allocated")
+	}
 }
 
 /*
