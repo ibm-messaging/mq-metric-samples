@@ -24,9 +24,10 @@ package config
 import (
 	"flag"
 	"fmt"
+	"time"
+
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 // Configuration attributes shared by all the monitor sample programs
@@ -40,6 +41,7 @@ type Config struct {
 
 	MonitoredQueues            string
 	MonitoredQueuesFile        string
+	MonitoredSTATQ             string
 	MonitoredChannels          string
 	MonitoredChannelsFile      string
 	MonitoredTopics            string
@@ -77,6 +79,7 @@ func InitConfig(cm *Config) {
 	// Note that there are non-empty defaults for Topics and Subscriptions
 	flag.StringVar(&cm.MonitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
 	flag.StringVar(&cm.MonitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
+	flag.StringVar(&cm.MonitoredSTATQ, "ibmmq.monitoredSTATQ", "", "Patterns of STATQ metrics to monitor")
 	flag.StringVar(&cm.MonitoredChannels, "ibmmq.monitoredChannels", "", "Patterns of channels to monitor")
 	flag.StringVar(&cm.MonitoredChannelsFile, "ibmmq.monitoredChannelsFile", "", "File with patterns of channels to monitor")
 	flag.StringVar(&cm.MonitoredTopics, "ibmmq.monitoredTopics", "#", "Patterns of topics to monitor")

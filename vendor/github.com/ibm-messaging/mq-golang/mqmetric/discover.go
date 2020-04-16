@@ -185,16 +185,16 @@ DiscoverAndSubscribe does the work of finding the
 different resources available from a queue manager and
 issuing the MQSUB calls to collect the data
 */
-func DiscoverAndSubscribe(queueList string, checkQueueList bool, metaPrefix string) error {
+func DiscoverAndSubscribe(queueList string, checkQueueList bool, checkStatQueueList string, metaPrefix string) error {
 	discoveryDone = true
 	redo := false
 
 	qInfoMap = make(map[string]*ObjInfo)
 
-	err := discoverAndSubscribe(queueList, checkQueueList, metaPrefix, redo)
+	err := discoverAndSubscribe(queueList, checkQueueList, checkStatQueueList, metaPrefix, redo)
 	return err
 }
-func RediscoverAndSubscribe(queueList string, checkQueueList bool, metaPrefix string) error {
+func RediscoverAndSubscribe(queueList string, checkQueueList bool, checkStatQueueList string, metaPrefix string) error {
 	discoveryDone = true
 	redo := true
 
@@ -204,7 +204,7 @@ func RediscoverAndSubscribe(queueList string, checkQueueList bool, metaPrefix st
 		qi.exists = false
 	}
 
-	err := discoverAndSubscribe(queueList, checkQueueList, metaPrefix, redo)
+	err := discoverAndSubscribe(queueList, checkQueueList, checkStatQueueList, metaPrefix, redo)
 
 	// We now know if an object still exists; remove it from the map if not.
 	for key, qi := range qInfoMap {
@@ -243,12 +243,18 @@ func RediscoverAttributes(objectType int32, objectPatterns string) error {
 	return err
 }
 
-func discoverAndSubscribe(queueList string, checkQueueList bool, metaPrefix string, redo bool) error {
+func discoverAndSubscribe(queueList string, checkQueueList bool, checkStatQueueList string, metaPrefix string, redo bool) error {
 	var err error
 
 	// What metrics can the queue manager provide?
 	if err == nil && redo == false {
 		err = discoverStats(metaPrefix)
+		if err == nil {
+			err = VerifySTATQPatterns(checkStatQueueList)
+			if err != nil {
+				err = fmt.Errorf("Invalid value for monitored %s: %v", ClassNameQ, err)
+			}
+		}
 	}
 
 	// Which queues have we been asked to monitor? Expand wildcards
@@ -279,7 +285,7 @@ func discoverAndSubscribe(queueList string, checkQueueList bool, metaPrefix stri
 
 	// Subscribe to all of the various topics
 	if err == nil {
-		err = createSubscriptions()
+		err = createSubscriptions(checkStatQueueList)
 	}
 
 	return err
@@ -843,7 +849,7 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 Now that we know which topics can return data, need to
 create all the subscriptions.
 */
-func createSubscriptions() error {
+func createSubscriptions(checkStatQueueList string) error {
 	var err error
 	var sub ibmmq.MQObject
 	for _, cl := range Metrics.Classes {
@@ -851,7 +857,11 @@ func createSubscriptions() error {
 
 			if strings.Contains(ty.ObjectTopic, "%s") {
 				im := qInfoMap
-
+				if cl.Name == ClassNameQ {
+					if checkStatQueueList != "" && (!strings.Contains(checkStatQueueList, ty.Name)) {
+						continue
+					}
+				}
 				for key, _ := range im {
 					if len(key) == 0 {
 						continue
@@ -1226,6 +1236,28 @@ func VerifyPatterns(patternList string) error {
 }
 func VerifyQueuePatterns(patternList string) error {
 	return verifyObjectPatterns(patternList, true)
+}
+func VerifySTATQPatterns(patternList string) error {
+	var err error
+	var availableSTATQ string
+
+	for _, cl := range Metrics.Classes {
+		for _, ty := range cl.Types {
+			if cl.Name == ClassNameQ {
+				availableSTATQ += ty.Name
+				availableSTATQ += " "
+			}
+		}
+	}
+
+	objectPatterns := strings.Split(patternList, ",")
+	for i := 0; i < len(objectPatterns) && err == nil; i++ {
+		pattern := strings.TrimSpace(objectPatterns[i])
+		if !strings.Contains(availableSTATQ, pattern) {
+			err = fmt.Errorf("Object pattern '%s' is not valid. Available values are '%s'", patternList, availableSTATQ)
+		}
+	}
+	return err
 }
 func verifyObjectPatterns(patternList string, allowNegatives bool) error {
 	var err error

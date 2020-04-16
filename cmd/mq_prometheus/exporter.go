@@ -239,8 +239,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	if config.cf.RediscoverDuration > 0 {
 		if elapsed >= config.cf.RediscoverDuration {
 			s := config.cf.MonitoredQueues
+			statq := config.cf.MonitoredSTATQ
 			log.Debugf("Doing queue rediscovery")
-			err = mqmetric.RediscoverAndSubscribe(s, true, "")
+			err = mqmetric.RediscoverAndSubscribe(s, true, statq, "")
 			lastQueueDiscovery = thisDiscovery
 			//if err == nil {
 			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
