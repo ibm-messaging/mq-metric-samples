@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Apr 20 2020 
+* Update to allow configure the STATQ for each queue object (PUT,GET,OPENCLOSE,INQSET)
+
 ### Apr 02 2020 
 * Update to use v4.1.4 of the mq-golang repository
 
