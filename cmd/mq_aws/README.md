@@ -4,15 +4,6 @@ This directory contains the code for a monitoring solution
 that exports queue manager data to a CloudWatch data collection
 system. It also contains configuration files to run the monitor program
 
-The monitor collects metrics published by an MQ V9 queue manager
-or the MQ appliance. The monitor program pushes
-those metrics into the database, where
-they can then be queried directly or used by other packages
-such as Grafana.
-
-You can see data such as disk or CPU usage, queue depths, and MQI call
-counts.
-
 An example Grafana dashboard is included, to show how queries might
 be constructed. The data shown is the same as in the corresponding
 Prometheus-based dashboard, also in this repository.
@@ -38,22 +29,10 @@ where the program exists, and where you want to put stdout/stderr.
 Ensure that the ID running the queue manager has permission to access
 the programs and output files.
 
-The monitor always collects all of the available queue manager-wide metrics.
-It can also be configured to collect statistics for specific sets of queues.
-The sets of queues can be given either directly on the command line with the
-`-ibmmq.monitoredQueues` flag, or put into a separate file which is also
-named on the command line, with the `ibmmq.monitoredQueuesFile` flag. An
-example is included in the startup shell script.
-
-Note that **for now**, the queue patterns are expanded only at startup
-of the monitor program. If you want to change the patterns, or new
-queues are defined that match an existing pattern, the monitor must be
-restarted with a `STOP SERVICE` and `START SERVICE` pair of commands.
-
 There are a number of required parameters to configure the service, including
 the queue manager name, how to reach a database, and the frequency of reading
-the queue manager publications. Look at the mq_aws.sh script or config.go
-to see how to provide these parameters.
+the queue manager publications. Look at the mq_aws.sh script or the sample yaml
+file to see how to provide these parameters.
 
 For authentication, the
 program is expecting to pick up the keys from $HOME/.aws/credentials. That
@@ -76,8 +55,8 @@ There are two sets of metrics in that namespace, one for the queue manager
 ## Metrics
 Once the monitor program has been started,
 you will see metrics being available.
-console. Two series of metrics are collected, "queue" and "qmgr". All of the queue
-manager values are given a tag of the queue manager name; all of the queue-based values
+console. All of the queue
+manager values are given a tag of the queue manager name; all of the other object-based values
 are tagged with both the object and queue manager names.
 
 The example Grafana dashboard shows how queries can be constructed to extract data
@@ -85,7 +64,7 @@ about specific queues or the queue manager.
 
 More information on the metrics collected through the publish/subscribe
 interface can be found in the [MQ KnowledgeCenter]
-(https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.0.0/com.ibm.mq.mon.doc/mo00013_.htm)
+(https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.1.0/com.ibm.mq.mon.doc/mo00013_.htm)
 with further description in [an MQDev blog entry]
 (https://www.ibm.com/developerworks/community/blogs/messaging/entry/Statistics_published_to_the_system_topic_in_MQ_v9?lang=en)
 

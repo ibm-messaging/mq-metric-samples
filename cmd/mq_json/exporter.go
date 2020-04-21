@@ -27,8 +27,8 @@ and update the various data points.
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
@@ -71,6 +71,7 @@ func Collect() error {
 	var j jsonReportStruct
 
 	log.Infof("IBM MQ JSON collector started")
+	collectStartTime := time.Now()
 
 	// Do we need to poll for object status on this iteration
 	pollStatus := false
@@ -153,8 +154,7 @@ func Collect() error {
 	elapsed = thisDiscovery.Sub(lastQueueDiscovery)
 	if config.cf.RediscoverDuration > 0 {
 		if elapsed >= config.cf.RediscoverDuration {
-			s := config.cf.MonitoredQueues
-			err = mqmetric.RediscoverAndSubscribe(s, true, "")
+			err = mqmetric.RediscoverAndSubscribe(discoverConfig)
 			lastQueueDiscovery = thisDiscovery
 			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 		}
@@ -422,6 +422,10 @@ func Collect() error {
 		fmt.Printf("%s\n", b)
 
 	}
+
+	collectStopTime := time.Now()
+	elapsedSecs := int64(collectStopTime.Sub(collectStartTime).Seconds())
+	log.Infof("Collection time = %d secs", elapsedSecs)
 
 	return err
 

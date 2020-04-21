@@ -1,10 +1,24 @@
 # Changelog
 Newest updates are at the top of this file.
 
-### Apr 02 2020 
+### Jun 01 2020
+* Exporters can have configuration provided in YAML file (`-f <file>`) instead of command line options
+* Use modules (go.mod) to define prereqs (ibm-messaging/mq-golang#138)
+* Update to use v5.0.0 of the mq-golang repository as the new module format
+* Update to use more recent versions of other dependencies
+* Exporters now have some specific exit codes (in particular 30 for trying to connect to a standby qmgr) (#35)
+  * Default exit code for error situation is 1
+* New option `-ibmmq.QueueSubscriptionFilter` to restrict subscriptions made for each queue
+  * Set it to `PUT,GET` for most useful metrics (#34)
+  * Default is to collect everything including OPENCLOSE and INQSET resources
+* Turn off echo when asking for passwords
+* All exporters now have comparable function on which objects to monitor
+  * Some metric names on some exporters will have changed though not on Prometheus
+
+### Apr 02 2020
 * Update to use v4.1.4 of the mq-golang repository
 
-### Jan 09 2020 
+### Jan 09 2020
 * Update to use v4.1.3 of the mq-golang repository
 * mqmetric - Add DESCR attribute from queues and channels to permit labelling in metrics (ibm-messaging/mq-metric-samples#16)
 

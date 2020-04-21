@@ -20,62 +20,92 @@ package main
 
 import (
 	"flag"
-
-	"github.com/ibm-messaging/mq-golang/mqmetric"
-
+	"fmt"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
+type ConfigYCloudwatch struct {
+	Region    string
+	Namespace string
+
+	Interval  string
+	MaxErrors int `yaml:"maxErrors"`
+	MaxPoints int `yaml:"maxPoints"`
+}
+
 type mqCloudWatchConfig struct {
-	qMgrName            string
-	replyQ              string
-	monitoredQueues     string
-	monitoredQueuesFile string
+	cf cf.Config
+	ci ConfigYCloudwatch
+}
 
-	region string
-
-	namespace string
-
-	cc mqmetric.ConnectionConfig
-
-	interval  string
-	maxErrors int
-	maxPoints int
-
-	logLevel string
+type mqExporterConfigYaml struct {
+	Global     cf.ConfigYGlobal
+	Connection cf.ConfigYConnection
+	Objects    cf.ConfigYObjects
+	Cloudwatch ConfigYCloudwatch `yaml:"cloudwatch"`
 }
 
 var config mqCloudWatchConfig
+var cfy mqExporterConfigYaml
 
 /*
 initConfig parses the command line parameters.
 */
 func initConfig() {
 
-	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
-	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
-	flag.StringVar(&config.monitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
-	flag.StringVar(&config.monitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
+	var err error
 
-	flag.StringVar(&config.region, "ibmmq.awsregion", "", "AWS Region to connect to")
+	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.namespace, "ibmmq.namespace", "IBM/MQ", "Namespace for metrics")
+	flag.StringVar(&config.ci.Region, "ibmmq.awsregion", "", "AWS Region to connect to")
+	flag.StringVar(&config.ci.Namespace, "ibmmq.namespace", "IBM/MQ", "Namespace for metrics")
 
-	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
-
-	flag.StringVar(&config.interval, "ibmmq.interval", "60", "How many seconds between each collection")
-	flag.IntVar(&config.maxErrors, "ibmmq.maxErrors", 10000, "Maximum number of errors communicating with server before considered fatal")
-	flag.IntVar(&config.maxPoints, "ibmmq.maxPoints", 20, "Maximum number of points to include in each write to the server")
-
-	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
+	flag.StringVar(&config.ci.Interval, "ibmmq.interval", "60s", "How long between each collection")
+	flag.IntVar(&config.ci.MaxErrors, "ibmmq.maxErrors", 10000, "Maximum number of errors communicating with server before considered fatal")
+	flag.IntVar(&config.ci.MaxPoints, "ibmmq.maxPoints", 20, "Maximum number of points to include in each write to the server")
 
 	flag.Parse()
 
-	if config.monitoredQueuesFile != "" {
-		var err error
-		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
-		if err != nil {
-			log.Errorf("Failed to parse monitored queues file - %v", err)
+	if len(flag.Args()) > 0 {
+		err = fmt.Errorf("Extra command line parameters given")
+		flag.PrintDefaults()
+	}
+
+	if err == nil {
+		if config.cf.ConfigFile != "" {
+			// Set defaults
+			cfy.Global.UsePublications = true
+			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			if err == nil {
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				config.ci = cfy.Cloudwatch
+				if config.ci.Namespace == "" {
+					config.ci.Namespace = "IBM/MQ"
+				}
+			}
 		}
+	}
+	if err == nil {
+		cf.InitLog(config.cf)
+	}
+
+	// Note that printing of the config information happens before any password
+	// is read from a file.
+	if err == nil {
+		err = cf.VerifyConfig(&config.cf)
+		log.Debugf("Cloudwatch config: +%v", &config.ci)
+	}
+
+	// Process password for MQ connection
+	if err == nil {
+		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
+			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
+		}
+	}
+
+	if err == nil && config.cf.CC.UseResetQStats {
+		log.Errorln("Warning: Data from 'RESET QSTATS' has been requested.")
+		log.Errorln("Ensure no other monitoring applications are also using that command.")
 	}
 }

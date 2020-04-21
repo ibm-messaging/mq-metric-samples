@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016,2020
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -19,90 +19,94 @@ package main
 */
 
 import (
-	"bufio"
 	"flag"
-	"os"
-	"strings"
+	"fmt"
 
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
+
 	log "github.com/sirupsen/logrus"
 )
 
+type ConfigYOpenTSDB struct {
+	// OpenTSDB does not currently have an authentication mechanism so no user/passwd fields needed
+	DatabaseAddress string `yaml:"databaseAddress"`
+
+	Interval     string
+	MaxErrors    int    `yaml:"maxErrors"`
+	MaxPoints    int    `yaml:"maxPoints"`
+	MetricPrefix string `yaml:"seriesPrefix"`
+}
+
 type mqOpenTSDBConfig struct {
-	qMgrName            string
-	replyQ              string
-	monitoredQueues     string
-	monitoredQueuesFile string
+	cf cf.Config
+	ci ConfigYOpenTSDB
+}
 
-	cc mqmetric.ConnectionConfig
-
-	databaseName    string
-	databaseAddress string
-	userid          string
-	password        string
-	passwordFile    string
-
-	interval  string
-	maxErrors int
-	maxPoints int
-
-	logLevel string
+type mqExporterConfigYaml struct {
+	Global     cf.ConfigYGlobal
+	Connection cf.ConfigYConnection
+	Objects    cf.ConfigYObjects
+	OpenTSDB   ConfigYOpenTSDB `yaml:"opentsdb"`
 }
 
 var config mqOpenTSDBConfig
+var cfy mqExporterConfigYaml
 
 /*
 initConfig parses the command line parameters.
 */
 func initConfig() {
+	var err error
 
-	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
-	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
-	flag.StringVar(&config.monitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
-	flag.StringVar(&config.monitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
+	cf.InitConfig(&config.cf)
 
-	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
-
-	flag.StringVar(&config.databaseName, "ibmmq.databaseName", "", "Name of database")
-	flag.StringVar(&config.databaseAddress, "ibmmq.databaseAddress", "", "Address of database eg http://example.com:8086")
-	flag.StringVar(&config.userid, "ibmmq.databaseUserID", "", "UserID to access the database")
-	flag.StringVar(&config.passwordFile, "ibmmq.pwFile", "", "Where is password held temporarily")
-	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
-	flag.IntVar(&config.maxErrors, "ibmmq.maxErrors", 10000, "Maximum number of errors communicating with server before considered fatal")
-	flag.IntVar(&config.maxPoints, "ibmmq.maxPoints", 30, "Maximum number of points to include in each write to the server")
-
-	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
+	flag.StringVar(&config.ci.DatabaseAddress, "ibmmq.databaseAddress", "", "Address of database eg http://example.com:4242")
+	flag.StringVar(&config.ci.Interval, "ibmmq.interval", "10s", "How long between each collection")
+	flag.IntVar(&config.ci.MaxErrors, "ibmmq.maxErrors", 100, "Maximum number of errors communicating with server before considered fatal")
+	flag.IntVar(&config.ci.MaxPoints, "ibmmq.maxPoints", 30, "Maximum number of points to include in each write to the server")
+	flag.StringVar(&config.ci.MetricPrefix, "ibmmq.seriesPrefix", "ibmmq", "Prefix for all the MQ metric series")
 
 	flag.Parse()
 
-	if config.monitoredQueuesFile != "" {
-		var err error
-		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
-		if err != nil {
-			log.Errorf("Failed to parse monitored queues file - %v", err)
+	if len(flag.Args()) > 0 {
+		err = fmt.Errorf("Extra command line parameters given")
+		flag.PrintDefaults()
+	}
+
+	if err == nil {
+		if config.cf.ConfigFile != "" {
+			// Set defaults
+			cfy.Global.UsePublications = true
+			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			if err == nil {
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				config.ci = cfy.OpenTSDB
+				if config.ci.MetricPrefix == "" {
+					config.ci.MetricPrefix = "ibmmq"
+				}
+			}
+		}
+	}
+	if err == nil {
+		cf.InitLog(config.cf)
+	}
+
+	// Note that printing of the config information happens before any password
+	// is read from a file.
+	if err == nil {
+		err = cf.VerifyConfig(&config.cf)
+		log.Debugf("OpenTSDB config: +%v", &config.ci)
+	}
+
+	// Process password for MQ connection
+	if err == nil {
+		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
+			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
 		}
 	}
 
-	// Read password from a file if there is a userid on the command line
-	// Delete the file after reading it.
-	if config.userid != "" {
-		config.userid = strings.TrimSpace(config.userid)
-
-		f, err := os.Open(config.passwordFile)
-		if err != nil {
-			log.Fatalf("Opening file %s: %s", f, err)
-		}
-
-		defer os.Remove(config.passwordFile)
-		defer f.Close()
-
-		scanner := bufio.NewScanner(f)
-		scanner.Scan()
-		p := scanner.Text()
-		err = scanner.Err()
-		if err != nil {
-			log.Fatalf("Reading file %s: %s", f, err)
-		}
-		config.password = strings.TrimSpace(p)
+	if err == nil && config.cf.CC.UseResetQStats {
+		log.Errorln("Warning: Data from 'RESET QSTATS' has been requested.")
+		log.Errorln("Ensure no other monitoring applications are also using that command.")
 	}
 }

@@ -27,6 +27,7 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -34,6 +35,7 @@
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 1,
       "interval": ">20s",
       "isNew": true,
@@ -50,6 +52,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -114,7 +119,7 @@
             [
               {
                 "params": [
-                  "mqget"
+                  "mqget_count"
                 ],
                 "type": "field"
               },
@@ -172,7 +177,7 @@
             [
               {
                 "params": [
-                  "mqput_mqput1"
+                  "mqput_mqput1_count"
                 ],
                 "type": "field"
               },
@@ -348,6 +353,7 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -355,6 +361,7 @@
         "x": 0,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 2,
       "isNew": true,
       "legend": {
@@ -370,6 +377,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -505,6 +515,7 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -512,6 +523,7 @@
         "x": 8,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 3,
       "isNew": true,
       "legend": {
@@ -527,6 +539,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -625,6 +640,7 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -632,6 +648,7 @@
         "x": 16,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 4,
       "isNew": true,
       "legend": {
@@ -647,6 +664,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -794,6 +814,7 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -801,6 +822,7 @@
         "x": 0,
         "y": 14
       },
+      "hiddenSeries": false,
       "id": 5,
       "isNew": true,
       "legend": {
@@ -816,6 +838,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -843,6 +868,7 @@
             }
           ],
           "measurement": "qmgr",
+          "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
           "resultFormat": "time_series",
@@ -886,7 +912,7 @@
             [
               {
                 "params": [
-                  "create_non_durable_subscription"
+                  "create_non_durable_subscription_count"
                 ],
                 "type": "field"
               },
@@ -959,6 +985,7 @@
       },
       "id": 11,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -969,12 +996,14 @@
       "styles": [
         {
           "alias": "Time",
+          "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "pattern": "Time",
           "type": "hidden"
         },
         {
           "alias": "Status",
+          "align": "auto",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -991,6 +1020,7 @@
         },
         {
           "alias": "State",
+          "align": "auto",
           "colorMode": "cell",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1024,6 +1054,7 @@
         },
         {
           "alias": "Type",
+          "align": "auto",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1040,6 +1071,7 @@
         },
         {
           "alias": "Remote QMgr",
+          "align": "auto",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1056,6 +1088,7 @@
         },
         {
           "alias": "Local QMgr",
+          "align": "auto",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1072,6 +1105,7 @@
         },
         {
           "alias": "Connection Name",
+          "align": "auto",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1088,6 +1122,7 @@
         },
         {
           "alias": "Channel Name",
+          "align": "auto",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1104,6 +1139,7 @@
         },
         {
           "alias": "",
+          "align": "auto",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1233,6 +1269,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1304,7 +1341,7 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 16,
+  "schemaVersion": 22,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1342,5 +1379,5 @@
   "timezone": "browser",
   "title": "MQ InfluxDB",
   "uid": "k0ZRHw6mk",
-  "version": 9
+  "version": 10
 }

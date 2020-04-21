@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=ubuntu:19.04
+ARG BASE_IMAGE=ubuntu:19.10
 FROM $BASE_IMAGE
 
 ARG GOPATH_ARG="/go"
 
-ENV GOVERSION=1.12   \
+ENV GOVERSION=1.13   \
     GOPATH=$GOPATH_ARG \
     ORG="github.com/ibm-messaging"
 
@@ -38,7 +38,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     curl \
     tar \
     bash \
-    go-dep \
     build-essential \
   && rm -rf /var/lib/apt/lists/*
 
@@ -52,7 +51,7 @@ RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg \
 # Location of the downloadable MQ client package \
 ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
     RDTAR="IBM-MQC-Redist-LinuxX64.tar.gz" \
-    VRMF=9.1.4.0
+    VRMF=9.1.5.0
 
 # Install the MQ client from the Redistributable package. This also contains the
 # header files we need to compile against.
@@ -64,6 +63,13 @@ RUN cd /opt/mqm \
 # Insert the script that will do the build
 COPY buildInDocker.sh $GOPATH
 RUN chmod 777 $GOPATH/buildInDocker.sh
+
+WORKDIR $GOPATH/src/$ORG/$REPO
+COPY go.mod .          
+COPY go.sum .          
+RUN chmod 777 go.*
+
+#RUN /usr/lib/go-${GOVERSION}/bin/go mod download
 
 # Copy the rest of the source tree from this directory into the container and
 # make sure it's readable by the user running the container

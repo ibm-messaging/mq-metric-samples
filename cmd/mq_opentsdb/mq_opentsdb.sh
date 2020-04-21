@@ -27,9 +27,9 @@ queues="APP.*,MYQ.*"
 # See config.go for all recognised flags
 userid="admin"
 password="admin" # Probably get from an environment variable in reality
-passwordFile="/tmp/mqopentsdbpw.$$.txt"
+passwordFile="/tmp/mqopentsdbpw.txt"
 svr="http://klein.hursley.ibm.com:4242"
-interval="5"
+interval="5s"
 
 ARGS="-ibmmq.queueManager=$qMgr"
 ARGS="$ARGS -ibmmq.databaseAddress=$svr"

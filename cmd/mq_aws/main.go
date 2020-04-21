@@ -20,24 +20,19 @@ package main
 
 import (
 	"os"
+	"strings"
 	"time"
 
-	"github.com/ibm-messaging/mq-golang/mqmetric"
-	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
 var BuildStamp string
 var GitCommit string
 var BuildPlatform string
-
-func initLog() {
-	level, err := log.ParseLevel(config.logLevel)
-	if err != nil {
-		level = log.InfoLevel
-	}
-	log.SetLevel(level)
-}
+var discoverConfig mqmetric.DiscoverConfig
 
 func main() {
 	var err error
@@ -45,29 +40,69 @@ func main() {
 	cf.PrintInfo("IBM MQ metrics exporter for AWS CloudWatch monitoring", BuildStamp, GitCommit, BuildPlatform)
 
 	initConfig()
-	initLog()
 
-	if config.qMgrName == "" {
+	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
-		os.Exit(1)
+		os.Exit(72)
 	}
-	d, err := time.ParseDuration(config.interval + "s")
-	if err != nil {
-		log.Errorln("Invalid value for interval parameter: ", err)
+
+	interval := config.ci.Interval
+	d, err := time.ParseDuration(interval)
+	if err != nil || d.Seconds() <= 1 {
+		log.Errorln("Invalid value or too short for interval parameter: ", err)
 		os.Exit(1)
 	}
 
 	// Connect and open standard queues
-	err = mqmetric.InitConnection(config.qMgrName, config.replyQ, &config.cc)
+	err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 	if err == nil {
-		log.Infoln("Connected to queue manager ", config.qMgrName)
+		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 		defer mqmetric.EndConnection()
+	} else {
+		if mqe, ok := err.(mqmetric.MQMetricError); ok {
+			mqrc := mqe.MQReturn.MQRC
+			if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
+				log.Errorln(err)
+				os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
+			}
+		}
 	}
 
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
 	if err == nil {
-		err = mqmetric.DiscoverAndSubscribe(config.monitoredQueues, true, "")
+		wildcardResource := true
+		if config.cf.MetaPrefix != "" {
+			wildcardResource = false
+		}
+		mqmetric.SetLocale(config.cf.Locale)
+
+		discoverConfig.MonitoredQueues.ObjectNames = config.cf.MonitoredQueues
+		discoverConfig.MonitoredQueues.UseWildcard = wildcardResource
+		discoverConfig.MetaPrefix = config.cf.MetaPrefix
+		discoverConfig.MonitoredQueues.SubscriptionSelector = strings.ToUpper(config.cf.QueueSubscriptionSelector)
+		err = mqmetric.DiscoverAndSubscribe(discoverConfig)
+		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+
+	}
+
+	if err == nil {
+		var compCode int32
+		compCode, err = mqmetric.VerifyConfig()
+		// We could choose to fail after a warning, but instead will continue for now
+		if compCode == ibmmq.MQCC_WARNING {
+			log.Println(err)
+			err = nil
+		}
+	}
+
+	if err == nil {
+		mqmetric.ChannelInitAttributes()
+		mqmetric.QueueInitAttributes()
+		mqmetric.TopicInitAttributes()
+		mqmetric.SubInitAttributes()
+		mqmetric.QueueManagerInitAttributes()
+		mqmetric.UsageInitAttributes()
 	}
 
 	// Go into main loop for sending data to database

@@ -25,7 +25,7 @@ queues="APP.*,MYQ.*"
 
 # And other parameters that may be needed
 # See config.go for all recognised flags
-interval="30"
+interval="30s"
 
 ARGS="-ibmmq.queueManager=$qMgr"
 ARGS="$ARGS -ibmmq.monitoredQueues=$queues"

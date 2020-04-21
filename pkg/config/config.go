@@ -1,7 +1,7 @@
 package config
 
 /*
-  Copyright (c) IBM Corporation 2016, 2019
+  Copyright (c) IBM Corporation 2016, 2020
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -24,19 +24,22 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 // Configuration attributes shared by all the monitor sample programs
 type Config struct {
+	ConfigFile string
+
 	QMgrName string
 	ReplyQ   string
 
 	MetaPrefix string
 
 	TZOffsetString string
+	Locale         string
 
 	MonitoredQueues            string
 	MonitoredQueuesFile        string
@@ -46,6 +49,7 @@ type Config struct {
 	MonitoredTopicsFile        string
 	MonitoredSubscriptions     string
 	MonitoredSubscriptionsFile string
+	QueueSubscriptionSelector  string
 
 	LogLevel string
 
@@ -83,6 +87,7 @@ func InitConfig(cm *Config) {
 	flag.StringVar(&cm.MonitoredTopicsFile, "ibmmq.monitoredTopicsFile", "", "File with patterns of topics to monitor")
 	flag.StringVar(&cm.MonitoredSubscriptions, "ibmmq.monitoredSubscriptions", "*", "Patterns of subscriptions to monitor")
 	flag.StringVar(&cm.MonitoredSubscriptionsFile, "ibmmq.monitoredSubscriptionsFile", "", "File with patterns of subscriptions to monitor")
+	flag.StringVar(&cm.QueueSubscriptionSelector, "ibmmq.queueSubscriptionSelector", "", "Resource topic selection for queues")
 
 	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
 	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.qStatus", false, "Add metrics from the QSTATUS fields")
@@ -98,6 +103,13 @@ func InitConfig(cm *Config) {
 	flag.StringVar(&cm.TZOffsetString, "ibmmq.tzOffset", defaultTZOffset, "Time difference between collector and queue manager")
 	flag.StringVar(&cm.pollInterval, "pollInterval", defaultPollInterval, "Frequency of issuing object status checks")
 	flag.StringVar(&cm.rediscoverInterval, "rediscoverInterval", defaultRediscoverInterval, "Frequency of expanding wildcards for monitored queues")
+	// The locale ought to be discoverable from the environment, but making it an explicit config
+	// parameter for now to aid testing, to override, and to ensure it's given in the MQ-known format
+	// such as "Fr_FR"
+	flag.StringVar(&cm.Locale, "locale", "", "Locale for translated metric descriptions")
+
+	// A YAML configuration file can be used instead of all the preceding parameters
+	flag.StringVar(&cm.ConfigFile, "f", "", "Configuration file")
 
 }
 
@@ -195,6 +207,8 @@ func VerifyConfig(cm *Config) error {
 		}
 	}
 
+	log.Debugf("Configuration: %+v", cm)
+
 	return err
 }
 
@@ -222,5 +236,6 @@ func InitLog(cm Config) {
 	logger.Debug = log.Debugf
 	logger.Info = log.Infof
 	logger.Error = log.Errorf
+	logger.Warn = log.Warnf
 	mqmetric.SetLogger(logger)
 }

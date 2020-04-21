@@ -19,12 +19,9 @@ package main
 */
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
-	log "github.com/sirupsen/logrus"
-	"os"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 )
 
 type mqTTYConfig struct {
@@ -32,7 +29,19 @@ type mqTTYConfig struct {
 	interval string
 }
 
+type ConfigYJson struct {
+	Interval string
+}
+
+type mqExporterConfigYaml struct {
+	Global     cf.ConfigYGlobal
+	Connection cf.ConfigYConnection
+	Objects    cf.ConfigYObjects
+	JSON       ConfigYJson `yaml:"json"`
+}
+
 var config mqTTYConfig
+var cfy mqExporterConfigYaml
 
 /*
 initConfig parses the command line parameters.
@@ -52,26 +61,29 @@ func initConfig() error {
 	}
 
 	if err == nil {
+		if config.cf.ConfigFile != "" {
+			// Set defaults
+			cfy.Global.UsePublications = true
+			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			if err == nil {
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				config.interval = cfy.JSON.Interval
+			}
+		}
+	}
+
+	if err == nil {
+		cf.InitLog(config.cf)
+	}
+
+	if err == nil {
 		err = cf.VerifyConfig(&config.cf)
 	}
 
 	if err == nil {
 		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
-			// TODO: If stdin is a tty, then disable echo. Done differently on Windows and Unix
-			scanner := bufio.NewScanner(os.Stdin)
-			fmt.Printf("Enter password: \n")
-			scanner.Scan()
-			config.cf.CC.Password = scanner.Text()
+			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
 		}
-	}
-
-	if err == nil && config.cf.CC.UseResetQStats {
-		log.Errorln("Warning: Data from 'RESET QSTATS' has been requested.")
-		log.Errorln("Ensure no other monitoring applications are also using that command.\n")
-	}
-
-	if err == nil {
-		cf.InitLog(config.cf)
 	}
 
 	return err

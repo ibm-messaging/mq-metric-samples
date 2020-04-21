@@ -1,862 +1,1029 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_MQ_CLOUDWATCH",
-      "label": "MQ CloudWatch",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "cloudwatch",
-      "pluginName": "CloudWatch"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "singlestat",
-      "name": "Singlestat",
-      "version": ""
-    },
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "3.1.0"
-    },
-    {
-      "type": "datasource",
-      "id": "cloudwatch",
-      "name": "CloudWatch",
-      "version": "1.0.0"
-    }
-  ],
-  "id": null,
-  "title": "MQ CloudWatch",
-  "tags": [],
-  "style": "dark",
-  "timezone": "browser",
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
   "editable": true,
-  "hideControls": false,
-  "sharedCrosshair": false,
-  "rows": [
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 15,
+  "links": [],
+  "panels": [
     {
-      "collapse": false,
-      "editable": true,
-      "height": "250px",
-      "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "${DS_MQ_CLOUDWATCH}",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 1,
-          "isNew": true,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 12,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "MQGET: {{object}}",
-              "dimensions": {
-                "object": "APP.0",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqget",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "A",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQGET: {{object}}",
-              "dimensions": {
-                "object": "APP.1",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqget",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "B",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQGET: {{object}}",
-              "dimensions": {
-                "object": "APP.2",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqget",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "C",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQGET: {{object}}",
-              "dimensions": {
-                "object": "APP.3",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqget",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "D",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQGET: {{object}}",
-              "dimensions": {
-                "object": "APP.4",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqget",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "E",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQPUT: {{object}}",
-              "dimensions": {
-                "object": "APP.0",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqput_mqput1",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "F",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQPUT: {{object}}",
-              "dimensions": {
-                "object": "APP.1",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqput_mqput1",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "G",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQPUT: {{object}}",
-              "dimensions": {
-                "object": "APP.2",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqput_mqput1",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "H",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQPUT: {{object}}",
-              "dimensions": {
-                "object": "APP.3",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqput_mqput1",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "I",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "MQPUT: {{object}}",
-              "dimensions": {
-                "object": "APP.4",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.mqput_mqput1",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "J",
-              "region": "us-west-2",
-              "statistics": [
-                "Sum"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "Depth: {{object}}",
-              "dimensions": {
-                "object": "APP.0",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.queue_depth",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "K",
-              "region": "us-west-2",
-              "statistics": [
-                "Average"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "Depth: {{object}}",
-              "dimensions": {
-                "object": "APP.1",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.queue_depth",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "L",
-              "region": "us-west-2",
-              "statistics": [
-                "Average"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "Depth: {{object}}",
-              "dimensions": {
-                "object": "APP.2",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.queue_depth",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "M",
-              "region": "us-west-2",
-              "statistics": [
-                "Average"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "Depth: {{object}}",
-              "dimensions": {
-                "object": "APP.3",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.queue_depth",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "N",
-              "region": "us-west-2",
-              "statistics": [
-                "Average"
-              ],
-              "hide": false
-            },
-            {
-              "alias": "Depth: {{object}}",
-              "dimensions": {
-                "object": "APP.4",
-                "qmgr": "QM1"
-              },
-              "metricName": "queue.queue_depth",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "O",
-              "region": "us-west-2",
-              "statistics": [
-                "Average"
-              ],
-              "hide": false
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Queue Activity",
-          "tooltip": {
-            "msResolution": true,
-            "shared": true,
-            "sort": 0,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "show": true
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
-        }
-      ],
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "panels": [],
       "title": "MQ AWS CloudWatch",
-      "showTitle": true
+      "type": "row"
     },
     {
-      "collapse": false,
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "CloudWatch",
       "editable": true,
-      "height": "250px",
-      "panels": [
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "hiddenSeries": false,
+      "id": 1,
+      "isNew": true,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
         {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "${DS_MQ_CLOUDWATCH}",
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          "alias": "MQGET: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.0"
           },
-          "id": 2,
-          "isNew": true,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 4,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "alias": "System CPU",
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "metricName": "qmgr.system_cpu_time_percentage",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "A",
-              "region": "us-west-2",
-              "statistics": [
-                "Average"
-              ]
-            },
-            {
-              "alias": "User CPU",
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "metricName": "qmgr.user_cpu_time_percentage",
-              "namespace": "IBM/MQ",
-              "period": "",
-              "refId": "B",
-              "region": "us-west-2",
-              "statistics": [
-                "Average"
-              ]
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "CPU",
-          "tooltip": {
-            "msResolution": true,
-            "shared": true,
-            "sort": 0,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "show": true
-          },
-          "yaxes": [
-            {
-              "format": "percent",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqget_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "A",
+          "region": "default",
+          "statistics": [
+            "Sum"
           ]
         },
         {
-          "title": "Log write latency",
-          "error": false,
-          "span": 4,
-          "editable": true,
-          "type": "graph",
-          "isNew": true,
-          "id": 3,
-          "targets": [
-            {
-              "refId": "A",
-              "namespace": "IBM/MQ",
-              "metricName": "qmgr.log_write_latency_seconds",
-              "statistics": [
-                "Average"
-              ],
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "period": "",
-              "region": "us-west-2",
-              "alias": "Latency"
-            }
-          ],
-          "datasource": "${DS_MQ_CLOUDWATCH}",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "s"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
+          "alias": "MQGET: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.1"
           },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "sort": 0,
-            "msResolution": true
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "links": []
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqget_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "B",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
         },
         {
-          "title": "File system",
-          "error": false,
-          "span": 4,
-          "editable": true,
-          "type": "graph",
-          "isNew": true,
-          "id": 4,
-          "targets": [
-            {
-              "refId": "A",
-              "namespace": "IBM/MQ",
-              "metricName": "qmgr.log_file_system_in_use_bytes",
-              "statistics": [
-                "Average"
-              ],
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "period": "",
-              "region": "us-west-2",
-              "alias": "QMgr file system - in use [{{qmgr}}]"
-            },
-            {
-              "refId": "B",
-              "namespace": "IBM/MQ",
-              "metricName": "qmgr.queue_manager_file_system_in_use_bytes",
-              "statistics": [
-                "Average"
-              ],
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "period": "",
-              "region": "us-west-2",
-              "alias": "Log file system - in use [{{qmgr}}]"
-            }
-          ],
-          "datasource": "${DS_MQ_CLOUDWATCH}",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "bytes"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
+          "alias": "MQGET: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.2"
           },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqget_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "C",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "MQGET: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.3"
           },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqget_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "D",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "MQGET: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.4"
           },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "sort": 0,
-            "msResolution": true
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqget_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "E",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "MQPUT: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.0"
           },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "links": []
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqput_mqput1_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "F",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "MQPUT: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.1"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqput_mqput1_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "G",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "MQPUT: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.2"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqput_mqput1_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "H",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "MQPUT: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.3"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqput_mqput1_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "I",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "MQPUT: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.4"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.mqput_mqput1_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "J",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        },
+        {
+          "alias": "Depth: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.0"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.queue_depth",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "K",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        },
+        {
+          "alias": "Depth: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.1"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.queue_depth",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "L",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        },
+        {
+          "alias": "Depth: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.2"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.queue_depth",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "M",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        },
+        {
+          "alias": "Depth: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.3"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.queue_depth",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "N",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        },
+        {
+          "alias": "Depth: {{queue}}",
+          "dimensions": {
+            "qmgr": "QM1",
+            "queue": "APP.4"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "matchExact": false,
+          "metricName": "queue.queue_depth",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "O",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
         }
       ],
-      "title": "New row"
-    },
-    {
-      "title": "New row",
-      "height": "250px",
-      "editable": true,
-      "collapse": false,
-      "panels": [
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Queue Activity",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
         {
-          "title": "Subscriptions",
-          "error": false,
-          "span": 6,
-          "editable": true,
-          "type": "graph",
-          "isNew": true,
-          "id": 5,
-          "targets": [
-            {
-              "refId": "A",
-              "namespace": "IBM/MQ",
-              "metricName": "qmgr.non_durable_subscriber_low_water_mark",
-              "statistics": [
-                "Minimum"
-              ],
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "period": "",
-              "region": "us-west-2",
-              "alias": "ND Sub - low-water"
-            },
-            {
-              "refId": "B",
-              "namespace": "IBM/MQ",
-              "metricName": "qmgr.non_durable_subscriber_high_water_mark",
-              "statistics": [
-                "Minimum"
-              ],
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "period": "",
-              "region": "us-west-2",
-              "alias": "ND Sub - high-water"
-            },
-            {
-              "refId": "C",
-              "namespace": "IBM/MQ",
-              "metricName": "qmgr.create_non_durable_subscription",
-              "statistics": [
-                "Sum"
-              ],
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "period": "",
-              "region": "us-west-2",
-              "alias": "ND MQSUB Calls"
-            }
-          ],
-          "datasource": "${DS_MQ_CLOUDWATCH}",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "sort": 0,
-            "msResolution": true
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "links": []
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         },
         {
-          "title": "Persistent Bytes Put",
-          "error": false,
-          "span": 6,
-          "editable": true,
-          "type": "singlestat",
-          "isNew": true,
-          "id": 6,
-          "targets": [
-            {
-              "refId": "A",
-              "namespace": "IBM/MQ",
-              "metricName": "qmgr.put_persistent_messages_bytes",
-              "statistics": [
-                "Sum"
-              ],
-              "dimensions": {
-                "qmgr": "QM1"
-              },
-              "period": "",
-              "region": "us-west-2",
-              "alias": "Persistent Bytes"
-            }
-          ],
-          "links": [],
-          "datasource": "${DS_MQ_CLOUDWATCH}",
-          "maxDataPoints": 100,
-          "interval": null,
-          "cacheTimeout": null,
-          "format": "none",
-          "prefix": "",
-          "postfix": "",
-          "nullText": null,
-          "valueMaps": [
-            {
-              "value": "null",
-              "op": "=",
-              "text": "N/A"
-            }
-          ],
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "rangeMaps": [
-            {
-              "from": "null",
-              "to": "null",
-              "text": "N/A"
-            }
-          ],
-          "mappingType": 1,
-          "nullPointMode": "connected",
-          "valueName": "avg",
-          "prefixFontSize": "50%",
-          "valueFontSize": "80%",
-          "postfixFontSize": "50%",
-          "thresholds": "",
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "sparkline": {
-            "show": false,
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "fillColor": "rgba(31, 118, 189, 0.18)"
-          },
-          "gauge": {
-            "show": false,
-            "minValue": 0,
-            "maxValue": 100,
-            "thresholdMarkers": true,
-            "thresholdLabels": false
-          }
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 8,
+      "panels": [],
+      "title": "New row",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "CloudWatch",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 9
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "isNew": true,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "System CPU",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricName": "qmgr.system_cpu_time_percentage",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "A",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        },
+        {
+          "alias": "User CPU",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricName": "qmgr.user_cpu_time_percentage",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "B",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPU",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "CloudWatch",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 9
+      },
+      "hiddenSeries": false,
+      "id": 3,
+      "isNew": true,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Latency",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": false,
+          "metricName": "qmgr.log_write_latency_seconds",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "A",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Log write latency",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "CloudWatch",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "isNew": true,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "QMgr file system - in use [{{qmgr}}]",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": false,
+          "metricName": "qmgr.log_file_system_in_use_bytes",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "A",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        },
+        {
+          "alias": "Log file system - in use [{{qmgr}}]",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": false,
+          "metricName": "qmgr.queue_manager_file_system_in_use_bytes",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "B",
+          "region": "default",
+          "statistics": [
+            "Average"
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "File system",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 9,
+      "panels": [],
+      "title": "New row",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "CloudWatch",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "isNew": true,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "ND Sub - low-water",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": false,
+          "metricName": "qmgr.non_durable_subscriber_low_water_mark",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "A",
+          "region": "default",
+          "statistics": [
+            "Minimum"
+          ]
+        },
+        {
+          "alias": "ND Sub - high-water",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": false,
+          "metricName": "qmgr.non_durable_subscriber_high_water_mark",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "B",
+          "region": "default",
+          "statistics": [
+            "Minimum"
+          ]
+        },
+        {
+          "alias": "ND MQSUB Calls",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": false,
+          "metricName": "qmgr.create_non_durable_subscription_count",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "C",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Subscriptions",
+      "tooltip": {
+        "msResolution": true,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "rgba(245, 54, 54, 0.9)",
+        "rgba(237, 129, 40, 0.89)",
+        "rgba(50, 172, 45, 0.97)"
+      ],
+      "datasource": "CloudWatch",
+      "editable": true,
+      "error": false,
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 6,
+      "interval": null,
+      "isNew": true,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "options": {},
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "alias": "Persistent Bytes",
+          "dimensions": {
+            "qmgr": "QM1"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricName": "qmgr.put_persistent_messages_bytes",
+          "namespace": "IBM/MQ",
+          "period": "",
+          "refId": "A",
+          "region": "default",
+          "statistics": [
+            "Sum"
+          ]
+        }
+      ],
+      "thresholds": "",
+      "title": "Persistent Bytes Put",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "avg"
     }
   ],
+  "refresh": "10s",
+  "schemaVersion": 22,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
   "time": {
     "from": "now-15m",
     "to": "now"
@@ -886,15 +1053,8 @@
       "30d"
     ]
   },
-  "templating": {
-    "list": []
-  },
-  "annotations": {
-    "list": []
-  },
-  "refresh": "1m",
-  "schemaVersion": 12,
-  "version": 3,
-  "links": [],
-  "gnetId": null
+  "timezone": "browser",
+  "title": "MQ CloudWatch",
+  "uid": "o0vsVoRGk",
+  "version": 3
 }

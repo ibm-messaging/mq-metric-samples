@@ -31,7 +31,7 @@ TAG="mq-metric-samples-gobuild"
 # version in the dep file (it's the only dependency explicitly listed for now)
 # and the current Git tag for this repo. Then pick the latest version to create
 # the Docker tag
-VERDEP=`cat Gopkg.toml | awk '/version/ {print $3}' | sed "s/\"//g" `
+VERDEP=`cat go.mod | awk '/mq-golang/ {print $2}' `
 VERREPO=`git tag -l | sort | tail -1 `
 
 VER=`latestSemVer $VERDEP $VERREPO`

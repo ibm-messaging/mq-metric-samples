@@ -34,19 +34,31 @@ func newPoint(metric string, timestamp time.Time, value float64, tags map[string
 		return nil, errors.New("PointError: Metric can not be empty")
 	}
 
-	d1 := cloudwatch.Dimension{
-		Name:  aws.String("qmgr"),
-		Value: aws.String(tags["qmgr"]),
-	}
-
-	dl = append(dl, &d1)
-
-	if qName, ok := tags["object"]; ok {
-		d2 := cloudwatch.Dimension{
-			Name:  aws.String("object"),
-			Value: aws.String(qName),
+	/*
+		d1 := cloudwatch.Dimension{
+			Name:  aws.String("qmgr"),
+			Value: aws.String(tags["qmgr"]),
 		}
-		dl = append(dl, &d2)
+
+		dl = append(dl, &d1)
+
+		if qName, ok := tags["queue"]; ok {
+			d2 := cloudwatch.Dimension{
+				Name:  aws.String("queue"),
+				Value: aws.String(qName),
+			}
+			dl = append(dl, &d2)
+		}
+	*/
+	for tag, val := range tags {
+		if val == "" {
+			val = "-"
+		}
+		dim := cloudwatch.Dimension{
+			Name:  aws.String(tag),
+			Value: aws.String(val),
+		}
+		dl = append(dl, &dim)
 	}
 
 	unit := aws.String("None")

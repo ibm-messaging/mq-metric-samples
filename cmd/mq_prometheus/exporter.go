@@ -30,8 +30,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
@@ -61,6 +61,10 @@ func newExporter() *exporter {
 	}
 }
 
+const (
+	defaultScrapeTimeout = 10 // Prometheus default scrape_timeout is 10s
+)
+
 var (
 	first                 = true
 	gaugeMap              = make(map[string]*prometheus.GaugeVec)
@@ -75,6 +79,7 @@ var (
 	lastQueueDiscovery    time.Time
 	platformString        string
 	counter               = 0
+	warnedScrapeTimeout   = false
 )
 
 /*
@@ -133,19 +138,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	e.mutex.Lock() // To protect metrics from concurrent collects.
 	defer e.mutex.Unlock()
 
-	log.Infof("IBMMQ Collect started")
-
-	// Do we need to poll for object status on this iteration
-	pollStatus := false
-	thisPoll := time.Now()
-	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.cf.PollIntervalDuration {
-		log.Debugf("Polling for object status")
-		lastPoll = thisPoll
-		pollStatus = true
-	} else {
-		log.Debugf("Skipping poll for object status")
-	}
+	log.Infof("IBMMQ Collect started %o", ch)
+	collectStartTime := time.Now()
 
 	// Clear out everything we know so far. In particular, replace
 	// the map of values for each object so the collection starts
@@ -163,8 +157,21 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	err := mqmetric.ProcessPublications()
 	if err != nil {
 		log.Fatalf("Error processing publications: %v", err)
+	} else {
+		log.Debugf("Collected and processed resource publications successfully")
 	}
 
+	// Do we need to poll for object status on this iteration
+	pollStatus := false
+	thisPoll := time.Now()
+	elapsed := thisPoll.Sub(lastPoll)
+	if elapsed >= config.cf.PollIntervalDuration {
+		log.Debugf("Polling for object status")
+		lastPoll = thisPoll
+		pollStatus = true
+	} else {
+		log.Debugf("Skipping poll for object status")
+	}
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too. Don't treat errors in this block
 	// as fatal - the previous section will have caught things like the qmgr
@@ -238,9 +245,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	elapsed = thisDiscovery.Sub(lastQueueDiscovery)
 	if config.cf.RediscoverDuration > 0 {
 		if elapsed >= config.cf.RediscoverDuration {
-			s := config.cf.MonitoredQueues
 			log.Debugf("Doing queue rediscovery")
-			err = mqmetric.RediscoverAndSubscribe(s, true, "")
+			err = mqmetric.RediscoverAndSubscribe(discoverConfig)
 			lastQueueDiscovery = thisDiscovery
 			//if err == nil {
 			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
@@ -454,7 +460,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
-	// Then put the channel info back to Prometheus
+	// Then put the responses from DIS xxSTATUS info back to Prometheus
 	// We do this even if we have not polled for new status, so that Grafana's "instant"
 	// view will still show up the most recently known values
 	for _, attr := range e.chlStatus.Attributes {
@@ -474,7 +480,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, attr := range e.topicStatus.Attributes {
 		if !attr.Pseudo {
 			g := topicStatusGaugeMap[attr.MetricName]
-			log.Debugf("Reporting topic gauge for %s", attr.MetricName)
+			//log.Debugf("Reporting topic gauge for %s", attr.MetricName)
 			g.Collect(ch)
 		}
 	}
@@ -508,6 +514,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				g.Collect(ch)
 			}
 		}
+	}
+
+	collectStopTime := time.Now()
+	elapsedSecs := int64(collectStopTime.Sub(collectStartTime).Seconds())
+	log.Infof("Collection time = %d secs", elapsedSecs)
+	if elapsedSecs > defaultScrapeTimeout && !warnedScrapeTimeout {
+		log.Warnf("Collection time has exceeded Prometheus default scrape_timeout value of %d seconds. Ensure you have set a larger value for this job", defaultScrapeTimeout)
+		warnedScrapeTimeout = true
 	}
 
 }

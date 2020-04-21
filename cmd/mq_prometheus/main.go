@@ -22,20 +22,23 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/ibm-messaging/mq-golang/mqmetric"
-	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
+	"strings"
+
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
 var BuildStamp string
 var GitCommit string
 var BuildPlatform string
+var discoverConfig mqmetric.DiscoverConfig
 
 func main() {
 	var err error
-
 	cf.PrintInfo("IBM MQ metrics exporter for Prometheus monitoring", BuildStamp, GitCommit, BuildPlatform)
 
 	err = initConfig()
@@ -45,7 +48,7 @@ func main() {
 
 	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
-		os.Exit(1)
+		os.Exit(72) // Same as strmqm "queue manager name error"
 	}
 
 	if err == nil {
@@ -54,6 +57,14 @@ func main() {
 		if err == nil {
 			log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 			defer mqmetric.EndConnection()
+		} else {
+			if mqe, ok := err.(mqmetric.MQMetricError); ok {
+				mqrc := mqe.MQReturn.MQRC
+				if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
+					log.Errorln(err)
+					os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
+				}
+			}
 		}
 	}
 
@@ -67,8 +78,13 @@ func main() {
 			wildcardResource = false
 		}
 
-		mqmetric.SetLocale(config.locale)
-		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, wildcardResource, config.cf.MetaPrefix)
+		mqmetric.SetLocale(config.cf.Locale)
+		discoverConfig.MonitoredQueues.ObjectNames = config.cf.MonitoredQueues
+		discoverConfig.MonitoredQueues.SubscriptionSelector = strings.ToUpper(config.cf.QueueSubscriptionSelector)
+
+		discoverConfig.MonitoredQueues.UseWildcard = wildcardResource
+		discoverConfig.MetaPrefix = config.cf.MetaPrefix
+		err = mqmetric.DiscoverAndSubscribe(discoverConfig)
 		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 	}
 
@@ -93,7 +109,7 @@ func main() {
 		exporter := newExporter()
 		prometheus.MustRegister(exporter)
 
-		http.Handle(config.httpMetricPath, prometheus.Handler())
+		http.Handle(config.httpMetricPath, promhttp.Handler())
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Write(landingPage())
 		})

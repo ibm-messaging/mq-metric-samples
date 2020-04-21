@@ -20,59 +20,84 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	"os"
-
-	"github.com/ibm-messaging/mq-golang/mqmetric"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type mqTTYConfig struct {
-	qMgrName            string
-	replyQ              string
-	monitoredQueues     string
-	monitoredQueuesFile string
-	hostname            string
-	hostlabel           string // Used in the output string
+	cf cf.Config
 
-	cc mqmetric.ConnectionConfig
+	hostname  string
+	hostlabel string // Used in the output string
+	interval  string
+}
 
-	interval string
+type ConfigYColl struct {
+	Interval string
+	Hostname string `yaml:"hostname"`
+}
 
-	logLevel string
+type mqExporterConfigYaml struct {
+	Global     cf.ConfigYGlobal
+	Connection cf.ConfigYConnection
+	Objects    cf.ConfigYObjects
+	Collectd   ConfigYColl `yaml:"collectd"`
 }
 
 var config mqTTYConfig
+var cfy mqExporterConfigYaml
 
 /*
 initConfig parses the command line parameters.
 */
 func initConfig() {
 
-	flag.StringVar(&config.qMgrName, "ibmmq.queueManager", "", "Queue Manager name")
-	flag.StringVar(&config.replyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
-	flag.StringVar(&config.monitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
-	flag.StringVar(&config.monitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
+	var err error
+
+	cf.InitConfig(&config.cf)
 
 	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
 	flag.StringVar(&config.hostname, "ibmmq.hostname", "localhost", "Host to connect to")
 
-	flag.BoolVar(&config.cc.ClientMode, "ibmmq.client", false, "Connect as MQ client")
-
-	flag.StringVar(&config.logLevel, "log.level", "error", "Log level - debug, info, error")
-
 	flag.Parse()
 
-	if config.monitoredQueuesFile != "" {
-		var err error
-		config.monitoredQueues, err = mqmetric.ReadPatterns(config.monitoredQueuesFile)
-		if err != nil {
-			log.Errorf("Failed to parse monitored queues file - %v", err)
+	if len(flag.Args()) > 0 {
+		err = fmt.Errorf("Extra command line parameters given")
+		flag.PrintDefaults()
+	}
+
+	if err == nil {
+		if config.cf.ConfigFile != "" {
+			// Set defaults
+			cfy.Global.UsePublications = true
+			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			if err == nil {
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				config.interval = cfy.Collectd.Interval
+				if cfy.Collectd.Hostname != "" {
+					config.hostname = cfy.Collectd.Hostname
+				}
+			}
+		}
+	}
+
+	if err == nil {
+		cf.InitLog(config.cf)
+	}
+
+	if err == nil {
+		err = cf.VerifyConfig(&config.cf)
+	}
+
+	if err == nil {
+		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
+			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
 		}
 	}
 
 	// Don't want to use "localhost" as the tag in the metric printing
-	if config.hostname == "localhost" {
+	if config.hostname == "localhost" || config.hostname == "" {
 		config.hostlabel, _ = os.Hostname()
 	} else {
 		config.hostlabel = config.hostname

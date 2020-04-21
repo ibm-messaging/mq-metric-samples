@@ -4,12 +4,12 @@ This directory contains the code for a monitoring solution
 that prints queue manager data in JSON format.
 It also contains configuration files to run the monitor program
 
-The monitor collects metrics published by an MQ V9 queue manager
-or the MQ appliance. The monitor program prints
+The monitor collects metrics published by an MQ queue manager. The monitor program prints
 these metrics to stdout.
 
 You can see data such as disk or CPU usage, queue depths, and MQI call
-counts. You can also see basic channel status information.
+counts. You can also see channel status information along with other
+object status reports.
 
 ## Configuring MQ
 It is convenient to run the monitor program as a queue manager service.
@@ -30,13 +30,6 @@ Since the output from the monitor is always sent to stdout, you will
 probably want to modify the script to pipe the output to a processing
 program that works with JSON data, or to a program that automatically
 creates and manages multiple log files.
-
-The monitor always collects all of the available queue manager-wide metrics.
-It can also be configured to collect statistics for specific sets of queues.
-The sets of queues can be given either directly on the command line with the
-`-ibmmq.monitoredQueues` flag, or put into a separate file which is also
-named on the command line, with the `ibmmq.monitoredQueuesFile` flag. An
-example is included in the startup shell script.
 
 At each collection interval, a JSON object is printed, consisting of
 a timestamp followed by an array of "points" which contain the
@@ -110,28 +103,10 @@ jq -c '.collectionTime.timeStamp as $t | .points[] |
 Once the monitor program has been started, you will see metrics being available.
 More information on the metrics collected through the publish/subscribe
 interface can be found in the [MQ KnowledgeCenter]
-(https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.0.0/com.ibm.mq.mon.doc/mo00013_.htm)
+(https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.1.0/com.ibm.mq.mon.doc/mo00013_.htm)
 with further description in [an MQDev blog entry]
 (https://www.ibm.com/developerworks/community/blogs/messaging/entry/Statistics_published_to_the_system_topic_in_MQ_v9?lang=en)
 
 The metrics printed are named after the
 descriptions that you can see when running the amqsrua sample program, but with some
 minor modifications to match a more appropriate style.
-
-## Channel Status
-The monitor program can now process channel status.
-
-The channels to be monitored are set on the command line, similarly to
-the queue patterns, with `-ibmmq.monitoredChannels` or `-ibmmq.monitoredChannelFile`.
-Unlike the queue monitoring, wildcards are handled automatically by the channel
-status API. So you do not need to restart this monitor in order to pick up newly-defined
-channels that match an existing pattern.
-
-Another command line parameter is `pollInterval`. This determines how frequently the
-channel status is collected. You may want to have it collected at a different rate to
-the queue data, as it may be more expensive to extract the channel status. The default
-pollInterval is 0, which means that the channel status is collected every time the
-the queue and queue manager statistics publication collection.
-Setting it to `1m` means that a minimum
-time of one minute will elapse between asking for channel status even if the queue statistics
-are gathered more frequently.

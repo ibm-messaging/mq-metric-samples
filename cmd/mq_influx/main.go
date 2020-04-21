@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2020
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -20,17 +20,20 @@ package main
 
 import (
 	"os"
+	"strings"
 	"time"
 
-	"github.com/ibm-messaging/mq-golang/mqmetric"
-	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
-	"github.com/influxdata/influxdb1-client/v2"
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
+	client "github.com/influxdata/influxdb1-client/v2"
 	log "github.com/sirupsen/logrus"
 )
 
 var BuildStamp string
 var GitCommit string
 var BuildPlatform string
+var discoverConfig mqmetric.DiscoverConfig
 
 func main() {
 	var err error
@@ -42,11 +45,11 @@ func main() {
 
 	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
-		os.Exit(1)
+		os.Exit(72)
 	}
-	d, err := time.ParseDuration(config.interval)
-	if err != nil {
-		log.Errorln("Invalid value for interval parameter: ", err)
+	d, err := time.ParseDuration(config.ci.Interval)
+	if err != nil || d.Seconds() <= 1 {
+		log.Errorln("Invalid or too short value for interval parameter: ", err)
 		os.Exit(1)
 	}
 
@@ -55,20 +58,45 @@ func main() {
 	if err == nil {
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 		defer mqmetric.EndConnection()
+	} else {
+		if mqe, ok := err.(mqmetric.MQMetricError); ok {
+			mqrc := mqe.MQReturn.MQRC
+			if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
+				log.Errorln(err)
+				os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
+			}
+		}
 	}
 
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
 
 	if err == nil {
-		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, true, config.cf.MetaPrefix)
+		discoverConfig.MonitoredQueues.ObjectNames = config.cf.MonitoredQueues
+		discoverConfig.MonitoredQueues.UseWildcard = true
+		discoverConfig.MonitoredQueues.SubscriptionSelector = strings.ToUpper(config.cf.QueueSubscriptionSelector)
+		discoverConfig.MetaPrefix = config.cf.MetaPrefix
+		err = mqmetric.DiscoverAndSubscribe(discoverConfig)
+
+	}
+
+	if err == nil {
+		var compCode int32
+		compCode, err = mqmetric.VerifyConfig()
+		// We could choose to fail after a warning, but instead will continue for now
+		if compCode == ibmmq.MQCC_WARNING {
+			log.Println(err)
+			err = nil
+		}
 	}
 
 	if err == nil {
 		mqmetric.ChannelInitAttributes()
 		mqmetric.QueueInitAttributes()
 		mqmetric.TopicInitAttributes()
+		mqmetric.SubInitAttributes()
 		mqmetric.QueueManagerInitAttributes()
+		mqmetric.UsageInitAttributes()
 	}
 
 	// Go into main loop for sending data to database
@@ -76,9 +104,9 @@ func main() {
 	// come during the write of the data.
 	if err == nil {
 		c, err = client.NewHTTPClient(client.HTTPConfig{
-			Addr:     config.databaseAddress,
-			Username: config.userid,
-			Password: config.password,
+			Addr:     config.ci.DatabaseAddress,
+			Username: config.ci.Userid,
+			Password: config.ci.Password,
 		})
 
 		if err != nil {

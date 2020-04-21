@@ -19,11 +19,9 @@ package main
 */
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	cf "github.com/ibm-messaging/mq-metric-samples/pkg/config"
-	"os"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 )
 
 type mqExporterConfig struct {
@@ -32,8 +30,18 @@ type mqExporterConfig struct {
 	httpListenPort string
 	httpMetricPath string
 	namespace      string
+}
 
-	locale string
+type ConfigYProm struct {
+	Port        string
+	MetricsPath string `yaml:"metricsPath"`
+	Namespace   string
+}
+type mqExporterConfigYaml struct {
+	Global     cf.ConfigYGlobal
+	Connection cf.ConfigYConnection
+	Objects    cf.ConfigYObjects
+	Prometheus ConfigYProm
 }
 
 const (
@@ -42,6 +50,7 @@ const (
 )
 
 var config mqExporterConfig
+var cfy mqExporterConfigYaml
 
 /*
 initConfig parses the command line parameters. Note that the logging
@@ -61,11 +70,6 @@ func initConfig() error {
 
 	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
 
-	// The locale ought to be discoverable from the environment, but making it an explicit config
-	// parameter for now to aid testing, to override, and to ensure it's given in the MQ-known format
-	// such as "Fr_FR"
-	flag.StringVar(&config.locale, "locale", "", "Locale for translated metric descriptions")
-
 	flag.Parse()
 
 	if len(flag.Args()) > 0 {
@@ -74,26 +78,36 @@ func initConfig() error {
 	}
 
 	if err == nil {
+		if config.cf.ConfigFile != "" {
+			// Set defaults
+			cfy.Global.UsePublications = true
+			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			if err == nil {
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				config.httpListenPort = cfy.Prometheus.Port
+				config.httpMetricPath = cfy.Prometheus.MetricsPath
+				config.namespace = cfy.Prometheus.Namespace
+			}
+		}
+	}
+
+	if err == nil {
+		cf.InitLog(config.cf)
+	}
+
+	if err == nil {
 		err = cf.VerifyConfig(&config.cf)
 	}
 
 	if err == nil {
 		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
-			// TODO: If stdin is a tty, then disable echo. Done differently on Windows and Unix
-			scanner := bufio.NewScanner(os.Stdin)
-			fmt.Printf("Enter password: \n")
-			scanner.Scan()
-			config.cf.CC.Password = scanner.Text()
+			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
 		}
 	}
 
 	if err == nil && config.cf.CC.UseResetQStats {
 		fmt.Println("Warning: Data from 'RESET QSTATS' has been requested.")
-		fmt.Println("Ensure no other monitoring applications are also using that command.\n")
-	}
-
-	if err == nil {
-		cf.InitLog(config.cf)
+		fmt.Println("Ensure no other monitoring applications are also using that command.")
 	}
 
 	return err

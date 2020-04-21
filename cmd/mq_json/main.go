@@ -20,16 +20,18 @@ package main
 
 import (
 	"os"
+	"strings"
 	"time"
 
-	ibmmq "github.com/ibm-messaging/mq-golang/ibmmq"
-	mqmetric "github.com/ibm-messaging/mq-golang/mqmetric"
+	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	mqmetric "github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	log "github.com/sirupsen/logrus"
 )
 
 var BuildStamp string
 var GitCommit string
 var BuildPlatform string
+var discoverConfig mqmetric.DiscoverConfig
 
 // Print this via the logger rather than direct to stdout so it can be
 // avoided if someone is using the stdout stream as the JSON input to a parser
@@ -56,11 +58,11 @@ func main() {
 
 	if config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
-		os.Exit(1)
+		os.Exit(72)
 	}
 	d, err := time.ParseDuration(config.interval)
-	if err != nil {
-		log.Errorln("Invalid value for interval parameter: ", err)
+	if err != nil || d.Seconds() <= 1 {
+		log.Errorln("Invalid or too short value for interval parameter: ", err)
 		os.Exit(1)
 	}
 
@@ -75,8 +77,24 @@ func main() {
 	if err == nil {
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 		defer mqmetric.EndConnection()
+	} else {
+		if mqe, ok := err.(mqmetric.MQMetricError); ok {
+			mqrc := mqe.MQReturn.MQRC
+			if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
+				log.Errorln(err)
+				os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
+			}
+		}
 	}
 
+	if err == nil {
+		mqmetric.ChannelInitAttributes()
+		mqmetric.QueueInitAttributes()
+		mqmetric.TopicInitAttributes()
+		mqmetric.SubInitAttributes()
+		mqmetric.QueueManagerInitAttributes()
+		mqmetric.UsageInitAttributes()
+	}
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
 	if err == nil {
@@ -86,7 +104,12 @@ func main() {
 		if config.cf.MetaPrefix != "" {
 			wildcardResource = false
 		}
-		err = mqmetric.DiscoverAndSubscribe(config.cf.MonitoredQueues, wildcardResource, config.cf.MetaPrefix)
+		discoverConfig.MonitoredQueues.ObjectNames = config.cf.MonitoredQueues
+		discoverConfig.MonitoredQueues.UseWildcard = wildcardResource
+		discoverConfig.MetaPrefix = config.cf.MetaPrefix
+		discoverConfig.MonitoredQueues.SubscriptionSelector = strings.ToUpper(config.cf.QueueSubscriptionSelector)
+
+		err = mqmetric.DiscoverAndSubscribe(discoverConfig)
 		// Also get the static attributes for any configured channels
 		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 	}

@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016,2020
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -30,9 +30,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -46,6 +48,11 @@ var (
 	first      = true
 	errorCount = 0
 	c          *client
+	forceFlush = false
+
+	lastPoll           = time.Now()
+	lastQueueDiscovery time.Time
+	platformString     string
 )
 
 /*
@@ -56,6 +63,14 @@ func Collect() error {
 	var err error
 	var series string
 	log.Infof("IBM MQ OpenTSDB collection started")
+
+	if platformString == "" {
+		platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)
+		log.Infof("Platform is %s", platformString)
+
+	}
+
+	collectStartTime := time.Now()
 
 	if c == nil {
 		c, err = newClient()
@@ -78,6 +93,77 @@ func Collect() error {
 		log.Fatalf("Error processing publications: %v", err)
 	}
 
+	// Do we need to poll for object status on this iteration
+	pollStatus := false
+	thisPoll := time.Now()
+	elapsed := thisPoll.Sub(lastPoll)
+	if elapsed >= config.cf.PollIntervalDuration {
+		log.Debugf("Polling for object status")
+		lastPoll = thisPoll
+		pollStatus = true
+	} else {
+		log.Debugf("Skipping poll for object status")
+	}
+	if pollStatus {
+		if config.cf.CC.UseStatus {
+			err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
+			if err != nil {
+				log.Errorf("Error collecting channel status: %v", err)
+			} else {
+				log.Debugf("Collected all channel status")
+			}
+
+			err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
+			if err != nil {
+				log.Errorf("Error collecting topic status: %v", err)
+			} else {
+				log.Debugf("Collected all topic status")
+			}
+
+			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
+			if err != nil {
+				log.Errorf("Error collecting subscription status: %v", err)
+			} else {
+				log.Debugf("Collected all subscription status")
+			}
+
+			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
+			if err != nil {
+				log.Errorf("Error collecting queue status: %v", err)
+			} else {
+				log.Debugf("Collected all queue status")
+			}
+		}
+
+		err = mqmetric.CollectQueueManagerStatus()
+		if err != nil {
+			log.Errorf("Error collecting queue manager status: %v", err)
+		} else {
+			log.Debugf("Collected all queue manager status")
+		}
+
+		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+			err = mqmetric.CollectUsageStatus()
+			if err != nil {
+				log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+			} else {
+				log.Debugf("Collected all buffer pool/pageset status")
+			}
+		}
+	}
+
+	thisDiscovery := time.Now()
+	elapsed = thisDiscovery.Sub(lastQueueDiscovery)
+	if config.cf.RediscoverDuration > 0 {
+		if elapsed >= config.cf.RediscoverDuration {
+			log.Debugf("Doing queue rediscovery")
+			err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+			lastQueueDiscovery = thisDiscovery
+			//if err == nil {
+			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+			//}
+		}
+	}
 	// Have now processed all of the publications, and all the MQ-owned
 	// value fields and maps have been updated.
 	//
@@ -97,14 +183,28 @@ func Collect() error {
 					for key, value := range elem.Values {
 						f := mqmetric.Normalise(elem, key, value)
 						tags := map[string]string{
-							"qmgr": config.qMgrName,
+							"qmgr":     config.cf.QMgrName,
+							"platform": platformString,
 						}
 
 						series = "qmgr"
 						if key != mqmetric.QMgrMapKey {
-							tags["object"] = key
+							tags["queue"] = key
 							series = "queue"
+							usage := ""
+							if usageAttr, ok := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+								if usageAttr.ValueInt64 == 1 {
+									usage = "XMITQ"
+								} else {
+									usage = "NORMAL"
+								}
+							}
+
+							tags["usage"] = usage
+							tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
+
 						}
+
 						pt, _ := newPoint(series+"."+elem.MetricName, t, float32(f), tags)
 						bp.addPoint(pt)
 
@@ -113,32 +213,248 @@ func Collect() error {
 						// may require http chunking which is disabled by default
 						// in the database. So we flush after a configurable set has been
 						// collected.
-						if len(bp.Points) >= config.maxPoints {
-							bp = c.Flush(bp)
-						}
-						//log.Debugf("Adding point %v", pt)
+						bp = c.Flush(bp)
 					}
+					//log.Debugf("Adding point %v", pt)
 				}
 			}
 		}
 
+		series = "channel"
+		for _, attr := range mqmetric.ChannelStatus.Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 {
+
+					chlType := int(mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
+					chlTypeString := strings.Replace(ibmmq.MQItoString("CHT", chlType), "MQCHT_", "", -1)
+					// Not every channel status report has the RQMNAME attribute (eg SVRCONNs)
+					rqmName := ""
+					if rqmNameAttr, ok := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
+						rqmName = rqmNameAttr.ValueString
+					}
+
+					chlName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+					connName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+					jobName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
+
+					tags := map[string]string{
+						"qmgr": config.cf.QMgrName,
+					}
+					tags["channel"] = chlName
+					tags["platform"] = platformString
+					tags[mqmetric.ATTR_CHL_TYPE] = strings.TrimSpace(chlTypeString)
+					tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
+					tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
+					tags[mqmetric.ATTR_CHL_JOBNAME] = strings.TrimSpace(jobName)
+
+					f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
+
+					pt, _ := newPoint(series+"."+attr.MetricName, t, float32(f), tags)
+					bp.addPoint(pt)
+					bp = c.Flush(bp)
+					log.Debugf("Adding channel point %v", pt)
+				}
+			}
+		}
+
+		series = "queue"
+		for _, attr := range mqmetric.QueueStatus.Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 {
+
+					qName := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+
+					tags := map[string]string{
+						"qmgr": config.cf.QMgrName,
+					}
+					tags["queue"] = qName
+					tags["platform"] = platformString
+					usage := ""
+					if usageAttr, ok := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+						if usageAttr.ValueInt64 == 1 {
+							usage = "XMITQ"
+						} else {
+							usage = "NORMAL"
+						}
+					}
+
+					tags["usage"] = usage
+					tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
+
+					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
+
+					pt, _ := newPoint(series+"."+attr.MetricName, t, float32(f), tags)
+
+					bp.addPoint(pt)
+					bp = c.Flush(bp)
+
+					log.Debugf("Adding queue point %v", pt)
+				}
+			}
+		}
+
+		series = "topic"
+		for _, attr := range mqmetric.TopicStatus.Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 {
+
+					topicString := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
+					topicStatusType := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
+
+					tags := map[string]string{
+						"qmgr": config.cf.QMgrName,
+					}
+					tags["topic"] = topicString
+					tags["platform"] = platformString
+					tags["type"] = topicStatusType
+
+					f := mqmetric.TopicNormalise(attr, value.ValueInt64)
+
+					pt, _ := newPoint(series+"."+attr.MetricName, t, float32(f), tags)
+
+					bp.addPoint(pt)
+					bp = c.Flush(bp)
+
+					log.Debugf("Adding topic point %v", pt)
+				}
+			}
+		}
+
+		series = "subscription"
+		for _, attr := range mqmetric.SubStatus.Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 {
+					subId := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_ID].Values[key].ValueString
+					subName := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_NAME].Values[key].ValueString
+					subType := int(mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_TYPE].Values[key].ValueInt64)
+					subTypeString := strings.Replace(ibmmq.MQItoString("SUBTYPE", subType), "MQSUBTYPE_", "", -1)
+					topicString := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
+
+					tags := map[string]string{
+						"qmgr": config.cf.QMgrName,
+					}
+
+					tags["platform"] = platformString
+					tags["type"] = subTypeString
+					tags["subid"] = subId
+					tags["subscription"] = subName
+					tags["topic"] = topicString
+					f := mqmetric.SubNormalise(attr, value.ValueInt64)
+
+					pt, _ := newPoint(series+"."+attr.MetricName, t, float32(f), tags)
+
+					bp.addPoint(pt)
+					bp = c.Flush(bp)
+
+					log.Debugf("Adding subscription point %v", pt)
+				}
+			}
+		}
+
+		series = "qmgr"
+		for _, attr := range mqmetric.QueueManagerStatus.Attributes {
+			for _, value := range attr.Values {
+				if value.IsInt64 {
+
+					qMgrName := strings.TrimSpace(config.cf.QMgrName)
+
+					tags := map[string]string{
+						"qmgr":     qMgrName,
+						"platform": platformString,
+					}
+
+					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+
+					pt, _ := newPoint(series+"."+attr.MetricName, t, float32(f), tags)
+
+					bp.addPoint(pt)
+					bp = c.Flush(bp)
+
+					log.Debugf("Adding qmgr point %v", pt)
+				}
+			}
+		}
+
+		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+			series = "bufferpool"
+			for _, attr := range mqmetric.UsageBpStatus.Attributes {
+				for key, value := range attr.Values {
+					bpId := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_ID].Values[key].ValueString
+					bpLocation := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_LOCATION].Values[key].ValueString
+					bpClass := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_CLASS].Values[key].ValueString
+					if value.IsInt64 && !attr.Pseudo {
+						qMgrName := strings.TrimSpace(config.cf.QMgrName)
+
+						tags := map[string]string{
+							"qmgr":     qMgrName,
+							"platform": platformString,
+						}
+						tags["bufferpool"] = bpId
+						tags["location"] = bpLocation
+						tags["pageclass"] = bpClass
+
+						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+
+						pt, _ := newPoint(series+"."+attr.MetricName, t, float32(f), tags)
+						bp.addPoint(pt)
+						bp = c.Flush(bp)
+
+						log.Debugf("Adding bufferpool point %v", pt)
+
+					}
+				}
+			}
+
+			series = "pageset"
+			for _, attr := range mqmetric.UsagePsStatus.Attributes {
+				for key, value := range attr.Values {
+					qMgrName := strings.TrimSpace(config.cf.QMgrName)
+					psId := mqmetric.UsagePsStatus.Attributes[mqmetric.ATTR_PS_ID].Values[key].ValueString
+					bpId := mqmetric.UsagePsStatus.Attributes[mqmetric.ATTR_PS_BPID].Values[key].ValueString
+					if value.IsInt64 && !attr.Pseudo {
+						tags := map[string]string{
+							"qmgr":     qMgrName,
+							"platform": platformString,
+						}
+						tags["pageset"] = psId
+						tags["bufferpool"] = bpId
+						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+
+						pt, _ := newPoint(series+"."+attr.MetricName, t, float32(f), tags)
+						bp.addPoint(pt)
+						bp = c.Flush(bp)
+						log.Debugf("Adding pageset point %v", pt)
+
+					}
+				}
+			}
+		}
+		forceFlush = true
 		c.Flush(bp)
 	}
 
-	return err
+	collectStopTime := time.Now()
+	elapsedSecs := int64(collectStopTime.Sub(collectStartTime).Seconds())
+	log.Infof("Collection time = %d secs", elapsedSecs)
 
+	return err
 }
 
 func (c *client) Flush(bp *BatchPoints) *BatchPoints {
 	// This is where real errors might occur, including the inability to
 	// contact the database server. We will ignore (but log)  these errors
 	// up to a threshold, after which it is considered fatal.
+	if len(bp.Points) < config.ci.MaxPoints && !forceFlush {
+		return bp
+	}
+
 	if len(bp.Points) > 0 {
+		forceFlush = false
 		_, err := c.Put(bp, "details")
 		if err != nil {
 			log.Error(err)
 			errorCount++
-			if errorCount >= config.maxErrors {
+			if errorCount >= config.ci.MaxErrors {
 				log.Fatal("Too many errors communicating with server")
 			}
 		} else {
@@ -152,7 +468,7 @@ func (c *client) Flush(bp *BatchPoints) *BatchPoints {
 func newClient() (*client, error) {
 
 	tr := &http.Transport{}
-	u, err := url.Parse(config.databaseAddress)
+	u, err := url.Parse(config.ci.DatabaseAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +508,7 @@ func (c *client) Put(bp *BatchPoints, params string) ([]byte, error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	// log.Infof("Request is %v", req)
+	log.Debugf("Request is %v with datalen %d", req, len(data))
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -205,6 +521,9 @@ func (c *client) Put(bp *BatchPoints, params string) ([]byte, error) {
 		return nil, err
 	}
 
-	log.Infoln("Response body: ", string(body))
+	log.Debugln("Response body: ", string(body))
 	return body, nil
+}
+
+func initObjectAttributes() {
 }
