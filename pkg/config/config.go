@@ -74,6 +74,9 @@ func InitConfig(cm *Config) {
 	flag.StringVar(&cm.LogLevel, "log.level", "error", "Log level - debug, info, error")
 
 	flag.StringVar(&cm.QMgrName, "ibmmq.queueManager", "", "Queue Manager name")
+	flag.StringVar(&cm.CC.CcdtUrl, "ibmmq.ccdtUrl", "", "Path to CCDT")
+	flag.StringVar(&cm.CC.ConnName, "ibmmq.connName", "", "Connection Name")
+	flag.StringVar(&cm.CC.Channel, "ibmmq.channel", "", "Channel Name")
 	flag.StringVar(&cm.ReplyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
 
 	flag.StringVar(&cm.MetaPrefix, "metaPrefix", "", "Override path to monitoring resource topic")
@@ -88,6 +91,7 @@ func InitConfig(cm *Config) {
 	flag.StringVar(&cm.MonitoredSubscriptions, "ibmmq.monitoredSubscriptions", "*", "Patterns of subscriptions to monitor")
 	flag.StringVar(&cm.MonitoredSubscriptionsFile, "ibmmq.monitoredSubscriptionsFile", "", "File with patterns of subscriptions to monitor")
 	flag.StringVar(&cm.QueueSubscriptionSelector, "ibmmq.queueSubscriptionSelector", "", "Resource topic selection for queues")
+	flag.BoolVar(&cm.CC.ShowInactiveChannels, "ibmmq.showInactiveChannels", false, "Show inactive channels (not just stopped ones)")
 
 	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
 	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.qStatus", false, "Add metrics from the QSTATUS fields")

@@ -1,3 +1,9 @@
+#
+# This is the section of the configuration file
+# that is common for all collectors. It gets combined
+# with the collector-specific portion to create the real
+# configuration file.
+
 global:
   useObjectStatus: true
   useResetQStats: false
@@ -9,7 +15,17 @@ global:
 
 connection:
     queueManager: QM1
+
+# You can point at a CCDT here
+    ccdtUrl:
+# Or for simple client configurations, set the connName and channel
+    connName:
+    channel:
+# If none of the channel-related attributes are set, then this can
+# be set to true to force client connectivity and the usual environment
+# variables such as MQSERVER are used.
     clientConnection: false
+
 # If a user is set, then a password must be passed somehow. It can
 # be done in this file, on a command line, or (better) passed via stdin
 #    user: mqadmin
@@ -30,8 +46,5 @@ objects:
     - TO.*
     topics:
     subscriptions:
+    showInactiveChannels: false
 
-prometheus:
-  port: 9157
-  metricsPath: "/metrics"
-  namespace: ibmmq

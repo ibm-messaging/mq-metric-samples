@@ -51,7 +51,7 @@ RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg \
 # Location of the downloadable MQ client package \
 ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
     RDTAR="IBM-MQC-Redist-LinuxX64.tar.gz" \
-    VRMF=9.1.5.0
+    VRMF=9.2.0.0
 
 # Install the MQ client from the Redistributable package. This also contains the
 # header files we need to compile against.
@@ -68,6 +68,9 @@ WORKDIR $GOPATH/src/$ORG/$REPO
 COPY go.mod .          
 COPY go.sum .          
 RUN chmod 777 go.*
+
+COPY config.common.yaml .
+RUN chmod 777 config.common.yaml
 
 #RUN /usr/lib/go-${GOVERSION}/bin/go mod download
 

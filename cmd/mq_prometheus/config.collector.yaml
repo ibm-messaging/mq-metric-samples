@@ -1,0 +1,6 @@
+
+# This is the collector-specific piece of the configuration
+prometheus:
+  port: 9157
+  metricsPath: "/metrics"
+  namespace: ibmmq

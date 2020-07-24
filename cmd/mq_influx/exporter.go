@@ -79,7 +79,7 @@ func Collect(c client.Client) error {
 	pollStatus := false
 	thisPoll := time.Now()
 	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.cf.PollIntervalDuration {
+	if elapsed >= config.cf.PollIntervalDuration || first {
 		log.Debugf("Polling for object status")
 		lastPoll = thisPoll
 		pollStatus = true
@@ -166,12 +166,23 @@ func Collect(c client.Client) error {
 			log.Fatalln("Error creating batch points: ", err)
 		}
 
+		// Start with a metric that shows how many publications were processed by this collection
+		series = "qmgr"
+		tags := map[string]string{
+			"qmgr":     config.cf.QMgrName,
+			"platform": platformString,
+		}
+		fields := map[string]interface{}{"exporter_publications": float64(mqmetric.GetProcessPublicationCount())}
+		pt, _ := client.NewPoint(series, tags, fields, t)
+		bp.AddPoint(pt)
+		log.Debugf("Adding point %v", pt)
+
 		for _, cl := range mqmetric.Metrics.Classes {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
 					for key, value := range elem.Values {
 						f := mqmetric.Normalise(elem, key, value)
-						tags := map[string]string{
+						tags = map[string]string{
 							"qmgr":     config.cf.QMgrName,
 							"platform": platformString,
 						}

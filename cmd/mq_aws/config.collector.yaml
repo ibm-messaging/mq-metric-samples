@@ -1,0 +1,9 @@
+
+# This is the collector-specific portion of the configuration
+cloudwatch:
+  region: eu-west-1
+  interval: 60s
+  maxErrors: 10
+  maxPoints: 20
+  namespace: "IBM/MQ"
+

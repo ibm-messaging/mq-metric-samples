@@ -1,0 +1,9 @@
+
+# This is the collector-specific piece of the configuration
+influx:
+  databaseName: MQDB
+  databaseAddress: "http://localhost:8086"
+  databaseUser: admin
+  databasePasswordFile: "/tmp/mqinfluxpw.txt"
+  interval: 10s
+  maxErrors: 10

@@ -80,6 +80,7 @@ var (
 	platformString        string
 	counter               = 0
 	warnedScrapeTimeout   = false
+	pubCountDesc          *prometheus.Desc
 )
 
 /*
@@ -165,7 +166,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	pollStatus := false
 	thisPoll := time.Now()
 	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.cf.PollIntervalDuration {
+	if elapsed >= config.cf.PollIntervalDuration || first {
 		log.Debugf("Polling for object status")
 		lastPoll = thisPoll
 		pollStatus = true
@@ -304,6 +305,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 	}
+	// We will also send a pseudo-gauge that shows how many publications were processed
+	if pubCountDesc == nil {
+		fqName := prometheus.BuildFQName(config.namespace, "qmgr", "exporter_publications")
+		pubCountDesc = prometheus.NewDesc(fqName,
+			"How many resource publications processed",
+			[]string{"qmgr", "platform"},
+			nil)
+	}
+	// Tags must be in same order as created in the Description
+	ch <- prometheus.MustNewConstMetric(pubCountDesc, prometheus.GaugeValue, float64(mqmetric.GetProcessPublicationCount()), config.cf.QMgrName, platformString)
 
 	// Next we extract the info for channel status. Several of the attributes
 	// are used to build the tags that uniquely identify a channel instance
@@ -318,7 +329,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					chlType := int(e.chlStatus.Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
 					chlTypeString := strings.Replace(ibmmq.MQItoString("CHT", chlType), "MQCHT_", "", -1)
 					// Not every channel status report has the RQMNAME attribute (eg SVRCONNs)
-					rqmname := ""
+					rqmname := "-"
 					if rqmnameAttr, ok := e.chlStatus.Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
 						rqmname = rqmnameAttr.ValueString
 					}

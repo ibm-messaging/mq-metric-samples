@@ -1,7 +1,14 @@
 # Changelog
 Newest updates are at the top of this file.
 
-### Jun 01 2020
+### Jul 23 2020
+* Update to use v5.1.0 of the mq-golang repository
+* Update to use MQ 9.2.0
+* Added pseudo-metric qmgr_exporter_publications for how many consumed on each scrape
+* Added showInactiveChannels option (#38)
+* Added explicit client configuration options (#40)
+
+### Jun 01 2020 (v5.0.0)
 * Exporters can have configuration provided in YAML file (`-f <file>`) instead of command line options
 * Use modules (go.mod) to define prereqs (ibm-messaging/mq-golang#138)
 * Update to use v5.0.0 of the mq-golang repository as the new module format

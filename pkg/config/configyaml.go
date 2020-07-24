@@ -42,6 +42,9 @@ type ConfigYConnection struct {
 	Client       bool `yaml:"clientConnection"`
 	Password     string
 	ReplyQueue   string `yaml:"replyQueue"`
+	CcdtUrl      string `yaml:"ccdtUrl"`
+	ConnName     string `yaml:"connName"`
+	Channel      string `yaml:"channel"`
 }
 type ConfigYObjects struct {
 	Queues                    []string
@@ -49,6 +52,7 @@ type ConfigYObjects struct {
 	Channels                  []string
 	Topics                    []string
 	Subscriptions             []string
+	ShowInactiveChannels      bool `yaml:"showInactiveChannels"`
 }
 
 func ReadConfigFile(f string, cmy interface{}) error {
@@ -65,6 +69,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.UseStatus = cyg.UseObjectStatus
 	cm.CC.UseResetQStats = cyg.UseResetQStats
 	cm.CC.UsePublications = cyg.UsePublications
+	cm.CC.ShowInactiveChannels = cyo.ShowInactiveChannels
 
 	cm.LogLevel = copyIfSet(cm.LogLevel, cyg.LogLevel)
 	cm.MetaPrefix = copyIfSet(cm.MetaPrefix, cyg.MetaPrefix)
@@ -74,6 +79,9 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.Locale = copyIfSet(cm.Locale, cyg.Locale)
 
 	cm.QMgrName = copyIfSet(cm.QMgrName, cyc.QueueManager)
+	cm.CC.CcdtUrl = copyIfSet(cm.CC.CcdtUrl, cyc.CcdtUrl)
+	cm.CC.ConnName = copyIfSet(cm.CC.ConnName, cyc.ConnName)
+	cm.CC.Channel = copyIfSet(cm.CC.Channel, cyc.Channel)
 	cm.CC.ClientMode = cyc.Client
 	cm.CC.UserId = copyIfSet(cm.CC.UserId, cyc.User)
 	cm.CC.Password = copyIfSet(cm.CC.Password, cyc.Password)

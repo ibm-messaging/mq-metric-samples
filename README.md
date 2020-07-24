@@ -152,6 +152,11 @@ a Grafana bug, or it may really be how Grafana is designed to work. But without 
 the metric line, the table was showing multiple versions of the status for each channel. This
 table combines multiple metrics on the same line now.
 
+Information about channels comes from the DISPLAY CHSTATUS CURRENT command. That
+only shows channels with a known state and does not report on inactive channels.
+To also see the inactive channels, then set the showInactiveChannels 
+configuration attribute to true.
+
 ### z/OS Support
 Because the DIS QSTATUS and DIS CHSTATUS commands can be used on z/OS, the monitors can now
 support showing some limited information from a z/OS queue manager. There is nothing special needed to configure it, beyond the client
@@ -195,10 +200,11 @@ Instead of providing all of the configuration for the exporters via command-line
 provide the configuration in a YAML file. Then only the `-f` command-line option is required for the exporter to
 point at the file.
 
-An example configuration file is provided in each exporter's directory. All of the exporters support
+All of the exporters support
 the same configuration options for how to connect to MQ and which objects are monitored. There is
 then an exporter-specific section for additional configuration such as how to contact the back-end
 database. 
+The common options are shown in a template in this directory; the exporter-specific options are in individual files in each directory. Combine the two pieces into a single file to get a complete deployable configuration.
 
 Unlike the command line flags, lists are provided in a more natural format instead of comma-separated
 values in a single string. If an option is provided on both the command line and in the file, it is the file

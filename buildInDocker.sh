@@ -57,9 +57,9 @@ do
   then
     cp $srcdir/*.mqsc $GOPATH/bin
   fi
-  if [ -r $srcdir/$m.yaml ]
+  if [ -r $srcdir/config.collector.yaml ]
   then
-    cp $srcdir/*.yaml $GOPATH/bin
+    cat ./config.common.yaml $srcdir/config.collector.yaml > $GOPATH/bin/$m.yaml
   fi
 
 done

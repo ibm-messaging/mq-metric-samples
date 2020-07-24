@@ -77,7 +77,7 @@ func Collect() error {
 	pollStatus := false
 	thisPoll := time.Now()
 	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.cf.PollIntervalDuration {
+	if elapsed >= config.cf.PollIntervalDuration || first {
 		log.Debugf("Polling for object status")
 		lastPoll = thisPoll
 		pollStatus = true
@@ -210,6 +210,12 @@ func Collect() error {
 				}
 			}
 		}
+
+		// Add a metric that shows how many publications were processed by this collection
+		key := mqmetric.QMgrMapKey
+		pt = ptMap[key]
+		pt.Metric[fixup("exporter_publications")] = float64(mqmetric.GetProcessPublicationCount())
+		ptMap[key] = pt
 
 		// After all the points have been created, add them to the JSON structure
 		// for printing out

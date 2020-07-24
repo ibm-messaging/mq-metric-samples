@@ -110,7 +110,7 @@ func Collect() error {
 	pollStatus := false
 	thisPoll := time.Now()
 	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.cf.PollIntervalDuration {
+	if elapsed >= config.cf.PollIntervalDuration || first {
 		log.Debugf("Polling for object status")
 		lastPoll = thisPoll
 		pollStatus = true
@@ -192,12 +192,22 @@ func Collect() error {
 		t := time.Now()
 		bp := newBatchPoints()
 
+		// Start with a metric that shows how many publications were processed by this collection
+		series = "qmgr"
+		tags := map[string]string{
+			"qmgr":     config.cf.QMgrName,
+			"platform": platformString,
+		}
+		pt, _ := newPoint(series+"."+"exporter_publications", t, float64(mqmetric.GetProcessPublicationCount()), tags)
+		bp.addPoint(pt)
+		log.Debugf("Adding point %v", pt)
+
 		for _, cl := range mqmetric.Metrics.Classes {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
 					for key, value := range elem.Values {
 						f := mqmetric.Normalise(elem, key, value)
-						tags := map[string]string{
+						tags = map[string]string{
 							"qmgr":     config.cf.QMgrName,
 							"platform": platformString,
 						}
@@ -221,6 +231,7 @@ func Collect() error {
 						tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
 						pt, _ := newPoint(series+"."+elem.MetricName, t, float64(f), tags)
 						bp.addPoint(pt)
+						log.Debugf("Adding point %v", pt)
 
 						// AWS recommends not sending too many
 						// data points in a single request.
@@ -232,6 +243,7 @@ func Collect() error {
 				}
 			}
 		}
+
 		series = "channel"
 		for _, attr := range mqmetric.ChannelStatus.Attributes {
 			for key, value := range attr.Values {

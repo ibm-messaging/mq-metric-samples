@@ -40,6 +40,8 @@ github.com/ibm-messaging/mq-golang/v5 v5.0.0-beta h1:Ts5937R/HK3FZeFnF4yksJI1XAs
 github.com/ibm-messaging/mq-golang/v5 v5.0.0-beta/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
 github.com/ibm-messaging/mq-golang/v5 v5.0.0 h1:9J8bsDoCo60rbSgB7ZAURPG3L5Kpr+F8dYNOwQ7Qnnk=
 github.com/ibm-messaging/mq-golang/v5 v5.0.0/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
+github.com/ibm-messaging/mq-golang/v5 v5.1.0 h1:fWTWSV9uBv847rVQqGPRGGCQr61FJR7eSxM5RJMa3NQ=
+github.com/ibm-messaging/mq-golang/v5 v5.1.0/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
 github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d h1:/WZQPMZNsjZ7IlCpsLGdQBINg5bxKQ1K1sh6awxLtkA=
 github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d/go.mod h1:qj24IKcXYK6Iy9ceXlo3Tc+vtHo9lIhSX5JddghvEPo=
 github.com/jmespath/go-jmespath v0.3.0 h1:OS12ieG61fsCg5+qLJ+SsW9NicxNkg3b25OyT2yCeUc=
