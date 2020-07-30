@@ -2,4 +2,4 @@
 
 # This is the collector-specific piece of the configuration
 json:
-  interval:10s
+  interval: 10s

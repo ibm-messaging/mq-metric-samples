@@ -73,16 +73,6 @@ func Collect() error {
 	log.Infof("IBM MQ JSON collector started")
 	collectStartTime := time.Now()
 
-	// Do we need to poll for object status on this iteration
-	pollStatus := false
-	thisPoll := time.Now()
-	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.cf.PollIntervalDuration || first {
-		log.Debugf("Polling for object status")
-		lastPoll = thisPoll
-		pollStatus = true
-	}
-
 	if platformString == "" {
 		platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)
 	}
@@ -101,6 +91,16 @@ func Collect() error {
 	err = mqmetric.ProcessPublications()
 	if err != nil {
 		log.Fatalf("Error processing publications: %v", err)
+	}
+
+	// Do we need to poll for object status on this iteration
+	pollStatus := false
+	thisPoll := time.Now()
+	elapsed := thisPoll.Sub(lastPoll)
+	if elapsed >= config.cf.PollIntervalDuration || first {
+		log.Debugf("Polling for object status")
+		lastPoll = thisPoll
+		pollStatus = true
 	}
 
 	// If there has been sufficient interval since the last explicit poll for
@@ -185,7 +185,6 @@ func Collect() error {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
 					for key, value := range elem.Values {
-
 						if pt, ok = ptMap[key]; !ok {
 							pt = pointsStruct{}
 							pt.Tags = make(map[string]string)
@@ -213,9 +212,11 @@ func Collect() error {
 
 		// Add a metric that shows how many publications were processed by this collection
 		key := mqmetric.QMgrMapKey
-		pt = ptMap[key]
-		pt.Metric[fixup("exporter_publications")] = float64(mqmetric.GetProcessPublicationCount())
-		ptMap[key] = pt
+		if pt, ok = ptMap[key]; ok {
+			pt = ptMap[key]
+			pt.Metric[fixup("exporter_publications")] = float64(mqmetric.GetProcessPublicationCount())
+			ptMap[key] = pt
+		}
 
 		// After all the points have been created, add them to the JSON structure
 		// for printing out
