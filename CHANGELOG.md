@@ -1,6 +1,11 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Aug 10 2020
+* Update to use v5.1.1 of the mq-golang repository
+* Moved build shell commands to `scripts` subdirectory and added README there
+* Add a Windows batch file as example of building locally
+
 ### Jul 23 2020
 * Update to use v5.1.0 of the mq-golang repository
 * Update to use MQ 9.2.0

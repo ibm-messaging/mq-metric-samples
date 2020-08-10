@@ -17,29 +17,11 @@
 # to compile the binary components of the monitoring programs, and then to copy those
 # programs to a local temporary directory.
 
-function latestSemVer {
-  (for x in $*
-  do
-    echo $x | sed "s/^v//g"
-  done) | sort -n | tail -1
-}
+. ./common.sh
 
 GOPATH="/go"
-
 TAG="mq-metric-samples-gobuild"
-# Assume repo tags have been created in a sensible order. Find the mq-golang
-# version in the dep file (it's the only dependency explicitly listed for now)
-# and the current Git tag for this repo. Then pick the latest version to create
-# the Docker tag
-VERDEP=`cat go.mod | awk '/mq-golang/ {print $2}' `
-VERREPO=`git tag -l | sort | tail -1 `
 
-VER=`latestSemVer $VERDEP $VERREPO`
-if [ -z "$VER" ]
-then
-  VER="latest"
-fi
-# echo "VERDEP=$VERDEP VERREPO=$VERREPO"
 echo "Building container $TAG:$VER"
 
 # Set the userid we will run the container as
@@ -47,14 +29,13 @@ uid=`id -u`
 gid=`id -g`
 
 # Build a container that has all the pieces needed to compile the Go programs for MQ
-docker build --build-arg GOPATH_ARG=$GOPATH -t $TAG:$VER .
+docker build --build-arg GOPATH_ARG=$GOPATH -f Dockerfile.build -t $TAG:$VER .
 rc=$?
 
 if [ $rc -eq 0 ]
 then
   # Run the image to do the compilation and extract the files
   # from it into a local directory mounted into the container.
-  OUTDIR=$HOME/tmp/mq-metric-samples/bin
   rm -rf $OUTDIR
   mkdir -p $OUTDIR
 

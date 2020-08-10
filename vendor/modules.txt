@@ -45,7 +45,7 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/ibm-messaging/mq-golang/v5 v5.1.0
+# github.com/ibm-messaging/mq-golang/v5 v5.1.1
 github.com/ibm-messaging/mq-golang/v5/ibmmq
 github.com/ibm-messaging/mq-golang/v5/mqmetric
 # github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d

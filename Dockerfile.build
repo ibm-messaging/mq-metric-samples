@@ -61,12 +61,12 @@ RUN cd /opt/mqm \
  && rm -f ./*.tar.gz
 
 # Insert the script that will do the build
-COPY buildInDocker.sh $GOPATH
+COPY scripts/buildInDocker.sh $GOPATH
 RUN chmod 777 $GOPATH/buildInDocker.sh
 
 WORKDIR $GOPATH/src/$ORG/$REPO
-COPY go.mod .          
-COPY go.sum .          
+COPY go.mod .
+COPY go.sum .
 RUN chmod 777 go.*
 
 COPY config.common.yaml .

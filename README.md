@@ -24,8 +24,7 @@ file if you wish to reload all of the dependencies by running `go mod vendor`.
 
 You will require the following programs:
 
-* Go compiler. This should be at least version 12. If you see an error similar to "ld: NULL not defined"
-then it is likely you need to upgrade your compiler.
+* Go compiler. This should be at least version 13.
 
 To build the programs on Linux and MacOS, you may set an environment variable to permit some compile/link flags.
 This is due to security controls in the compiler.
@@ -69,10 +68,15 @@ monitor agent directory also has sample scripts, configuration files etc to help
 with getting the agent running in your specific environment.
 
 ## Using a Docker container to build the programs
-You can use the `buildMonitors.sh` script in this directory to build a Docker container that
+You can use the `buildMonitors.sh` script in the `scripts` subdirectory to build a Docker container that
 in turn will build all the binary programs and copy them to a local directory. That script also
 sets some extra version-related flags that will be shown when the program starts. The container will
 automatically download and install the MQ client runtime files needed for compilation.
+
+## Building on Windows
+There is a `buildMonitors.bat` file that may help with building on Windows. It assumes you have
+the [tdm-gcc-64](https://jmeubank.github.io/tdm-gcc/download/) 64-bit compiler suite installed. It
+builds all the collectors and corresponding YAML configuration files into %GOPATH%/bin
 
 ## Monitor configuration
 The monitors always collect all of the available queue manager-wide metrics.
@@ -154,7 +158,7 @@ table combines multiple metrics on the same line now.
 
 Information about channels comes from the DISPLAY CHSTATUS CURRENT command. That
 only shows channels with a known state and does not report on inactive channels.
-To also see the inactive channels, then set the showInactiveChannels 
+To also see the inactive channels, then set the showInactiveChannels
 configuration attribute to true.
 
 ### z/OS Support
@@ -203,7 +207,7 @@ point at the file.
 All of the exporters support
 the same configuration options for how to connect to MQ and which objects are monitored. There is
 then an exporter-specific section for additional configuration such as how to contact the back-end
-database. 
+database.
 The common options are shown in a template in this directory; the exporter-specific options are in individual files in each directory. Combine the two pieces into a single file to get a complete deployable configuration.
 
 Unlike the command line flags, lists are provided in a more natural format instead of comma-separated
