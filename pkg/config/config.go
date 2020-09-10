@@ -237,9 +237,12 @@ func InitLog(cm Config) {
 	}
 	log.SetLevel(level)
 	logger := new(mqmetric.Logger)
+	logger.Trace = log.Tracef
 	logger.Debug = log.Debugf
 	logger.Info = log.Infof
-	logger.Error = log.Errorf
 	logger.Warn = log.Warnf
+	logger.Error = log.Errorf
+	logger.Fatal = log.Fatalf
+	logger.Panic = log.Panicf
 	mqmetric.SetLogger(logger)
 }
