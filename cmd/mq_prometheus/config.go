@@ -28,12 +28,14 @@ type mqExporterConfig struct {
 	cf cf.Config // Common configuration attributes for all collectors
 
 	httpListenPort string
+	httpListenHost string
 	httpMetricPath string
 	namespace      string
 }
 
 type ConfigYProm struct {
 	Port        string
+	Host        string
 	MetricsPath string `yaml:"metricsPath"`
 	Namespace   string
 }
@@ -65,7 +67,9 @@ func initConfig() error {
 
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.httpListenPort, "ibmmq.httpListenPort", defaultPort, "HTTP Listener")
+	flag.StringVar(&config.httpListenPort, "ibmmq.httpListenPort", defaultPort, "HTTP Listener Port")
+	flag.StringVar(&config.httpListenHost, "ibmmq.httpListenHost", "", "HTTP Listener Hose")
+
 	flag.StringVar(&config.httpMetricPath, "ibmmq.httpMetricPath", "/metrics", "Path to exporter metrics")
 
 	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
@@ -81,12 +85,13 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			// Set defaults
 			cfy.Global.UsePublications = true
-			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
-				config.httpListenPort = cfy.Prometheus.Port
-				config.httpMetricPath = cfy.Prometheus.MetricsPath
-				config.namespace = cfy.Prometheus.Namespace
+				config.httpListenPort = cf.CopyIfSet(config.httpListenPort, cfy.Prometheus.Port)
+				config.httpListenHost = cf.CopyIfSet(config.httpListenHost, cfy.Prometheus.Host)
+				config.httpMetricPath = cf.CopyIfSet(config.httpMetricPath, cfy.Prometheus.MetricsPath)
+				config.namespace = cf.CopyIfSet(config.namespace, cfy.Prometheus.Namespace)
 			}
 		}
 	}

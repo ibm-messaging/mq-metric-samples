@@ -57,7 +57,7 @@ about specific object or the queue manager.
 
 More information on the metrics collected through the publish/subscribe
 interface can be found in the [MQ KnowledgeCenter]
-(https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.1.0/com.ibm.mq.mon.doc/mo00013_.htm)
+(https://www.ibm.com/support/knowledgecenter/SSFKSJ_latest/com.ibm.mq.mon.doc/mo00013_.htm)
 with further description in [an MQDev blog entry]
 (https://www.ibm.com/developerworks/community/blogs/messaging/entry/Statistics_published_to_the_system_topic_in_MQ_v9?lang=en)
 

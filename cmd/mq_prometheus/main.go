@@ -114,8 +114,9 @@ func main() {
 			w.Write(landingPage())
 		})
 
-		log.Infoln("Listening on port", config.httpListenPort)
-		log.Fatal(http.ListenAndServe(":"+config.httpListenPort, nil))
+		address := config.httpListenHost + ":" + config.httpListenPort
+		log.Infoln("Listening on address", address)
+		log.Fatal(http.ListenAndServe(address, nil))
 
 	}
 

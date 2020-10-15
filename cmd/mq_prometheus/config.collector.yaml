@@ -2,5 +2,8 @@
 # This is the collector-specific piece of the configuration
 prometheus:
   port: 9157
+# We can constrain the http listener to a single adapter via the 'host' config. Default is
+# to bind to all local addresses  
+# host: 1.2.3.4
   metricsPath: "/metrics"
   namespace: ibmmq

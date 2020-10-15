@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016,2020
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ func initConfig() {
 		if config.cf.ConfigFile != "" {
 			// Set defaults
 			cfy.Global.UsePublications = true
-			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
 				config.interval = cfy.Collectd.Interval

@@ -82,7 +82,7 @@ default is **ibmmq**. The name can be configured with the `-namespace` option
 on the command line.
 
 More information on the metrics collected through the publish/subscribe
-interface can be found in the [MQ KnowledgeCenter](https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.0.0/com.ibm.mq.mon.doc/mo00013_.htm)
+interface can be found in the [MQ KnowledgeCenter](https://www.ibm.com/support/knowledgecenter/SSFKSJ_latest/com.ibm.mq.mon.doc/mo00013_.htm)
 with further description in [an MQDev blog entry](https://www.ibm.com/developerworks/community/blogs/messaging/entry/Statistics_published_to_the_system_topic_in_MQ_v9?lang=en)
 
 The queue and queue manager metrics shown in the Prometheus console are named after the descriptions

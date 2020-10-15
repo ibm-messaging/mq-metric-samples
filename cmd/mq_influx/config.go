@@ -80,7 +80,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			// Set defaults
 			cfy.Global.UsePublications = true
-			err := cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
+			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
 				config.ci = cfy.Influx

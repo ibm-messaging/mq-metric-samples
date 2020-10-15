@@ -71,32 +71,32 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.UsePublications = cyg.UsePublications
 	cm.CC.ShowInactiveChannels = cyo.ShowInactiveChannels
 
-	cm.LogLevel = copyIfSet(cm.LogLevel, cyg.LogLevel)
-	cm.MetaPrefix = copyIfSet(cm.MetaPrefix, cyg.MetaPrefix)
-	cm.pollInterval = copyIfSet(cm.pollInterval, cyg.PollInterval)
-	cm.rediscoverInterval = copyIfSet(cm.rediscoverInterval, cyg.RediscoverInterval)
-	cm.TZOffsetString = copyIfSet(cm.TZOffsetString, cyg.TZOffset)
-	cm.Locale = copyIfSet(cm.Locale, cyg.Locale)
+	cm.LogLevel = CopyIfSet(cm.LogLevel, cyg.LogLevel)
+	cm.MetaPrefix = CopyIfSet(cm.MetaPrefix, cyg.MetaPrefix)
+	cm.pollInterval = CopyIfSet(cm.pollInterval, cyg.PollInterval)
+	cm.rediscoverInterval = CopyIfSet(cm.rediscoverInterval, cyg.RediscoverInterval)
+	cm.TZOffsetString = CopyIfSet(cm.TZOffsetString, cyg.TZOffset)
+	cm.Locale = CopyIfSet(cm.Locale, cyg.Locale)
 
-	cm.QMgrName = copyIfSet(cm.QMgrName, cyc.QueueManager)
-	cm.CC.CcdtUrl = copyIfSet(cm.CC.CcdtUrl, cyc.CcdtUrl)
-	cm.CC.ConnName = copyIfSet(cm.CC.ConnName, cyc.ConnName)
-	cm.CC.Channel = copyIfSet(cm.CC.Channel, cyc.Channel)
+	cm.QMgrName = CopyIfSet(cm.QMgrName, cyc.QueueManager)
+	cm.CC.CcdtUrl = CopyIfSet(cm.CC.CcdtUrl, cyc.CcdtUrl)
+	cm.CC.ConnName = CopyIfSet(cm.CC.ConnName, cyc.ConnName)
+	cm.CC.Channel = CopyIfSet(cm.CC.Channel, cyc.Channel)
 	cm.CC.ClientMode = cyc.Client
-	cm.CC.UserId = copyIfSet(cm.CC.UserId, cyc.User)
-	cm.CC.Password = copyIfSet(cm.CC.Password, cyc.Password)
-	cm.ReplyQ = copyIfSet(cm.ReplyQ, cyc.ReplyQueue)
+	cm.CC.UserId = CopyIfSet(cm.CC.UserId, cyc.User)
+	cm.CC.Password = CopyIfSet(cm.CC.Password, cyc.Password)
+	cm.ReplyQ = CopyIfSet(cm.ReplyQ, cyc.ReplyQueue)
 
-	cm.MonitoredQueues = copyIfSetArray(cm.MonitoredQueues, cyo.Queues)
-	cm.MonitoredChannels = copyIfSetArray(cm.MonitoredChannels, cyo.Channels)
-	cm.MonitoredTopics = copyIfSetArray(cm.MonitoredTopics, cyo.Topics)
-	cm.MonitoredSubscriptions = copyIfSetArray(cm.MonitoredSubscriptions, cyo.Subscriptions)
-	cm.QueueSubscriptionSelector = copyIfSetArray(cm.QueueSubscriptionSelector, cyo.QueueSubscriptionSelector)
+	cm.MonitoredQueues = CopyIfSetArray(cm.MonitoredQueues, cyo.Queues)
+	cm.MonitoredChannels = CopyIfSetArray(cm.MonitoredChannels, cyo.Channels)
+	cm.MonitoredTopics = CopyIfSetArray(cm.MonitoredTopics, cyo.Topics)
+	cm.MonitoredSubscriptions = CopyIfSetArray(cm.MonitoredSubscriptions, cyo.Subscriptions)
+	cm.QueueSubscriptionSelector = CopyIfSetArray(cm.QueueSubscriptionSelector, cyo.QueueSubscriptionSelector)
 
 	return
 }
 
-func copyIfSetArray(a string, b []string) string {
+func CopyIfSetArray(a string, b []string) string {
 	s := a
 	for i := 0; i < len(b); i++ {
 		if i == 0 {
@@ -108,7 +108,7 @@ func copyIfSetArray(a string, b []string) string {
 	return s
 }
 
-func copyIfSet(a string, b string) string {
+func CopyIfSet(a string, b string) string {
 	if b != "" {
 		return b
 	} else {
