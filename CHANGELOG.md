@@ -1,6 +1,16 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Dec 04 2020
+* Update to use v5.1.3 of the mq-golang repository
+* Update to use MQ 9.2.1
+* Update YAML processing to better handle missing values as defaults (#50)
+* Add 'host' to Prometheus listener config (#51)
+* URLs pointing at MQ KnowledgeCenter updated 
+
+### Sep 10 2020
+* Update to use v5.1.2 of the mq-golang repository
+
 ### Aug 10 2020
 * Update to use v5.1.1 of the mq-golang repository
 * Moved build shell commands to `scripts` subdirectory and added README there

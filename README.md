@@ -78,6 +78,21 @@ There is a `buildMonitors.bat` file that may help with building on Windows. It a
 the [tdm-gcc-64](https://jmeubank.github.io/tdm-gcc/download/) 64-bit compiler suite installed. It
 builds all the collectors and corresponding YAML configuration files into %GOPATH%/bin
 
+## Queue manager configuration
+When metrics are being collected from the publish/subscribe interface (all platforms except z/OS),
+there are some considerations:
+* MAXHANDS on queue manager: Each subscription uses an object handle. If many queues are being monitored
+the default MAXHANDS may need to be increased. A warning is printed if the monitor thinks this attribute
+appears too low.
+* MAXDEPTH on model queues: The model queue used as the basis for publication and reply queues in the
+monitor must have a MAXDEPTH suitable for the expected amount of data. For published metrics, this is
+estimated based on holding one minute's amount of publications; the number of monitored channels is also
+used as an estimate, although that does not need to be time-based as the data is requested directly by the
+monitor.
+* USEDLQ on the admin topic: The USEDLQ attribute on the topic object associated with the metrics publications (usually
+SYSTEM.ADMIN.TOPIC) determines what happens if the subscriber's queue is full. You might prefer to set this to
+NO to avoid filling the system DLQ if the collection program does not read the publications frequently enough.
+
 ## Monitor configuration
 The monitors always collect all of the available queue manager-wide metrics.
 They can also be configured to collect statistics for specific sets of queues where
