@@ -6,7 +6,7 @@ storage mechanisms including Prometheus and InfluxDB.
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2020
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -103,21 +103,13 @@ const QMgrMapKey = "@self"
 const ClassNameQ = "STATQ"
 
 const maxBufSize = 100 * 1024 * 1024 // 100 MB
+
 const defaultMaxQDepth = 5000
-
-// Metrics is the global variable for the tree of data
-var Metrics AllMetrics
-
-// Only issue the warning about a '/' in an object name once.
-var globalSlashWarning = false
-var localSlashWarning = false
 
 var qInfoMap map[string]*ObjInfo
 var chlInfoMap map[string]*ObjInfo
 
 var locale string
-var discoveryDone = false
-var publicationCount = 0
 
 func GetDiscoveredQueues() []string {
 	traceEntry("GetDiscoveredQueues")
@@ -130,7 +122,8 @@ func GetDiscoveredQueues() []string {
 }
 
 func GetProcessPublicationCount() int {
-	return publicationCount
+	ci := getConnection(GetConnectionKey())
+	return ci.publicationCount
 }
 
 /*
@@ -153,14 +146,15 @@ func VerifyConfig() (int32, error) {
 	var compCode = ibmmq.MQCC_OK
 
 	traceEntry("VerifyConfig")
-	if !discoveryDone {
+	ci := getConnection(GetConnectionKey())
+	if !ci.discoveryDone {
 		err = fmt.Errorf("Error: Need to call DiscoverAndSubscribe first")
 		compCode = ibmmq.MQCC_FAILED
 	}
 
 	if err == nil {
 		selectors := []int32{ibmmq.MQIA_MAX_Q_DEPTH, ibmmq.MQIA_DEFINITION_TYPE}
-		v, err = replyQObj.InqMap(selectors)
+		v, err = ci.si.replyQObj.InqMap(selectors)
 		if err == nil {
 			maxQDepth := v[ibmmq.MQIA_MAX_Q_DEPTH].(int32)
 			// Function has tuning based on number of queues to be monitored
@@ -172,8 +166,8 @@ func VerifyConfig() (int32, error) {
 			// and assume monitor collection interval is one minute
 			// Since we don't do pubsub-based collection on z/OS, this qdepth doesn't matter
 			recommendedDepth := (20 + len(qInfoMap)*5) * 6
-			if maxQDepth < int32(recommendedDepth) && usePublications {
-				err = fmt.Errorf("Warning: Maximum queue depth on %s may be too low. Current value = %d. Suggested depth based on queue count is at least %d", replyQBaseName, maxQDepth, recommendedDepth)
+			if maxQDepth < int32(recommendedDepth) && ci.usePublications {
+				err = fmt.Errorf("Warning: Maximum queue depth on %s may be too low. Current value = %d. Suggested depth based on queue count is at least %d", ci.si.replyQBaseName, maxQDepth, recommendedDepth)
 				compCode = ibmmq.MQCC_WARNING
 			}
 
@@ -184,7 +178,7 @@ func VerifyConfig() (int32, error) {
 			// separate patterns, then this will overestimate what's needed. Hence it's a warning, not an error.
 			recommendedDepth = len(chlInfoMap) + 20
 			if maxQDepth < int32(recommendedDepth) && len(chlInfoMap) > 0 {
-				err = fmt.Errorf("Warning: Maximum queue depth on %s may be too low. Current value = %d. Suggested depth based on channel count is at least %d\n", replyQBaseName, maxQDepth, recommendedDepth)
+				err = fmt.Errorf("Warning: Maximum queue depth on %s may be too low. Current value = %d. Suggested depth based on channel count is at least %d\n", ci.si.replyQBaseName, maxQDepth, recommendedDepth)
 				compCode = ibmmq.MQCC_WARNING
 			}
 
@@ -193,7 +187,7 @@ func VerifyConfig() (int32, error) {
 			// A LOCAL queue would end up with mixed sets of replies/publications
 			defType := v[ibmmq.MQIA_DEFINITION_TYPE].(int32)
 			if defType == ibmmq.MQQDT_PREDEFINED {
-				err = fmt.Errorf("Error: ReplyQ parameter %s must refer to a MODEL queue,", replyQBaseName)
+				err = fmt.Errorf("Error: ReplyQ parameter %s must refer to a MODEL queue,", ci.si.replyQBaseName)
 				compCode = ibmmq.MQCC_FAILED
 			}
 		}
@@ -211,8 +205,8 @@ issuing the MQSUB calls to collect the data
 */
 func DiscoverAndSubscribe(dc DiscoverConfig) error {
 	traceEntry("DiscoverAndSubscribe")
-
-	discoveryDone = true
+	ci := getConnection(GetConnectionKey())
+	ci.discoveryDone = true
 	redo := false
 
 	qInfoMap = make(map[string]*ObjInfo)
@@ -225,7 +219,8 @@ func DiscoverAndSubscribe(dc DiscoverConfig) error {
 func RediscoverAndSubscribe(dc DiscoverConfig) error {
 	traceEntry("RediscoverAndSubscribe")
 
-	discoveryDone = true
+	ci := getConnection(GetConnectionKey())
+	ci.discoveryDone = true
 	redo := true
 
 	// Assume queues have been deleted and we will tidy up later.
@@ -283,6 +278,8 @@ func discoverAndSubscribe(dc DiscoverConfig, redo bool) error {
 	var err error
 
 	traceEntry("discoverAndSubscribe")
+	ci := getConnection(GetConnectionKey())
+
 	// What metrics can the queue manager provide?
 	if err == nil && redo == false {
 		err = discoverStats(dc)
@@ -309,8 +306,8 @@ func discoverAndSubscribe(dc DiscoverConfig, redo bool) error {
 		// we round up the number of qmgr subs and per-queue subs. This will need extension if more object types are supported
 		// in the amqsrua-style of resource subscriptions. Add a few extra just in case.
 		recommendedHandles := 20 + len(qInfoMap)*5 + 10
-		if maxHandles < int32(recommendedHandles) && usePublications {
-			err = fmt.Errorf("MAXHANDS attribute on queue manager needs increasing. Current value = %d. Recommended minimum based on number of monitored queues = %d", maxHandles, recommendedHandles)
+		if ci.si.maxHandles < int32(recommendedHandles) && ci.usePublications {
+			err = fmt.Errorf("MAXHANDS attribute on queue manager needs increasing. Current value = %d. Recommended minimum based on number of monitored queues = %d", ci.si.maxHandles, recommendedHandles)
 		}
 	}
 
@@ -332,11 +329,14 @@ func discoverClasses(dc DiscoverConfig, metaPrefix string) error {
 	var rootTopic string
 
 	traceEntry("discoverClasses")
+	k := GetConnectionKey()
+	ci := getConnection(k)
+
 	// Have to know the starting point for the topic that tells about classes
 	if metaPrefix == "" {
-		rootTopic = "$SYS/MQ/INFO/QMGR/" + resolvedQMgrName + "/Monitor/METADATA/CLASSES"
+		rootTopic = "$SYS/MQ/INFO/QMGR/" + ci.si.resolvedQMgrName + "/Monitor/METADATA/CLASSES"
 	} else {
-		rootTopic = metaPrefix + "/INFO/QMGR/" + resolvedQMgrName + "/Monitor/METADATA/CLASSES"
+		rootTopic = metaPrefix + "/INFO/QMGR/" + ci.si.resolvedQMgrName + "/Monitor/METADATA/CLASSES"
 	}
 	sub, err = subscribeManaged(rootTopic, &metaReplyQObj)
 	if err == nil {
@@ -353,7 +353,7 @@ func discoverClasses(dc DiscoverConfig, metaPrefix string) error {
 			cl := new(MonClass)
 			classIndex := 0
 			cl.Types = make(map[int]*MonType)
-			cl.Parent = &Metrics
+			cl.Parent = GetPublishedMetrics(k)
 
 			for j := 0; j < len(group.GroupList); j++ {
 				elem := group.GroupList[j]
@@ -375,14 +375,14 @@ func discoverClasses(dc DiscoverConfig, metaPrefix string) error {
 				}
 			}
 			if cl.Name != "STATAPP" {
-				Metrics.Classes[classIndex] = cl
+				cl.Parent.Classes[classIndex] = cl
 			} else {
 				logDebug("Not subscribing to Class STATAPP resources")
 			}
 		}
 	}
 
-	subsOpened = true
+	ci.si.subsOpened = true
 	traceExitErr("discoverClasses", 0, err)
 	return err
 }
@@ -587,12 +587,16 @@ func discoverStats(dc DiscoverConfig) error {
 	var err error
 
 	traceEntry("discoverStats")
+	k := GetConnectionKey()
+	ci := getConnection(k)
+	metrics := GetPublishedMetrics(k)
+
 	metaPrefix := dc.MetaPrefix
 	// Start with an empty set of information about the available stats
-	Metrics.Classes = make(map[int]*MonClass)
+	metrics.Classes = make(map[int]*MonClass)
 
 	// Allow us to proceed on z/OS even though it does not support pub/sub resources
-	if metaPrefix == "" && !usePublications {
+	if metaPrefix == "" && !ci.usePublications {
 		traceExit("discoverStats", 1)
 		return nil
 	}
@@ -602,7 +606,7 @@ func discoverStats(dc DiscoverConfig) error {
 
 	// For each CLASS, discover the TYPEs of data available
 	if err == nil {
-		for _, cl := range Metrics.Classes {
+		for _, cl := range metrics.Classes {
 			err = discoverTypes(dc, cl)
 			// And for each CLASS, discover the actual statistics elements
 			if err == nil {
@@ -619,7 +623,7 @@ func discoverStats(dc DiscoverConfig) error {
 		// Need to add in if it's qmgr or q level
 		nameSet := make(map[string]struct{})
 		var exists = struct{}{}
-		for _, cl := range Metrics.Classes {
+		for _, cl := range metrics.Classes {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
 					name := elem.MetricName
@@ -662,6 +666,8 @@ func discoverQueues(monitoredQueuePatterns string) error {
 	usingRegExp := false
 
 	traceEntry("discoverQueues")
+	ci := getConnection(GetConnectionKey())
+
 	// If the list of monitored queues has a ! somewhere in it, we will
 	// get the full list of queues on the qmgr, and filter it by patterns.
 	if strings.Contains(monitoredQueuePatterns, "!") {
@@ -681,7 +687,7 @@ func discoverQueues(monitoredQueuePatterns string) error {
 		qList, err = inquireObjects(monitoredQueuePatterns, ibmmq.MQOT_Q)
 	}
 
-	localSlashWarning = false
+	ci.localSlashWarning = false
 	if len(qList) > 0 {
 		//fmt.Printf("Monitoring Queues: %v\n", qList)
 		for i := 0; i < len(qList); i++ {
@@ -697,8 +703,8 @@ func discoverQueues(monitoredQueuePatterns string) error {
 			// Because of the possible complexities of pattern matching, we don't
 			// actually fail the discovery process, but instead issue a warning and continue with
 			// other queues.
-			if strings.Contains(qName, "/") && globalSlashWarning == false {
-				localSlashWarning = true // First time through, issue the warning for all queues
+			if strings.Contains(qName, "/") && ci.globalSlashWarning == false {
+				ci.localSlashWarning = true // First time through, issue the warning for all queues
 				logError("Warning: Cannot subscribe to queue containing '/': %s", qName)
 				continue
 			}
@@ -711,7 +717,7 @@ func discoverQueues(monitoredQueuePatterns string) error {
 			qInfoMap[qName] = qInfoElem
 		}
 
-		if useStatus {
+		if ci.useStatus {
 			if usingRegExp {
 				for qName, _ := range qInfoMap {
 					if len(qName) > 0 {
@@ -723,8 +729,8 @@ func discoverQueues(monitoredQueuePatterns string) error {
 			}
 		}
 
-		if localSlashWarning {
-			globalSlashWarning = true
+		if ci.localSlashWarning {
+			ci.globalSlashWarning = true
 		}
 
 		if err != nil {
@@ -751,6 +757,8 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 	var missingPatterns string
 
 	traceEntryF("inquireObjects", "Type: %d Patterns: %s", objectType, objectPatternsList)
+	ci := getConnection(GetConnectionKey())
+
 	objectList = make([]string, 0)
 
 	if objectPatternsList == "" {
@@ -797,7 +805,7 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 		pmo.Options |= ibmmq.MQPMO_FAIL_IF_QUIESCING
 
 		putmqmd.Format = "MQADMIN"
-		putmqmd.ReplyToQ = statusReplyQObj.Name
+		putmqmd.ReplyToQ = ci.si.statusReplyQObj.Name
 		putmqmd.MsgType = ibmmq.MQMT_REQUEST
 		putmqmd.Report = ibmmq.MQRO_PASS_DISCARD_AND_EXPIRY
 
@@ -826,7 +834,7 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 
 			// We don't see shared queues in the returned set unless explicitly asked for.
 			// MQQSGD_ALL returns all locals, and (if qmgr in a QSG) also shared queues.
-			if platform == ibmmq.MQPL_ZOS {
+			if ci.si.platform == ibmmq.MQPL_ZOS {
 				pcfparm = new(ibmmq.PCFParameter)
 				pcfparm.Type = ibmmq.MQCFT_INTEGER
 				pcfparm.Parameter = ibmmq.MQIA_QSG_DISP
@@ -840,7 +848,7 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 		buf = append(cfh.Bytes(), buf...)
 
 		// And put the command to the queue
-		err = cmdQObj.Put(putmqmd, pmo, buf)
+		err = ci.si.cmdQObj.Put(putmqmd, pmo, buf)
 
 		if err != nil {
 			traceExitErr("inquireObjects", 3, err)
@@ -848,6 +856,7 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 		}
 
 		// Now get the response
+
 		getmqmd := ibmmq.NewMQMD()
 		gmo := ibmmq.NewMQGMO()
 		gmo.Options = ibmmq.MQGMO_NO_SYNCPOINT
@@ -856,23 +865,25 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 		gmo.Options |= ibmmq.MQGMO_CONVERT
 		gmo.WaitInterval = 30 * 1000
 
-		// Pick a default buffer size but allow it to double on retries to cope with
-		// truncated messages.
-		bufSize := 32768
+		// Use a loop to make sure we're looking at the proper response from a
+		// z/OS queue manager using the MQCFT_XR mechanism
+		for xr := true; xr; {
+			buf, datalen, err = getWithoutTruncation(ci.si.statusReplyQObj, getmqmd, gmo)
 
-		for truncation := true; truncation; {
-			buf = make([]byte, bufSize)
-
-			datalen, err = statusReplyQObj.Get(getmqmd, gmo, buf)
 			if err == nil {
-				truncation = false
 				cfh, offset := ibmmq.ReadPCFHeader(buf)
 				if cfh.CompCode != ibmmq.MQCC_OK {
+					xr = false
 					return objectList, fmt.Errorf("PCF command %s [%d] failed with CC %s [%d] RC %s [%d]",
 						ibmmq.MQItoString("CMD", int(cfh.Command)), cfh.Command,
 						ibmmq.MQItoString("CC", int(cfh.CompCode)), cfh.CompCode,
 						ibmmq.MQItoString("RC", int(cfh.Reason)), cfh.Reason)
 				} else {
+					logTrace("Received response of type %d [%s] and length %d", cfh.Type, ibmmq.MQItoString("CFT", int(cfh.Type)), datalen)
+					if ci.si.platform == ibmmq.MQPL_ZOS && cfh.Type != ibmmq.MQCFT_XR_ITEM {
+						continue
+					}
+					xr = false
 					parmAvail := true
 					bytesRead := 0
 					if cfh.ParameterCount == 0 {
@@ -890,6 +901,8 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 
 						switch elem.Parameter {
 						case returnedAttribute:
+							logTrace("Number of returned strings = %d", len(elem.String))
+
 							if len(elem.String) == 0 {
 								missingPatterns = missingPatterns + " " + pattern
 							}
@@ -901,19 +914,13 @@ func inquireObjects(objectPatternsList string, objectType int32) ([]string, erro
 					}
 				}
 			} else {
-				mqreturn := err.(*ibmmq.MQReturn)
-				if mqreturn.MQCC != ibmmq.MQCC_OK && mqreturn.MQRC == ibmmq.MQRC_TRUNCATED_MSG_FAILED && bufSize <= maxBufSize {
-					truncation = true
-					bufSize *= 2
-					if bufSize > maxBufSize {
-						bufSize = maxBufSize
-					}
-				} else {
-					traceExitErr("inquireObjects", 4, err)
-					return objectList, err
-				}
+
+				traceExitErr("inquireObjects", 4, err)
+				return objectList, err
+
 			}
 		}
+
 	}
 
 	if len(missingPatterns) > 0 && err == nil {
@@ -932,7 +939,11 @@ func createSubscriptions() error {
 	var sub ibmmq.MQObject
 
 	traceEntry("createSubscriptions")
-	for _, cl := range Metrics.Classes {
+	k := GetConnectionKey()
+	ci := getConnection(GetConnectionKey())
+	metrics := GetPublishedMetrics(k)
+
+	for _, cl := range metrics.Classes {
 		for _, ty := range cl.Types {
 
 			if strings.Contains(ty.ObjectTopic, "%s") {
@@ -955,7 +966,7 @@ func createSubscriptions() error {
 						}
 					} else {
 						topic := fmt.Sprintf(ty.ObjectTopic, key)
-						sub, err = subscribe(topic, &replyQObj)
+						sub, err = subscribe(topic, &ci.si.replyQObj)
 						if err == nil {
 							ty.subHobj[key] = sub
 							im[key].firstCollection = true
@@ -967,7 +978,7 @@ func createSubscriptions() error {
 
 					// Don't have a qmgr-level subscription to this topic. Should
 					// only do this subscription once at startup
-					sub, err = subscribe(ty.ObjectTopic, &replyQObj)
+					sub, err = subscribe(ty.ObjectTopic, &ci.si.replyQObj)
 					ty.subHobj[QMgrMapKey] = sub
 				}
 			}
@@ -1008,9 +1019,12 @@ func ProcessPublications() error {
 
 	traceEntry("ProcessPublications")
 
-	publicationCount = 0
+	k := GetConnectionKey()
+	ci := getConnection(k)
+	metrics := GetPublishedMetrics(k)
+	ci.publicationCount = 0
 
-	if !usePublications {
+	if !ci.usePublications {
 		traceExit("ProcessPublications", 1)
 		return nil
 	}
@@ -1023,7 +1037,7 @@ func ProcessPublications() error {
 		// Most common error will be MQRC_NO_MESSAGE_AVAILABLE
 		// which will end the loop.
 		if err == nil {
-			publicationCount++
+			ci.publicationCount++
 			elemList, _ := parsePCFResponse(data)
 
 			// A typical publication contains some fixed
@@ -1083,7 +1097,7 @@ func ProcessPublications() error {
 			// explicitly labelled "DELTA" are ones we should just
 			// use the latest value.
 			for key, newValue := range values {
-				if elem, ok := Metrics.Classes[classidx].Types[typeidx].Elements[key]; ok {
+				if elem, ok := metrics.Classes[classidx].Types[typeidx].Elements[key]; ok {
 					objectName := objName
 
 					if objectName == "" {
@@ -1501,4 +1515,42 @@ func trimToNull(s string) string {
 	}
 	return strings.TrimSpace(rc)
 
+}
+
+func getWithoutTruncation(hObj ibmmq.MQObject, md *ibmmq.MQMD, gmo *ibmmq.MQGMO) ([]byte, int, error) {
+	var err error
+	datalen := 0
+	traceEntry("getWithoutTruncation")
+
+	ci := getConnection(GetConnectionKey())
+
+	if ci.si.statusReplyBuf == nil {
+		// Pick a default initial size for this session's reply buffer. If it needs to grow, it will.
+		// There's no shrinking done later though as the size is likely to remain needed for the
+		// lifetime of the collector
+		ci.si.statusReplyBuf = make([]byte, 32768)
+	}
+
+	for trunc := true; trunc; {
+		logTrace("getWithoutTruncation: Trying MQGET with buffer size %d", len(ci.si.statusReplyBuf))
+		datalen, err = hObj.Get(md, gmo, ci.si.statusReplyBuf)
+		if err != nil {
+			mqreturn := err.(*ibmmq.MQReturn)
+			if mqreturn.MQCC != ibmmq.MQCC_OK && mqreturn.MQRC == ibmmq.MQRC_TRUNCATED_MSG_FAILED && len(ci.si.statusReplyBuf) < maxBufSize {
+				// Double the size, apart from capping it at 100MB
+				ci.si.statusReplyBuf = append(ci.si.statusReplyBuf, make([]byte, len(ci.si.statusReplyBuf))...)
+				if len(ci.si.statusReplyBuf) > maxBufSize {
+					ci.si.statusReplyBuf = ci.si.statusReplyBuf[0:maxBufSize]
+				}
+			} else {
+				traceExitF("getWithoutTruncation", 1, "BufSize %d Error %v", len(ci.si.statusReplyBuf), err)
+				return ci.si.statusReplyBuf, datalen, err
+			}
+		} else {
+			trunc = false
+		}
+	}
+
+	traceExit("getWithoutTruncation", 0)
+	return ci.si.statusReplyBuf, datalen, err
 }

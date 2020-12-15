@@ -1,7 +1,7 @@
 package config
 
 /*
-  Copyright (c) IBM Corporation 2016, 2020
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@ import (
 	"fmt"
 	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	log "github.com/sirupsen/logrus"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -64,60 +68,202 @@ type Config struct {
 	CC mqmetric.ConnectionConfig
 }
 
+type ConfigParm struct {
+	loc          interface{}
+	defaultValue interface{}
+	parmType     int
+	userSet      bool
+
+	cliName    string
+	envSection string // These also match the YAML elements
+	envName    string
+
+	usage string
+}
+
 const (
 	defaultPollInterval       = "0s"
 	defaultTZOffset           = "0h"
 	defaultRediscoverInterval = "1h"
 )
 
-func InitConfig(cm *Config) {
-	flag.StringVar(&cm.LogLevel, "log.level", "error", "Log level - debug, info, error")
+const (
+	CP_STR  = 0
+	CP_INT  = 1
+	CP_BOOL = 2
+)
 
-	flag.StringVar(&cm.QMgrName, "ibmmq.queueManager", "", "Queue Manager name")
-	flag.StringVar(&cm.CC.CcdtUrl, "ibmmq.ccdtUrl", "", "Path to CCDT")
-	flag.StringVar(&cm.CC.ConnName, "ibmmq.connName", "", "Connection Name")
-	flag.StringVar(&cm.CC.Channel, "ibmmq.channel", "", "Channel Name")
-	flag.StringVar(&cm.ReplyQ, "ibmmq.replyQueue", "SYSTEM.DEFAULT.MODEL.QUEUE", "Reply Queue to collect data")
+var configParms map[string]*ConfigParm
+var keys []string
 
-	flag.StringVar(&cm.MetaPrefix, "metaPrefix", "", "Override path to monitoring resource topic")
+func envVarKey(section string, name string) string {
+	return strings.ToUpper("IBMMQ_" + section + "_" + name)
+}
 
-	// Note that there are non-empty defaults for Topics and Subscriptions
-	flag.StringVar(&cm.MonitoredQueues, "ibmmq.monitoredQueues", "", "Patterns of queues to monitor")
-	flag.StringVar(&cm.MonitoredQueuesFile, "ibmmq.monitoredQueuesFile", "", "File with patterns of queues to monitor")
-	flag.StringVar(&cm.MonitoredChannels, "ibmmq.monitoredChannels", "", "Patterns of channels to monitor")
-	flag.StringVar(&cm.MonitoredChannelsFile, "ibmmq.monitoredChannelsFile", "", "File with patterns of channels to monitor")
-	flag.StringVar(&cm.MonitoredTopics, "ibmmq.monitoredTopics", "#", "Patterns of topics to monitor")
-	flag.StringVar(&cm.MonitoredTopicsFile, "ibmmq.monitoredTopicsFile", "", "File with patterns of topics to monitor")
-	flag.StringVar(&cm.MonitoredSubscriptions, "ibmmq.monitoredSubscriptions", "*", "Patterns of subscriptions to monitor")
-	flag.StringVar(&cm.MonitoredSubscriptionsFile, "ibmmq.monitoredSubscriptionsFile", "", "File with patterns of subscriptions to monitor")
-	flag.StringVar(&cm.QueueSubscriptionSelector, "ibmmq.queueSubscriptionSelector", "", "Resource topic selection for queues")
-	flag.BoolVar(&cm.CC.ShowInactiveChannels, "ibmmq.showInactiveChannels", false, "Show inactive channels (not just stopped ones)")
+func AddParm(loc interface{}, defaultValue interface{}, parmType int, cliName string, envSection string, envName string, usage string) {
+	p := new(ConfigParm)
+	p.loc = loc
+	p.defaultValue = defaultValue
+	p.cliName = cliName
+	p.envSection = envSection
+	p.envName = envName
+	p.usage = usage
+	p.parmType = parmType
+	p.userSet = false
 
-	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
-	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.qStatus", false, "Add metrics from the QSTATUS fields")
-	flag.BoolVar(&cm.CC.UseStatus, "ibmmq.useStatus", false, "Add metrics from all object STATUS fields")
-	flag.BoolVar(&cm.CC.UsePublications, "ibmmq.usePublications", true, "Use resource publications. Set to false to monitor older Distributed platforms")
-	flag.BoolVar(&cm.CC.UseResetQStats, "ibmmq.resetQStats", false, "Use RESET QSTATS on z/OS queue managers")
-
-	flag.StringVar(&cm.CC.UserId, "ibmmq.userid", "", "UserId for MQ connection")
-	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin
-	flag.StringVar(&cm.CC.Password, "ibmmq.password", "", "Password for MQ connection")
-	flag.BoolVar(&cm.CC.ClientMode, "ibmmq.client", false, "Connect as MQ client")
-
-	flag.StringVar(&cm.TZOffsetString, "ibmmq.tzOffset", defaultTZOffset, "Time difference between collector and queue manager")
-	flag.StringVar(&cm.pollInterval, "pollInterval", defaultPollInterval, "Frequency of issuing object status checks")
-	flag.StringVar(&cm.rediscoverInterval, "rediscoverInterval", defaultRediscoverInterval, "Frequency of expanding wildcards for monitored queues")
-	// The locale ought to be discoverable from the environment, but making it an explicit config
-	// parameter for now to aid testing, to override, and to ensure it's given in the MQ-known format
-	// such as "Fr_FR"
-	flag.StringVar(&cm.Locale, "locale", "", "Locale for translated metric descriptions")
-
-	// A YAML configuration file can be used instead of all the preceding parameters
-	flag.StringVar(&cm.ConfigFile, "f", "", "Configuration file")
+	configParms[envVarKey(p.envSection, p.envName)] = p
 
 }
 
-func VerifyConfig(cm *Config) error {
+func InitConfig(cm *Config) {
+	configParms = make(map[string]*ConfigParm)
+
+	// Setup a slightly non-default error handler that gets called if there are problems parsing the command line parms
+	flag.Usage = func() {
+
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s: \n", os.Args[0])
+		flag.PrintDefaults()
+
+		fmt.Fprintf(flag.CommandLine.Output(), "\n\nValid environment variables for configuration are : ")
+		for _, k := range keys {
+			fmt.Fprintf(flag.CommandLine.Output(), "%s ", k)
+		}
+		fmt.Fprintf(flag.CommandLine.Output(), "\n")
+	}
+
+	// Setup the CLI flags and the equivalent Environment variable names. The env vars are named
+	// after the YAML model, so they are slightly different than the CLI flag names.
+	//
+	// If the CLI flag is set, it overrides the env var. The env var in turn overrides the "default" hardcoded
+	// values for a parameter.
+	AddParm(&cm.LogLevel, "error", CP_STR, "log.level", "global", "logLevel", "Log level - debug, info, error")
+	AddParm(&cm.QMgrName, "", CP_STR, "ibmmq.queueManager", "connection", "queueManager", "Queue Manager name")
+	AddParm(&cm.CC.CcdtUrl, "", CP_STR, "ibmmq.ccdtUrl", "connection", "ccdtUrl", "Path to CCDT")
+	AddParm(&cm.CC.ConnName, "", CP_STR, "ibmmq.connName", "connection", "connName", "Connection Name")
+	AddParm(&cm.CC.Channel, "", CP_STR, "ibmmq.channel", "connection", "channel", "Channel Name")
+	AddParm(&cm.ReplyQ, "SYSTEM.DEFAULT.MODEL.QUEUE", CP_STR, "ibmmq.replyQueue", "connection", "replyQueue", "Reply Queue to collect data")
+
+	AddParm(&cm.MetaPrefix, "", CP_STR, "metaPrefix", "global", "metaPrefix", "Override path to monitoring resource topic")
+
+	// Note that there are non-empty defaults for Topics and Subscriptions
+	AddParm(&cm.MonitoredQueues, "", CP_STR, "ibmmq.monitoredQueues", "objects", "queues", "Patterns of queues to monitor")
+	AddParm(&cm.MonitoredChannels, "", CP_STR, "ibmmq.monitoredChannels", "objects", "channels", "Patterns of channels to monitor")
+	AddParm(&cm.MonitoredQueuesFile, "", CP_STR, "ibmmq.monitoredQueuesFile", "objects", "queuesFile", "File with patterns of queues to monitor")
+	AddParm(&cm.MonitoredChannelsFile, "", CP_STR, "ibmmq.monitoredChannelsFile", "objects", "channelsFile", "File with patterns of channels to monitor")
+	AddParm(&cm.MonitoredTopics, "#", CP_STR, "ibmmq.monitoredTopics", "objects", "topics", "Patterns of topics to monitor")
+	AddParm(&cm.MonitoredSubscriptions, "*", CP_STR, "ibmmq.monitoredSubscriptions", "objects", "subscriptions", "Patterns of subscriptions to monitor")
+	AddParm(&cm.MonitoredTopicsFile, "", CP_STR, "ibmmq.monitoredTopicsFile", "objects", "topicsFile", "File with patterns of topics to monitor")
+	AddParm(&cm.MonitoredSubscriptionsFile, "", CP_STR, "ibmmq.monitoredSubscriptionsFile", "objects", "subscriptionsFile", "File with patterns of subscriptions to monitor")
+	AddParm(&cm.QueueSubscriptionSelector, "", CP_STR, "ibmmq.queueSubscriptionSelector", "objects", "queueSubscriptionSelector", "Resource topic selection for queues")
+	AddParm(&cm.CC.ShowInactiveChannels, false, CP_BOOL, "ibmmq.showInactiveChannels", "objects", "showInactiveChannels", "Show inactive channels (not just stopped ones)")
+
+	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
+	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.qStatus", "global", "useObjectStatus", "Add metrics from the QSTATUS fields")
+	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.useStatus", "global", "useObjectStatus", "Add metrics from all object STATUS fields")
+	AddParm(&cm.CC.UsePublications, true, CP_BOOL, "ibmmq.usePublications", "global", "usePublications", "Use resource publications. Set to false to monitor older Distributed platforms")
+	AddParm(&cm.CC.UseResetQStats, false, CP_BOOL, "ibmmq.resetQStats", "global", "useResetQStats", "Use RESET QSTATS on z/OS queue managers")
+
+	AddParm(&cm.CC.UserId, "", CP_STR, "ibmmq.userid", "connection", "user", "UserId for MQ connection")
+	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin
+	AddParm(&cm.CC.Password, "", CP_STR, "ibmmq.password", "connection", "password", "Password for MQ connection")
+	AddParm(&cm.CC.ClientMode, false, CP_BOOL, "ibmmq.client", "connection", "clientConnection", "Connect as MQ client")
+
+	AddParm(&cm.TZOffsetString, defaultTZOffset, CP_STR, "ibmmq.tzOffset", "global", "tzOffset", "Time difference between collector and queue manager")
+	AddParm(&cm.pollInterval, defaultPollInterval, CP_STR, "pollInterval", "global", "pollInterval", "Frequency of issuing object status checks")
+	AddParm(&cm.rediscoverInterval, defaultRediscoverInterval, CP_STR, "rediscoverInterval", "global", "rediscoverInterval", "Frequency of expanding wildcards for monitored queues")
+	// The locale ought to be discoverable from the environment, but making it an explicit config
+	// parameter for now to aid testing, to override, and to ensure it's given in the MQ-known format
+	// such as "Fr_FR"
+	AddParm(&cm.Locale, "", CP_STR, "locale", "global", "locale", "Locale for translated metric descriptions")
+
+	// A YAML configuration file can be used instead of all the preceding parameters
+	AddParm(&cm.ConfigFile, "", CP_STR, "f", "global", "configurationFile", "Configuration file")
+
+}
+
+func ParseParms() error {
+	var err error
+
+	// While there's no real reason to sort the config parameters, it makes it
+	// a bit easier to see things during debug
+	keys = make([]string, len(configParms))
+	i := 0
+	for k, _ := range configParms {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+
+	// Now setup the command line flags. If an environment variable
+	// is defined for a value, then make that the new "default" value. A CLI
+	// setting will override that. But a YAML config setting will not.
+	for _, envVarName := range keys {
+		p := configParms[envVarName]
+		envValue := os.Getenv(envVarName)
+		//fmt.Printf("Env var for %s is '%s' (string)\n", envVarName, envValue)
+		if envValue != "" {
+			p.userSet = true
+		}
+
+		switch p.parmType {
+		case CP_STR:
+			if envValue != "" {
+				p.defaultValue = envValue
+			}
+			flag.StringVar((p.loc).(*string), p.cliName, (p.defaultValue).(string), p.usage)
+		case CP_INT:
+			if envValue != "" {
+				d, _ := strconv.ParseInt(envValue, 10, 0)
+				p.defaultValue = int(d)
+			}
+			flag.IntVar((p.loc).(*int), p.cliName, (p.defaultValue).(int), p.usage)
+		case CP_BOOL:
+			if envValue != "" {
+				p.defaultValue, _ = strconv.ParseBool(envValue)
+			}
+			flag.BoolVar((p.loc).(*bool), p.cliName, (p.defaultValue).(bool), p.usage)
+		}
+
+	}
+
+	flag.Parse()
+
+	// Now that the command line has been parsed, we will record which flags
+	// were explicitly set there.
+
+	for _, envVarName := range keys {
+		p := configParms[envVarName]
+		n := p.cliName
+		found := cliSet(n)
+		if found {
+			//fmt.Printf("Flag %s was set on cmd line\n", n)
+			p.userSet = true
+		} else {
+			//fmt.Printf("Flag %s was NOT set on cmd line\n", n)
+		}
+	}
+
+	if len(flag.Args()) > 0 {
+		err = fmt.Errorf("Unexpected additional command line parameters given.")
+		fmt.Fprintf(flag.CommandLine.Output(), "%v\n\n", err)
+		flag.Usage()
+	}
+
+	return err
+}
+
+// Was a flag explicitly set on the command line
+func cliSet(n string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == n {
+			found = true
+		}
+	})
+	return found
+}
+
+func VerifyConfig(cm *Config, fullCf interface{}) error {
 	var err error
 
 	// If someone has explicitly said not to use publications, then they
@@ -211,7 +357,12 @@ func VerifyConfig(cm *Config) error {
 		}
 	}
 
-	log.Debugf("Configuration: %+v", cm)
+	log.Debugf("VerifyConfig Config: %+v", fullCf)
+	if err != nil {
+		log.Debugf("VerifyConfig Error : %+v", err)
+	}
+
+	//log.Fatalf("Exiting immediately") // Used this temporarily to save time
 
 	return err
 }

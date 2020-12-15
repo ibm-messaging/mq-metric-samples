@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016,2020
+  Copyright (c) IBM Corporation 2016,2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ package main
 */
 
 import (
-	"flag"
-	"fmt"
-
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 
 	log "github.com/sirupsen/logrus"
@@ -60,18 +57,13 @@ func initConfig() {
 
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.ci.DatabaseAddress, "ibmmq.databaseAddress", "", "Address of database eg http://example.com:4242")
-	flag.StringVar(&config.ci.Interval, "ibmmq.interval", "10s", "How long between each collection")
-	flag.IntVar(&config.ci.MaxErrors, "ibmmq.maxErrors", 100, "Maximum number of errors communicating with server before considered fatal")
-	flag.IntVar(&config.ci.MaxPoints, "ibmmq.maxPoints", 30, "Maximum number of points to include in each write to the server")
-	flag.StringVar(&config.ci.MetricPrefix, "ibmmq.seriesPrefix", "ibmmq", "Prefix for all the MQ metric series")
+	cf.AddParm(&config.ci.DatabaseAddress, "", cf.CP_STR, "ibmmq.databaseAddress", "opentsdb", "databaseAddress", "Address of database eg http://example.com:4242")
+	cf.AddParm(&config.ci.Interval, "10s", cf.CP_STR, "ibmmq.interval", "opentsdb", "interval", "How long between each collection")
+	cf.AddParm(&config.ci.MaxErrors, 100, cf.CP_INT, "ibmmq.maxErrors", "opentsdb", "maxerrors", "Maximum number of errors communicating with server before considered fatal")
+	cf.AddParm(&config.ci.MaxPoints, 30, cf.CP_INT, "ibmmq.maxPoints", "opentsdb", "maxPoints", "Maximum number of points to include in each write to the server")
+	cf.AddParm(&config.ci.MetricPrefix, "ibmmq", cf.CP_STR, "ibmmq.seriesPrefix", "opentsdb", "seriesPrefix", "Prefix for all the MQ metric series")
 
-	flag.Parse()
-
-	if len(flag.Args()) > 0 {
-		err = fmt.Errorf("Extra command line parameters given")
-		flag.PrintDefaults()
-	}
+	cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
@@ -80,10 +72,12 @@ func initConfig() {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
-				config.ci = cfy.OpenTSDB
-				if config.ci.MetricPrefix == "" {
-					config.ci.MetricPrefix = "ibmmq"
-				}
+				config.ci.DatabaseAddress = cf.CopyParmIfNotSetStr("opentsdb", "databaseAddress", cfy.OpenTSDB.DatabaseAddress)
+				config.ci.Interval = cf.CopyParmIfNotSetStr("opentsdb", "interval", cfy.OpenTSDB.Interval)
+				config.ci.MaxErrors = cf.CopyParmIfNotSetInt("opentsdb", "maxErrors", cfy.OpenTSDB.MaxErrors)
+				config.ci.MaxPoints = cf.CopyParmIfNotSetInt("opentsdb", "maxPoints", cfy.OpenTSDB.MaxPoints)
+				config.ci.MetricPrefix = cf.CopyParmIfNotSetStr("opentsdb", "seriesPrefix", cfy.OpenTSDB.MetricPrefix)
+
 			}
 		}
 	}
@@ -94,7 +88,7 @@ func initConfig() {
 	// Note that printing of the config information happens before any password
 	// is read from a file.
 	if err == nil {
-		err = cf.VerifyConfig(&config.cf)
+		err = cf.VerifyConfig(&config.cf, config)
 		log.Debugf("OpenTSDB config: +%v", &config.ci)
 	}
 

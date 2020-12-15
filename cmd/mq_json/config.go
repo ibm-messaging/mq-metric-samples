@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package main
 */
 
 import (
-	"flag"
-	"fmt"
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 )
 
@@ -51,14 +49,9 @@ func initConfig() error {
 
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.interval, "ibmmq.interval", "10s", "How long between each collection")
+	cf.AddParm(&config.interval, "10s", cf.CP_STR, "ibmmq.interval", "json", "interval", "How long between each collection")
 
-	flag.Parse()
-
-	if len(flag.Args()) > 0 {
-		err = fmt.Errorf("Extra command line parameters given")
-		flag.PrintDefaults()
-	}
+	cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
@@ -67,7 +60,7 @@ func initConfig() error {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
-				config.interval = cf.CopyIfSet(config.interval, cfy.JSON.Interval)
+				config.interval = cf.CopyParmIfNotSetStr("json", "interval", cfy.JSON.Interval)
 			}
 		}
 	}
@@ -77,7 +70,7 @@ func initConfig() error {
 	}
 
 	if err == nil {
-		err = cf.VerifyConfig(&config.cf)
+		err = cf.VerifyConfig(&config.cf, config)
 	}
 
 	if err == nil {

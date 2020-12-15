@@ -38,26 +38,26 @@ import (
 
 type exporter struct {
 	mutex         sync.RWMutex
-	metrics       mqmetric.AllMetrics
-	chlStatus     mqmetric.StatusSet
-	qStatus       mqmetric.StatusSet
-	topicStatus   mqmetric.StatusSet
-	subStatus     mqmetric.StatusSet
-	qMgrStatus    mqmetric.StatusSet
-	usageBpStatus mqmetric.StatusSet
-	usagePsStatus mqmetric.StatusSet
+	metrics       *mqmetric.AllMetrics
+	chlStatus     *mqmetric.StatusSet
+	qStatus       *mqmetric.StatusSet
+	topicStatus   *mqmetric.StatusSet
+	subStatus     *mqmetric.StatusSet
+	qMgrStatus    *mqmetric.StatusSet
+	usageBpStatus *mqmetric.StatusSet
+	usagePsStatus *mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
 	return &exporter{
-		metrics:       mqmetric.Metrics,
-		chlStatus:     mqmetric.ChannelStatus,
-		qStatus:       mqmetric.QueueStatus,
-		topicStatus:   mqmetric.TopicStatus,
-		subStatus:     mqmetric.SubStatus,
-		qMgrStatus:    mqmetric.QueueManagerStatus,
-		usageBpStatus: mqmetric.UsageBpStatus,
-		usagePsStatus: mqmetric.UsagePsStatus,
+		metrics:       mqmetric.GetPublishedMetrics(""),
+		chlStatus:     mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL),
+		qStatus:       mqmetric.GetObjectStatus("", mqmetric.OT_Q),
+		topicStatus:   mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC),
+		subStatus:     mqmetric.GetObjectStatus("", mqmetric.OT_SUB),
+		qMgrStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_Q_MGR),
+		usageBpStatus: mqmetric.GetObjectStatus("", mqmetric.OT_BP),
+		usagePsStatus: mqmetric.GetObjectStatus("", mqmetric.OT_PS),
 	}
 }
 
@@ -563,7 +563,7 @@ resource that we know about. These are stored in a local map keyed
 from the resource names.
 */
 func allocateGauges() {
-	for _, cl := range mqmetric.Metrics.Classes {
+	for _, cl := range mqmetric.GetPublishedMetrics("").Classes {
 		for _, ty := range cl.Types {
 			for _, elem := range ty.Elements {
 				g := newMqGaugeVec(elem)
@@ -577,7 +577,7 @@ func allocateGauges() {
 func allocateChannelStatusGauges() {
 	// These attributes do not (currently) have an NLS translated description
 	mqmetric.ChannelInitAttributes()
-	for _, attr := range mqmetric.ChannelStatus.Attributes {
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "channel")
 		channelStatusGaugeMap[attr.MetricName] = g
@@ -586,7 +586,7 @@ func allocateChannelStatusGauges() {
 
 func allocateQStatusGauges() {
 	mqmetric.QueueInitAttributes()
-	for _, attr := range mqmetric.QueueStatus.Attributes {
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "queue")
 		qStatusGaugeMap[attr.MetricName] = g
@@ -595,7 +595,7 @@ func allocateQStatusGauges() {
 
 func allocateTopicStatusGauges() {
 	mqmetric.TopicInitAttributes()
-	for _, attr := range mqmetric.TopicStatus.Attributes {
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "topic")
 		topicStatusGaugeMap[attr.MetricName] = g
@@ -604,7 +604,7 @@ func allocateTopicStatusGauges() {
 
 func allocateSubStatusGauges() {
 	mqmetric.SubInitAttributes()
-	for _, attr := range mqmetric.SubStatus.Attributes {
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "subscription")
 		subStatusGaugeMap[attr.MetricName] = g
@@ -613,7 +613,7 @@ func allocateSubStatusGauges() {
 
 func allocateQMgrStatusGauges() {
 	mqmetric.QueueManagerInitAttributes()
-	for _, attr := range mqmetric.QueueManagerStatus.Attributes {
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_Q_MGR).Attributes {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "qmgr")
 		qMgrStatusGaugeMap[attr.MetricName] = g
@@ -622,12 +622,12 @@ func allocateQMgrStatusGauges() {
 
 func allocateUsageStatusGauges() {
 	mqmetric.UsageInitAttributes()
-	for _, attr := range mqmetric.UsageBpStatus.Attributes {
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "bufferpool")
 		usageBpStatusGaugeMap[attr.MetricName] = g
 	}
-	for _, attr := range mqmetric.UsagePsStatus.Attributes {
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "pageset")
 		usagePsStatusGaugeMap[attr.MetricName] = g

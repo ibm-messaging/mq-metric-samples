@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016,2020
+  Copyright (c) IBM Corporation 2016,2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -60,15 +60,25 @@ func main() {
 	err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 	if err == nil {
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
-		defer mqmetric.EndConnection()
 	} else {
 		if mqe, ok := err.(mqmetric.MQMetricError); ok {
 			mqrc := mqe.MQReturn.MQRC
+			mqcc := mqe.MQReturn.MQCC
+
 			if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
 				log.Errorln(err)
 				os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
+			} else if mqcc == ibmmq.MQCC_WARNING {
+				log.Infoln("Connected to queue manager ", config.cf.QMgrName)
+				// Report the error but allow it to continue
+				log.Errorln(err)
+				err = nil
 			}
 		}
+	}
+
+	if err == nil {
+		defer mqmetric.EndConnection()
 	}
 
 	// What metrics can the queue manager provide? Find out, and

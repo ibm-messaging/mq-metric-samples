@@ -92,7 +92,7 @@ func Collect() error {
 	// Clear out everything we know so far. In particular, replace
 	// the map of values for each object so the collection starts
 	// clean.
-	for _, cl := range mqmetric.Metrics.Classes {
+	for _, cl := range mqmetric.GetPublishedMetrics("").Classes {
 		for _, ty := range cl.Types {
 			for _, elem := range ty.Elements {
 				elem.Values = make(map[string]int64)
@@ -202,7 +202,7 @@ func Collect() error {
 		bp.addPoint(pt)
 		log.Debugf("Adding point %v", pt)
 
-		for _, cl := range mqmetric.Metrics.Classes {
+		for _, cl := range mqmetric.GetPublishedMetrics("").Classes {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
 					for key, value := range elem.Values {
@@ -219,7 +219,7 @@ func Collect() error {
 						}
 
 						usage := ""
-						if usageAttr, ok := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+						if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
 							if usageAttr.ValueInt64 == 1 {
 								usage = "XMITQ"
 							} else {
@@ -245,21 +245,21 @@ func Collect() error {
 		}
 
 		series = "channel"
-		for _, attr := range mqmetric.ChannelStatus.Attributes {
+		for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes {
 			for key, value := range attr.Values {
 				if value.IsInt64 {
 
-					chlType := int(mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
+					chlType := int(mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
 					chlTypeString := strings.Replace(ibmmq.MQItoString("CHT", chlType), "MQCHT_", "", -1)
 					// Not every channel status report has the RQMNAME attribute (eg SVRCONNs)
 					rqmName := ""
-					if rqmNameAttr, ok := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
+					if rqmNameAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
 						rqmName = rqmNameAttr.ValueString
 					}
 
-					chlName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
-					connName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
-					jobName := mqmetric.ChannelStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
+					chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+					connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+					jobName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
 
 					tags := map[string]string{
 						"qmgr": config.cf.QMgrName,
@@ -282,11 +282,11 @@ func Collect() error {
 		}
 
 		series = "queue"
-		for _, attr := range mqmetric.QueueStatus.Attributes {
+		for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes {
 			for key, value := range attr.Values {
 				if value.IsInt64 {
 
-					qName := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+					qName := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
 
 					tags := map[string]string{
 						"qmgr": config.cf.QMgrName,
@@ -294,7 +294,7 @@ func Collect() error {
 					tags["queue"] = qName
 					tags["platform"] = platformString
 					usage := ""
-					if usageAttr, ok := mqmetric.QueueStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+					if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
 						if usageAttr.ValueInt64 == 1 {
 							usage = "XMITQ"
 						} else {
@@ -318,12 +318,12 @@ func Collect() error {
 		}
 
 		series = "topic"
-		for _, attr := range mqmetric.TopicStatus.Attributes {
+		for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes {
 			for key, value := range attr.Values {
 				if value.IsInt64 {
 
-					topicString := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
-					topicStatusType := mqmetric.TopicStatus.Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
+					topicString := mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
+					topicStatusType := mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
 
 					tags := map[string]string{
 						"qmgr": config.cf.QMgrName,
@@ -345,14 +345,14 @@ func Collect() error {
 		}
 
 		series = "subscription"
-		for _, attr := range mqmetric.SubStatus.Attributes {
+		for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes {
 			for key, value := range attr.Values {
 				if value.IsInt64 {
-					subId := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_ID].Values[key].ValueString
-					subName := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_NAME].Values[key].ValueString
-					subType := int(mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_TYPE].Values[key].ValueInt64)
+					subId := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_ID].Values[key].ValueString
+					subName := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_NAME].Values[key].ValueString
+					subType := int(mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_TYPE].Values[key].ValueInt64)
 					subTypeString := strings.Replace(ibmmq.MQItoString("SUBTYPE", subType), "MQSUBTYPE_", "", -1)
-					topicString := mqmetric.SubStatus.Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
+					topicString := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
 
 					tags := map[string]string{
 						"qmgr": config.cf.QMgrName,
@@ -401,11 +401,11 @@ func Collect() error {
 
 		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
 			series = "bufferpool"
-			for _, attr := range mqmetric.UsageBpStatus.Attributes {
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes {
 				for key, value := range attr.Values {
-					bpId := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_ID].Values[key].ValueString
-					bpLocation := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_LOCATION].Values[key].ValueString
-					bpClass := mqmetric.UsageBpStatus.Attributes[mqmetric.ATTR_BP_CLASS].Values[key].ValueString
+					bpId := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_ID].Values[key].ValueString
+					bpLocation := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_LOCATION].Values[key].ValueString
+					bpClass := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_CLASS].Values[key].ValueString
 					if value.IsInt64 && !attr.Pseudo {
 						qMgrName := strings.TrimSpace(config.cf.QMgrName)
 
@@ -430,11 +430,11 @@ func Collect() error {
 			}
 
 			series = "pageset"
-			for _, attr := range mqmetric.UsagePsStatus.Attributes {
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes {
 				for key, value := range attr.Values {
 					qMgrName := strings.TrimSpace(config.cf.QMgrName)
-					psId := mqmetric.UsagePsStatus.Attributes[mqmetric.ATTR_PS_ID].Values[key].ValueString
-					bpId := mqmetric.UsagePsStatus.Attributes[mqmetric.ATTR_PS_BPID].Values[key].ValueString
+					psId := mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes[mqmetric.ATTR_PS_ID].Values[key].ValueString
+					bpId := mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes[mqmetric.ATTR_PS_BPID].Values[key].ValueString
 					if value.IsInt64 && !attr.Pseudo {
 						tags := map[string]string{
 							"qmgr":     qMgrName,

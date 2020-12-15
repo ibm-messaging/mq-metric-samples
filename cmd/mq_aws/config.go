@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package main
 */
 
 import (
-	"flag"
-	"fmt"
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
@@ -58,19 +56,14 @@ func initConfig() {
 
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.ci.Region, "ibmmq.awsregion", "", "AWS Region to connect to")
-	flag.StringVar(&config.ci.Namespace, "ibmmq.namespace", "IBM/MQ", "Namespace for metrics")
+	cf.AddParm(&config.ci.Region, "", cf.CP_STR, "ibmmq.awsregion", "cloudwatch", "awsregion", "AWS Region to connect to")
+	cf.AddParm(&config.ci.Namespace, "IBM/MQ", cf.CP_STR, "ibmmq.namespace", "cloudwatch", "namespace", "Namespace for metrics")
 
-	flag.StringVar(&config.ci.Interval, "ibmmq.interval", "60s", "How long between each collection")
-	flag.IntVar(&config.ci.MaxErrors, "ibmmq.maxErrors", 10000, "Maximum number of errors communicating with server before considered fatal")
-	flag.IntVar(&config.ci.MaxPoints, "ibmmq.maxPoints", 20, "Maximum number of points to include in each write to the server")
+	cf.AddParm(&config.ci.Interval, "60s", cf.CP_STR, "ibmmq.interval", "cloudwatch", "interval", "How long between each collection")
+	cf.AddParm(&config.ci.MaxErrors, 10000, cf.CP_INT, "ibmmq.maxErrors", "cloudwatch", "maxerrors", "Maximum number of errors communicating with server before considered fatal")
+	cf.AddParm(&config.ci.MaxPoints, 20, cf.CP_INT, "ibmmq.maxPoints", "cloudwatch", "maxpoints", "Maximum number of points to include in each write to the server")
 
-	flag.Parse()
-
-	if len(flag.Args()) > 0 {
-		err = fmt.Errorf("Extra command line parameters given")
-		flag.PrintDefaults()
-	}
+	err = cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
@@ -79,13 +72,17 @@ func initConfig() {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
-				config.ci = cfy.Cloudwatch
-				if config.ci.Namespace == "" {
-					config.ci.Namespace = "IBM/MQ"
-				}
+				config.ci.Region = cf.CopyParmIfNotSetStr("cloudwatch", "awsregion", cfy.Cloudwatch.Region)
+				config.ci.Namespace = cf.CopyParmIfNotSetStr("cloudwatch", "namespace", cfy.Cloudwatch.Namespace)
+
+				config.ci.Interval = cf.CopyParmIfNotSetStr("cloudwatch", "interval", cfy.Cloudwatch.Interval)
+				config.ci.MaxErrors = cf.CopyParmIfNotSetInt("cloudwatch", "maxerrors", cfy.Cloudwatch.MaxErrors)
+				config.ci.MaxPoints = cf.CopyParmIfNotSetInt("cloudwatch", "maxpoints", cfy.Cloudwatch.MaxPoints)
+
 			}
 		}
 	}
+
 	if err == nil {
 		cf.InitLog(config.cf)
 	}
@@ -93,8 +90,7 @@ func initConfig() {
 	// Note that printing of the config information happens before any password
 	// is read from a file.
 	if err == nil {
-		err = cf.VerifyConfig(&config.cf)
-		log.Debugf("Cloudwatch config: +%v", &config.ci)
+		err = cf.VerifyConfig(&config.cf, config)
 	}
 
 	// Process password for MQ connection

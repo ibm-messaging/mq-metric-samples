@@ -74,6 +74,16 @@ The server documentation has information on more complex
 options, including the ability to pull information on which hosts
 should be monitored from a variety of discovery tools.
 
+### Prometheus TLS
+The Prometheus servers now have the capability to use TLS to contact
+collector programs such as this. If you set the `httpsCertFile` and `httpsKeyFile`
+configuration parameters, the https protocol is enabled for the collector instead of using
+an unprotected http connection. This is the most basic TLS capability; additional function
+could be added in future, for example to validate the Prometheus system's credentials.
+
+Note that in TLS terms, the Prometheus engine is considered a **client** as it is the
+component that initiates the http(s) connection, while this collector is a **server**.
+
 ## Metrics
 Once the monitor program has been started, and Prometheus refreshed to
 connect to it, you will see metrics being available in the prometheus

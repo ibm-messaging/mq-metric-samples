@@ -7,3 +7,6 @@ prometheus:
 # host: 1.2.3.4
   metricsPath: "/metrics"
   namespace: ibmmq
+# We can also set keystore information if the Prometheus instance uses TLS to contact the collector
+# httpsKeyFile:  "server.key"
+# httpsCertFile: "server.crt"

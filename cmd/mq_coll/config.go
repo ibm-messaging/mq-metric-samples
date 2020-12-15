@@ -19,8 +19,6 @@ package main
 */
 
 import (
-	"flag"
-	"fmt"
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	"os"
 )
@@ -53,19 +51,12 @@ initConfig parses the command line parameters.
 */
 func initConfig() {
 
-	var err error
-
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.interval, "ibmmq.interval", "10", "How many seconds between each collection")
-	flag.StringVar(&config.hostname, "ibmmq.hostname", "localhost", "Host to connect to")
+	cf.AddParm(&config.interval, "60s", cf.CP_STR, "ibmmq.interval", "collectd", "interval", "How long between each collection")
+	cf.AddParm(&config.hostname, "localhost", cf.CP_STR, "ibmmq.hostname", "collectd", "hostname", "Host to connect to")
 
-	flag.Parse()
-
-	if len(flag.Args()) > 0 {
-		err = fmt.Errorf("Extra command line parameters given")
-		flag.PrintDefaults()
-	}
+	err := cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
@@ -74,10 +65,8 @@ func initConfig() {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
-				config.interval = cfy.Collectd.Interval
-				if cfy.Collectd.Hostname != "" {
-					config.hostname = cfy.Collectd.Hostname
-				}
+				config.interval = cf.CopyParmIfNotSetStr("collectd", "interval", cfy.Collectd.Interval)
+				config.hostname = cf.CopyParmIfNotSetStr("collectd", "hostname", cfy.Collectd.Hostname)
 			}
 		}
 	}
@@ -87,7 +76,7 @@ func initConfig() {
 	}
 
 	if err == nil {
-		err = cf.VerifyConfig(&config.cf)
+		err = cf.VerifyConfig(&config.cf, config)
 	}
 
 	if err == nil {

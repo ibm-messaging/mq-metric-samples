@@ -1,12 +1,19 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Mar 26 2021
+* Update to use v5.2.0 of the mq-golang repository
+* Update to use MQ 9.2.2
+* Start to use enhanced mqmetric API that supports multiple connections (though still only having a single connection in the collectors for now)
+* Permit https connection from the Prometheus engine
+* Redesign collectors to permit configuration via environment variables
+
 ### Dec 04 2020
 * Update to use v5.1.3 of the mq-golang repository
 * Update to use MQ 9.2.1
 * Update YAML processing to better handle missing values as defaults (#50)
 * Add 'host' to Prometheus listener config (#51)
-* URLs pointing at MQ KnowledgeCenter updated 
+* URLs pointing at MQ KnowledgeCenter updated
 
 ### Sep 10 2020
 * Update to use v5.1.2 of the mq-golang repository

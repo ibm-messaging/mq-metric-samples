@@ -13,7 +13,7 @@ This package is provided as-is with no guarantees of support or updates.
 There are also no guarantees of compatibility with any future versions of the package;
 interfaces and functions are subject to change based on any feedback.
 
-These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.
+These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.pu
 Those packages are in the [mq-golang repository](https://github.com/ibm-messaging/mq-golang)
 and are also included in the `vendor` tree of this repository. They are referenced in the `go.mod`
 file if you wish to reload all of the dependencies by running `go mod vendor`.
@@ -99,8 +99,8 @@ They can also be configured to collect statistics for specific sets of queues wh
 metrics are published by the queue manager. Object status queries can be used to
 extract more information about other objects such as channels and subscriptions.
 
-The exporters can have their configuration given either on the command line
-via flags, or in a YAML file described below.
+The exporters can have their configuration given on the command line
+via flags, via environment variables, or in a YAML file described below.
 
 ### Wildcard Patterns for Queues
 The sets of queues to be monitored can be given either directly on the command line with the
@@ -236,6 +236,19 @@ structured. The command flags are not being changed to preserve compatibility wi
 User passwords can be provided in the file, but it is not recommended that you do that. Instead provide the password
 either on the command line or piped via stdin to the program.
 
+## Environment variable configuration for all exporters
+As a further alternative for configuration, parameters can be set by environment variables. This may be more
+convenient when running collectors in a container as the variables may be easier to modify for each container than
+setting up different YAML files. The names of the variables follow the YAML naming pattern with an IBMMQ prefix, underscore
+separators, and in uppercase.
+
+For example, the queue manager name can be set with "IBMMQ_CONNECTION_QUEUEMANAGER"
+You can use the "-h" parameter to the collector to see the complete set of options.
+
+### Precedence of configuration options
+The command line flags are highest precedence. Environment variables override settings in the YAML file, And the YAML
+override the hardcoded default values.
+
 ## More information
 Each of the sample monitor programs has its own README file describing any particular
 considerations.
@@ -254,4 +267,4 @@ must include a statement stating you accept the terms in the CLA.
 
 ## Copyright
 
-© Copyright IBM Corporation 2016, 2020
+© Copyright IBM Corporation 2016, 2021
