@@ -6,7 +6,7 @@ storage mechanisms including Prometheus and InfluxDB.
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2019
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -113,6 +113,7 @@ func statusTimeDiff(now time.Time, d string, t string) int64 {
 	var parsedT time.Time
 
 	traceEntry("statusTimeDiff")
+	ci := getConnection(GetConnectionKey())
 
 	// If there's any error in parsing the timestamp - perhaps
 	// the value has not been set yet, then just return 0
@@ -125,7 +126,7 @@ func statusTimeDiff(now time.Time, d string, t string) int64 {
 		}
 		parsedT, err = time.ParseInLocation(timeStampLayout, d+" "+t, now.Location())
 		if err == nil {
-			diff := now.Sub(parsedT).Seconds() + tzOffsetSecs
+			diff := now.Sub(parsedT).Seconds() + ci.tzOffsetSecs
 
 			if diff < 0 { // Cannot have status from the future
 				if !timeTravelWarningIssued {
@@ -144,6 +145,8 @@ func statusTimeDiff(now time.Time, d string, t string) int64 {
 
 func statusClearReplyQ() {
 	traceEntry("statusClearReplyQ")
+	ci := getConnection(GetConnectionKey())
+
 	buf := make([]byte, 0)
 	// Empty replyQ in case any left over from previous errors
 	for ok := true; ok; {
@@ -154,7 +157,7 @@ func statusClearReplyQ() {
 		gmo.Options |= ibmmq.MQGMO_NO_WAIT
 		gmo.Options |= ibmmq.MQGMO_CONVERT
 		gmo.Options |= ibmmq.MQGMO_ACCEPT_TRUNCATED_MSG
-		_, err := statusReplyQObj.Get(getmqmd, gmo, buf)
+		_, err := ci.si.statusReplyQObj.Get(getmqmd, gmo, buf)
 
 		if err != nil && err.(*ibmmq.MQReturn).MQCC == ibmmq.MQCC_FAILED {
 			ok = false
@@ -169,6 +172,8 @@ func statusClearReplyQ() {
 // with elements specific to the object type.
 func statusSetCommandHeaders() (*ibmmq.MQMD, *ibmmq.MQPMO, *ibmmq.MQCFH, []byte) {
 	traceEntry("statusSetCommandHeaders")
+	ci := getConnection(GetConnectionKey())
+
 	cfh := ibmmq.NewMQCFH()
 	cfh.Version = ibmmq.MQCFH_VERSION_3
 	cfh.Type = ibmmq.MQCFT_COMMAND_XR
@@ -182,7 +187,7 @@ func statusSetCommandHeaders() (*ibmmq.MQMD, *ibmmq.MQPMO, *ibmmq.MQCFH, []byte)
 	pmo.Options |= ibmmq.MQPMO_FAIL_IF_QUIESCING
 
 	putmqmd.Format = "MQADMIN"
-	putmqmd.ReplyToQ = statusReplyQObj.Name
+	putmqmd.ReplyToQ = ci.si.statusReplyQObj.Name
 	putmqmd.MsgType = ibmmq.MQMT_REQUEST
 	putmqmd.Report = ibmmq.MQRO_PASS_DISCARD_AND_EXPIRY
 
@@ -201,6 +206,8 @@ func statusGetReply() (*ibmmq.MQCFH, []byte, bool, error) {
 	var cfh *ibmmq.MQCFH
 
 	traceEntry("statusGetReply")
+	ci := getConnection(GetConnectionKey())
+
 	replyBuf := make([]byte, 10240)
 
 	getmqmd := ibmmq.NewMQMD()
@@ -212,7 +219,7 @@ func statusGetReply() (*ibmmq.MQCFH, []byte, bool, error) {
 	gmo.WaitInterval = 3 * 1000 // 3 seconds
 
 	allDone := false
-	datalen, err := statusReplyQObj.Get(getmqmd, gmo, replyBuf)
+	datalen, err := ci.si.statusReplyQObj.Get(getmqmd, gmo, replyBuf)
 	if err == nil {
 		cfh, offset = ibmmq.ReadPCFHeader(replyBuf)
 
@@ -243,7 +250,7 @@ func statusGetReply() (*ibmmq.MQCFH, []byte, bool, error) {
 // Called in a loop for each PCF Parameter element returned from the command
 // server messages. We can deal here with the various integer responses; string
 // responses need to be handled in the object-specific caller.
-func statusGetIntAttributes(s StatusSet, elem *ibmmq.PCFParameter, key string) bool {
+func statusGetIntAttributes(s *StatusSet, elem *ibmmq.PCFParameter, key string) bool {
 	// traceEntry("statusGetIntAttributes") // Don't trace as too noisy
 	usableValue := false
 	if elem.Type == ibmmq.MQCFT_INTEGER || elem.Type == ibmmq.MQCFT_INTEGER64 ||
