@@ -19,7 +19,6 @@ package main
 */
 
 import (
-	"flag"
 	"fmt"
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 )
@@ -31,13 +30,17 @@ type mqExporterConfig struct {
 	httpListenHost string
 	httpMetricPath string
 	namespace      string
+	httpsCertFile  string
+	httpsKeyFile   string
 }
 
 type ConfigYProm struct {
-	Port        string
-	Host        string
-	MetricsPath string `yaml:"metricsPath"`
-	Namespace   string
+	Port          string
+	Host          string
+	MetricsPath   string `yaml:"metricsPath"`
+	Namespace     string
+	HttpsCertFile string `yaml:"httpsCertFile"`
+	HttpsKeyFile  string `yaml:"httpsKeyFile"`
 }
 type mqExporterConfigYaml struct {
 	Global     cf.ConfigYGlobal
@@ -67,31 +70,30 @@ func initConfig() error {
 
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.httpListenPort, "ibmmq.httpListenPort", defaultPort, "HTTP Listener Port")
-	flag.StringVar(&config.httpListenHost, "ibmmq.httpListenHost", "", "HTTP Listener Hose")
+	cf.AddParm(&config.httpListenPort, defaultPort, cf.CP_STR, "ibmmq.httpListenPort", "prometheus", "port", "HTTP(S) Listener Port")
+	cf.AddParm(&config.httpListenHost, "", cf.CP_STR, "ibmmq.httpListenHost", "prometheus", "host", "HTTP(S) Listener Host")
+	cf.AddParm(&config.httpMetricPath, "/metrics", cf.CP_STR, "ibmmq.httpMetricPath", "prometheus", "metricsPath", "Path to exporter metrics")
 
-	flag.StringVar(&config.httpMetricPath, "ibmmq.httpMetricPath", "/metrics", "Path to exporter metrics")
+	cf.AddParm(&config.httpsCertFile, "", cf.CP_STR, "ibmmq.httpsCertFile", "prometheus", "httpsCertFile", "TLS public certificate file")
+	cf.AddParm(&config.httpsKeyFile, "", cf.CP_STR, "ibmmq.httpsKeyFile", "prometheus", "httpsKeyFile", "TLS private key file")
 
-	flag.StringVar(&config.namespace, "namespace", defaultNamespace, "Namespace for metrics")
+	cf.AddParm(&config.namespace, defaultNamespace, cf.CP_STR, "namespace", "prometheus", "namespace", "Namespace for metrics")
 
-	flag.Parse()
-
-	if len(flag.Args()) > 0 {
-		err = fmt.Errorf("Extra command line parameters given")
-		flag.PrintDefaults()
-	}
+	err = cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
-			// Set defaults
-			cfy.Global.UsePublications = true
+
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
-				config.httpListenPort = cf.CopyIfSet(config.httpListenPort, cfy.Prometheus.Port)
-				config.httpListenHost = cf.CopyIfSet(config.httpListenHost, cfy.Prometheus.Host)
-				config.httpMetricPath = cf.CopyIfSet(config.httpMetricPath, cfy.Prometheus.MetricsPath)
-				config.namespace = cf.CopyIfSet(config.namespace, cfy.Prometheus.Namespace)
+				config.httpListenPort = cf.CopyParmIfNotSetStr("prometheus", "port", cfy.Prometheus.Port)
+				config.httpListenHost = cf.CopyParmIfNotSetStr("prometheus", "host", cfy.Prometheus.Host)
+				config.httpMetricPath = cf.CopyParmIfNotSetStr("prometheus", "MetricsPath", cfy.Prometheus.MetricsPath)
+				config.namespace = cf.CopyParmIfNotSetStr("prometheus", "namespace", cfy.Prometheus.Namespace)
+
+				config.httpsCertFile = cf.CopyParmIfNotSetStr("prometheus", "httpsCertFile", cfy.Prometheus.HttpsCertFile)
+				config.httpsKeyFile = cf.CopyParmIfNotSetStr("prometheus", "httpsKeyFile", cfy.Prometheus.HttpsKeyFile)
 			}
 		}
 	}
@@ -101,7 +103,7 @@ func initConfig() error {
 	}
 
 	if err == nil {
-		err = cf.VerifyConfig(&config.cf)
+		err = cf.VerifyConfig(&config.cf, config)
 	}
 
 	if err == nil {

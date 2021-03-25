@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package main
 */
 
 import (
-	"flag"
-	"fmt"
 	"strings"
 
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
@@ -58,23 +56,17 @@ var cfy mqExporterConfigYaml
 initConfig parses the command line parameters.
 */
 func initConfig() error {
-	var err error
 
 	cf.InitConfig(&config.cf)
 
-	flag.StringVar(&config.ci.DatabaseName, "ibmmq.databaseName", "", "Name of database")
-	flag.StringVar(&config.ci.DatabaseAddress, "ibmmq.databaseAddress", "", "Address of database eg http://example.com:8086")
-	flag.StringVar(&config.ci.Userid, "ibmmq.databaseUserID", "", "UserID to access the database")
-	flag.StringVar(&config.ci.Interval, "ibmmq.interval", "10s", "How long between each collection")
-	flag.StringVar(&config.ci.PasswordFile, "ibmmq.pwFile", "", "Where is password to database held temporarily")
-	flag.IntVar(&config.ci.MaxErrors, "ibmmq.maxErrors", 100, "Maximum number of errors communicating with server before considered fatal")
+	cf.AddParm(&config.ci.DatabaseName, "", cf.CP_STR, "ibmmq.databaseName", "influx", "databaseName", "Name of database")
+	cf.AddParm(&config.ci.DatabaseAddress, "", cf.CP_STR, "ibmmq.databaseAddress", "influx", "databaseAddress", "Address of database eg http://example.com:8086")
+	cf.AddParm(&config.ci.Userid, "", cf.CP_STR, "ibmmq.databaseUserID", "influx", "databaseUser", "UserID to access the database")
+	cf.AddParm(&config.ci.Interval, "10s", cf.CP_STR, "ibmmq.interval", "influx", "interval", "How long between each collection")
+	cf.AddParm(&config.ci.PasswordFile, "", cf.CP_STR, "ibmmq.pwFile", "influx", "databasePasswordFile", "Where is password to database held temporarily")
+	cf.AddParm(&config.ci.MaxErrors, 100, cf.CP_INT, "ibmmq.maxErrors", "influx", "maxErrors", "Maximum number of errors communicating with server before considered fatal")
 
-	flag.Parse()
-
-	if len(flag.Args()) > 0 {
-		err = fmt.Errorf("Extra command line parameters given")
-		flag.PrintDefaults()
-	}
+	err := cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
@@ -83,8 +75,12 @@ func initConfig() error {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
-				config.ci = cfy.Influx
-
+				config.ci.DatabaseName = cf.CopyParmIfNotSetStr("influx", "databaseName", cfy.Influx.DatabaseName)
+				config.ci.DatabaseAddress = cf.CopyParmIfNotSetStr("influx", "databaseAddress", cfy.Influx.DatabaseAddress)
+				config.ci.Userid = cf.CopyParmIfNotSetStr("influx", "databaseUser", cfy.Influx.Userid)
+				config.ci.Interval = cf.CopyParmIfNotSetStr("influx", "interval", cfy.Influx.Interval)
+				config.ci.PasswordFile = cf.CopyParmIfNotSetStr("influx", "databasePasswordFile", cfy.Influx.PasswordFile)
+				config.ci.MaxErrors = cf.CopyParmIfNotSetInt("influx", "maxErrors", cfy.Influx.MaxErrors)
 			}
 		}
 	}
@@ -95,8 +91,7 @@ func initConfig() error {
 	// Note that printing of the config information happens before any password
 	// is read from a file.
 	if err == nil {
-		err = cf.VerifyConfig(&config.cf)
-		log.Debugf("Influx config: +%v", &config.ci)
+		err = cf.VerifyConfig(&config.cf, config)
 	}
 
 	// Process password for MQ connection

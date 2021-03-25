@@ -85,6 +85,7 @@ func main() {
 				log.Errorln(err)
 				os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
 			} else if mqcc == ibmmq.MQCC_WARNING {
+				log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 				// Report the error but allow it to continue
 				log.Errorln(err)
 				err = nil

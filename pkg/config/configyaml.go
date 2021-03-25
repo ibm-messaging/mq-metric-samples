@@ -1,7 +1,7 @@
 package config
 
 /*
-  Copyright (c) IBM Corporation 2016, 2020
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ package config
 */
 
 // This package provides a set of common routines that can used by all the
-// sample metric monitor programs
+// sample metric monitor programs to get the configuration from a YAML file.
+// Settings in that file can be overridden on the command line or via environment variable
 import (
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
@@ -65,53 +67,102 @@ func ReadConfigFile(f string, cmy interface{}) error {
 	return e2
 }
 
+// This handles the configuration parameters that are common to all the collectors. The individual
+// collectors call similar code for their own specific attributes
 func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo ConfigYObjects) {
-	cm.CC.UseStatus = cyg.UseObjectStatus
-	cm.CC.UseResetQStats = cyg.UseResetQStats
-	cm.CC.UsePublications = cyg.UsePublications
-	cm.CC.ShowInactiveChannels = cyo.ShowInactiveChannels
+	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", cyg.UseObjectStatus)
+	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", cyg.UseResetQStats)
+	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", cyg.UsePublications)
+	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("objects", "showInactiveChannels", cyo.ShowInactiveChannels)
 
-	cm.LogLevel = CopyIfSet(cm.LogLevel, cyg.LogLevel)
-	cm.MetaPrefix = CopyIfSet(cm.MetaPrefix, cyg.MetaPrefix)
-	cm.pollInterval = CopyIfSet(cm.pollInterval, cyg.PollInterval)
-	cm.rediscoverInterval = CopyIfSet(cm.rediscoverInterval, cyg.RediscoverInterval)
-	cm.TZOffsetString = CopyIfSet(cm.TZOffsetString, cyg.TZOffset)
-	cm.Locale = CopyIfSet(cm.Locale, cyg.Locale)
+	cm.LogLevel = CopyParmIfNotSetStr("global", "logLevel", cyg.LogLevel)
+	cm.MetaPrefix = CopyParmIfNotSetStr("global", "metaprefix", cyg.MetaPrefix)
+	cm.pollInterval = CopyParmIfNotSetStr("global", "pollInterval", cyg.PollInterval)
+	cm.rediscoverInterval = CopyParmIfNotSetStr("global", "rediscoverInterval", cyg.RediscoverInterval)
+	cm.TZOffsetString = CopyParmIfNotSetStr("global", "tzOffset", cyg.TZOffset)
+	cm.Locale = CopyParmIfNotSetStr("global", "locale", cyg.Locale)
 
-	cm.QMgrName = CopyIfSet(cm.QMgrName, cyc.QueueManager)
-	cm.CC.CcdtUrl = CopyIfSet(cm.CC.CcdtUrl, cyc.CcdtUrl)
-	cm.CC.ConnName = CopyIfSet(cm.CC.ConnName, cyc.ConnName)
-	cm.CC.Channel = CopyIfSet(cm.CC.Channel, cyc.Channel)
-	cm.CC.ClientMode = cyc.Client
-	cm.CC.UserId = CopyIfSet(cm.CC.UserId, cyc.User)
-	cm.CC.Password = CopyIfSet(cm.CC.Password, cyc.Password)
-	cm.ReplyQ = CopyIfSet(cm.ReplyQ, cyc.ReplyQueue)
+	cm.QMgrName = CopyParmIfNotSetStr("connection", "queueManager", cyc.QueueManager)
+	cm.CC.CcdtUrl = CopyParmIfNotSetStr("connection", "ccdtUrl", cyc.CcdtUrl)
+	cm.CC.ConnName = CopyParmIfNotSetStr("connection", "connName", cyc.ConnName)
+	cm.CC.Channel = CopyParmIfNotSetStr("connection", "channel", cyc.Channel)
+	cm.CC.ClientMode = CopyParmIfNotSetBool("connection", "clientConnection", cyc.Client)
+	cm.CC.UserId = CopyParmIfNotSetStr("connection", "user", cyc.User)
+	cm.CC.Password = CopyParmIfNotSetStr("connection", "password", cyc.Password)
+	cm.ReplyQ = CopyParmIfNotSetStr("connection", "replyQueue", cyc.ReplyQueue)
 
-	cm.MonitoredQueues = CopyIfSetArray(cm.MonitoredQueues, cyo.Queues)
-	cm.MonitoredChannels = CopyIfSetArray(cm.MonitoredChannels, cyo.Channels)
-	cm.MonitoredTopics = CopyIfSetArray(cm.MonitoredTopics, cyo.Topics)
-	cm.MonitoredSubscriptions = CopyIfSetArray(cm.MonitoredSubscriptions, cyo.Subscriptions)
-	cm.QueueSubscriptionSelector = CopyIfSetArray(cm.QueueSubscriptionSelector, cyo.QueueSubscriptionSelector)
+	cm.MonitoredQueues = CopyParmIfNotSetStrArray("objects", "queues", cyo.Queues)
+	cm.MonitoredChannels = CopyParmIfNotSetStrArray("objects", "channels", cyo.Channels)
+	cm.MonitoredTopics = CopyParmIfNotSetStrArray("objects", "topics", cyo.Topics)
+	cm.MonitoredSubscriptions = CopyParmIfNotSetStrArray("objects", "subscriptions", cyo.Subscriptions)
+	cm.QueueSubscriptionSelector = CopyParmIfNotSetStrArray("objects", "queueSubscriptionSelector", cyo.QueueSubscriptionSelector)
 
 	return
 }
 
-func CopyIfSetArray(a string, b []string) string {
-	s := a
-	for i := 0; i < len(b); i++ {
-		if i == 0 {
-			s = b[0]
-		} else {
-			s += "," + b[i]
-		}
+// If the parameter has already been set by env var or cli, then the value in the main config structure returned. Otherwise
+// the value passed as the "val" parameter - from the YAML version of the configuration elements - is returned
+func CopyParmIfNotSetBool(section string, name string, val bool) bool {
+	v, s := copyParmIfNotSet(section, name)
+	if s {
+		return *(v).(*bool)
+	} else {
+		return val
 	}
-	return s
 }
 
-func CopyIfSet(a string, b string) string {
-	if b != "" {
-		return b
+func CopyParmIfNotSetStr(section string, name string, val string) string {
+	v, s := copyParmIfNotSet(section, name)
+	if s {
+		return *(v).(*string)
 	} else {
-		return a
+		return val
 	}
+}
+
+func CopyParmIfNotSetStrArray(section string, name string, val []string) string {
+	v, s := copyParmIfNotSet(section, name)
+	if s {
+		return *(v).(*string)
+	} else {
+		// Convert YAML arrays into the single string expected by the mqmetric package
+		s := ""
+		for i := 0; i < len(val); i++ {
+			if i == 0 {
+				s = val[0]
+			} else {
+				s += "," + val[i]
+			}
+		}
+		return s
+	}
+}
+
+func CopyParmIfNotSetInt(section string, name string, val int) int {
+	v, s := copyParmIfNotSet(section, name)
+	if s {
+		return *(v).(*int)
+	} else {
+		return val
+	}
+}
+
+// Gets the value set in the YAML structure, but only if it has not previously been
+// set by the user via CLI or environment variable
+//
+// Debug of this is handled by direct Printfs as it's run before the logger is configured
+func copyParmIfNotSet(section string, name string) (interface{}, bool) {
+	k := envVarKey(section, name)
+	if p, ok := configParms[k]; ok {
+		if p.userSet {
+			//fmt.Printf("Returning data from %v\n",p)
+			return p.loc, true
+		} else {
+			//fmt.Printf("Key %s has not been set by user\n",k)
+		}
+	} else {
+		// If this happens, it indicates a problem in one of the config.go files so we leave it in.
+		fmt.Printf("Key %s not found in parms map\n", k)
+	}
+	return nil, false
 }

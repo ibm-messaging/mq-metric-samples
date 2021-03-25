@@ -19,6 +19,7 @@ package main
 */
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
 
@@ -64,6 +65,7 @@ func main() {
 					log.Errorln(err)
 					os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
 				} else if mqcc == ibmmq.MQCC_WARNING {
+					log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 					log.Errorln(err)
 					err = nil
 				}
@@ -122,9 +124,29 @@ func main() {
 		})
 
 		address := config.httpListenHost + ":" + config.httpListenPort
-		log.Infoln("Listening on address", address)
-		log.Fatal(http.ListenAndServe(address, nil))
-
+		if config.httpsKeyFile == "" && config.httpsCertFile == "" {
+			log.Infoln("Listening on http address", address)
+			log.Fatal(http.ListenAndServe(address, nil))
+		} else {
+			// TLS has been enabled for the collector (which is acting as a TLS Server)
+			// So we setup the TLS configuration from the keystores and let Prometheus
+			// contact us over the https protocol.
+			cert, err := tls.LoadX509KeyPair(config.httpsCertFile, config.httpsKeyFile)
+			if err == nil {
+				server := &http.Server{Addr: address,
+					Handler: nil,
+					// More fields could be added here for further control of the connection
+					TLSConfig: &tls.Config{
+						Certificates: []tls.Certificate{cert},
+						MinVersion:   tls.VersionTLS12,
+					},
+				}
+				log.Infoln("Listening on https address", address)
+				log.Fatal(server.ListenAndServeTLS("", ""))
+			} else {
+				log.Fatal(err)
+			}
+		}
 	}
 
 	if err != nil {
