@@ -121,14 +121,20 @@ func InitConfig(cm *Config) {
 	// Setup a slightly non-default error handler that gets called if there are problems parsing the command line parms
 	flag.Usage = func() {
 
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s: \n", os.Args[0])
+    o := flag.CommandLine.Output()
+		fmt.Fprintf(o, "Usage of %s: \n", os.Args[0])
 		flag.PrintDefaults()
 
-		fmt.Fprintf(flag.CommandLine.Output(), "\n\nValid environment variables for configuration are : ")
+		fmt.Fprintf(o, "\n\nValid environment variables for configuration are :\n")
+		i:= 0
 		for _, k := range keys {
-			fmt.Fprintf(flag.CommandLine.Output(), "%s ", k)
+			fmt.Fprintf(o, "%-32s ", k)
+			i++
+			if i % 5 == 0 {
+				fmt.Fprintf(o,"\n")
+			}
 		}
-		fmt.Fprintf(flag.CommandLine.Output(), "\n")
+		fmt.Fprintf(o, "\n")
 	}
 
 	// Setup the CLI flags and the equivalent Environment variable names. The env vars are named
