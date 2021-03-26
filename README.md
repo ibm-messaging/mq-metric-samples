@@ -13,7 +13,7 @@ This package is provided as-is with no guarantees of support or updates.
 There are also no guarantees of compatibility with any future versions of the package;
 interfaces and functions are subject to change based on any feedback.
 
-These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.
+These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.pu
 Those packages are in the [mq-golang repository](https://github.com/ibm-messaging/mq-golang)
 and are also included in the `vendor` tree of this repository. They are referenced in the `go.mod`
 file if you wish to reload all of the dependencies by running `go mod vendor`.
@@ -267,4 +267,4 @@ must include a statement stating you accept the terms in the CLA.
 
 ## Copyright
 
-© Copyright IBM Corporation 2016, 2020
+© Copyright IBM Corporation 2016, 2021
