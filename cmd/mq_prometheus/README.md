@@ -93,7 +93,7 @@ on the command line.
 
 More information on the metrics collected through the publish/subscribe
 interface can be found in the [MQ KnowledgeCenter](https://www.ibm.com/support/knowledgecenter/SSFKSJ_latest/com.ibm.mq.mon.doc/mo00013_.htm)
-with further description in [an MQDev blog entry](https://www.ibm.com/developerworks/community/blogs/messaging/entry/Statistics_published_to_the_system_topic_in_MQ_v9?lang=en)
+with further description in [an MQDev blog entry](https://community.ibm.com/community/user/integration/viewdocument/statistics-published-to-the-system?CommunityKey=183ec850-4947-49c8-9a2e-8e7c7fc46c64&tab=librarydocuments)
 
 The queue and queue manager metrics shown in the Prometheus console are named after the descriptions
 that you can see when running the amqsrua sample program, but with some
