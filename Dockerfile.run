@@ -44,7 +44,11 @@ RUN cd /opt/mqm \
  && curl -LO "$RDURL/$VRMF-$RDTAR" \
  && tar -zxf ./*.tar.gz \
  && rm -f ./*.tar.gz \
- && bin/genmqpkg.sh -b /opt/mqm
+ && bin/genmqpkg.sh -b /opt/mqm \
+ && mkdir -p /IBM/MQ/data/errors \
+   && mkdir -p /.mqm \
+   && chmod -R 777 /IBM \
+   && chmod -R 777 /.mqm
 
 ENV LD_LIBRARY_PATH="/opt/mqm/lib64:/usr/lib64" \
     MQ_CONNECT_TYPE=CLIENT

@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Apr 5 2021
+* Update Dockerfile.run to prevent permissions errors when running in OpenShift restricted SCC
+
 ### Mar 26 2021
 * Update to use v5.2.0 of the mq-golang repository
 * Update to use MQ 9.2.2
