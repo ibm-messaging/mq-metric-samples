@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Apr 8 2021
+* Update Dockerfile.run to move default configuration params to environment variables
+
 ### Apr 5 2021
 * Update Dockerfile.run to prevent permissions errors when running in OpenShift restricted SCC
 
