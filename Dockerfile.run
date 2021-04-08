@@ -60,5 +60,9 @@ RUN echo "Building container for $MONITOR"
 # Copy over the binary file, which is in the same directory as this one
 COPY $MONITOR /opt/bin/$MONITOR
 
+# Set default values for some configuration settings
+ENV IBMMQ_GLOBAL_CONFIGURATIONFILE=/opt/config/$MONITOR.yaml
+ENV IBMMQ_GLOBAL_LOGLEVEL=info
+
 # The configuration file should be mounted from the host into the /opt/config directory.
-CMD /opt/bin/$MONITOR -f /opt/config/$MONITOR.yaml -log.level=info
+CMD /opt/bin/$MONITOR
