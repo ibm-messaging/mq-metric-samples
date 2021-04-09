@@ -30,6 +30,9 @@ connection:
 # be done in this file, on a command line, or (better) passed via stdin
 #    user: mqadmin
 #    password: passw0rd                                             
+
+# Which queue should be used as the template for replies from the qmgr. This must
+# be a QMODEL.
     replyQueue: SYSTEM.DEFAULT.MODEL.QUEUE
 
 objects:
