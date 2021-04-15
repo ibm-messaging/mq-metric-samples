@@ -47,7 +47,7 @@ func main() {
 	// Print this because it's easy to get the escapes wrong from a shell script with wildcarded topics ('#')
 	log.Debugf("Monitored topics are '%s'", config.cf.MonitoredTopics)
 
-	if config.cf.QMgrName == "" {
+	if err == nil && config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(72) // Same as strmqm "queue manager name error"
 	}
