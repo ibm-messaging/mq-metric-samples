@@ -51,29 +51,33 @@ func printInfo(title string, stamp string, commit string, buildPlatform string) 
 
 func main() {
 	var err error
+	var d time.Duration
 
-	initConfig()
+	err = initConfig()
 
 	printInfo("Starting IBM MQ metrics exporter for JSON", BuildStamp, GitCommit, BuildPlatform)
 
-	if config.cf.QMgrName == "" {
+	if err == nil && config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(72)
 	}
-	d, err := time.ParseDuration(config.interval)
-	if err != nil || d.Seconds() <= 1 {
-		log.Errorln("Invalid or too short value for interval parameter: ", err)
-		os.Exit(1)
+	if err == nil {
+		d, err = time.ParseDuration(config.interval)
+		if err != nil || d.Seconds() <= 1 {
+			log.Errorln("Invalid or too short value for interval parameter: ", err)
+			os.Exit(1)
+		}
+
+		if config.cf.CC.UseResetQStats {
+			log.Warnln("Warning: Data from 'RESET QSTATS' has been requested. Ensure no other monitoring applications are also using that command.")
+		}
+
+		log.Infoln("Starting IBM MQ metrics exporter for JSON")
+
+		// Connect and open standard queues
+		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 	}
 
-	if config.cf.CC.UseResetQStats {
-		log.Warnln("Warning: Data from 'RESET QSTATS' has been requested. Ensure no other monitoring applications are also using that command.")
-	}
-
-	log.Infoln("Starting IBM MQ metrics exporter for JSON")
-
-	// Connect and open standard queues
-	err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 	if err == nil {
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 	} else {

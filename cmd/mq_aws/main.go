@@ -36,25 +36,28 @@ var discoverConfig mqmetric.DiscoverConfig
 
 func main() {
 	var err error
+	var d time.Duration
 
 	cf.PrintInfo("IBM MQ metrics exporter for AWS CloudWatch monitoring", BuildStamp, GitCommit, BuildPlatform)
 
-	initConfig()
+	err = initConfig()
 
-	if config.cf.QMgrName == "" {
+	if err == nil && config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(72)
 	}
 
-	interval := config.ci.Interval
-	d, err := time.ParseDuration(interval)
-	if err != nil || d.Seconds() <= 1 {
-		log.Errorln("Invalid value or too short for interval parameter: ", err)
-		os.Exit(1)
-	}
+	if err == nil {
+		interval := config.ci.Interval
+		d, err := time.ParseDuration(interval)
+		if err != nil || d.Seconds() <= 1 {
+			log.Errorln("Invalid value or too short for interval parameter: ", err)
+			os.Exit(1)
+		}
 
-	// Connect and open standard queues
-	err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
+		// Connect and open standard queues
+		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
+	}
 	if err == nil {
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 	} else {

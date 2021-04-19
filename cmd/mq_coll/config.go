@@ -49,7 +49,7 @@ var cfy mqExporterConfigYaml
 /*
 initConfig parses the command line parameters.
 */
-func initConfig() {
+func initConfig() error {
 
 	cf.InitConfig(&config.cf)
 
@@ -91,4 +91,6 @@ func initConfig() {
 	} else {
 		config.hostlabel = config.hostname
 	}
+
+	return err
 }

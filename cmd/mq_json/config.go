@@ -51,7 +51,7 @@ func initConfig() error {
 
 	cf.AddParm(&config.interval, "10s", cf.CP_STR, "ibmmq.interval", "json", "interval", "How long between each collection")
 
-	cf.ParseParms()
+	err = cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
