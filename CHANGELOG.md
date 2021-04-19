@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Apr 15 2021
+* Don't check for QMGR name unless config parse was a success
+
 ### Apr 8 2021
 * Update Dockerfile.run to move default configuration params to environment variables
 

@@ -50,7 +50,7 @@ var cfy mqExporterConfigYaml
 /*
 initConfig parses the command line parameters.
 */
-func initConfig() {
+func initConfig() error {
 
 	var err error
 
@@ -104,4 +104,6 @@ func initConfig() {
 		log.Errorln("Warning: Data from 'RESET QSTATS' has been requested.")
 		log.Errorln("Ensure no other monitoring applications are also using that command.")
 	}
+
+	return err
 }

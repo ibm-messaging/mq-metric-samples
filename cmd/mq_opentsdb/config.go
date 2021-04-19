@@ -52,7 +52,7 @@ var cfy mqExporterConfigYaml
 /*
 initConfig parses the command line parameters.
 */
-func initConfig() {
+func initConfig() error {
 	var err error
 
 	cf.InitConfig(&config.cf)
@@ -63,7 +63,7 @@ func initConfig() {
 	cf.AddParm(&config.ci.MaxPoints, 30, cf.CP_INT, "ibmmq.maxPoints", "opentsdb", "maxPoints", "Maximum number of points to include in each write to the server")
 	cf.AddParm(&config.ci.MetricPrefix, "ibmmq", cf.CP_STR, "ibmmq.seriesPrefix", "opentsdb", "seriesPrefix", "Prefix for all the MQ metric series")
 
-	cf.ParseParms()
+	err = cf.ParseParms()
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
@@ -81,6 +81,7 @@ func initConfig() {
 			}
 		}
 	}
+
 	if err == nil {
 		cf.InitLog(config.cf)
 	}
@@ -103,4 +104,6 @@ func initConfig() {
 		log.Errorln("Warning: Data from 'RESET QSTATS' has been requested.")
 		log.Errorln("Ensure no other monitoring applications are also using that command.")
 	}
+
+	return err
 }
