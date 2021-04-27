@@ -1,8 +1,15 @@
-# Monitoring metrics in Red Hat OpenShift
-This directory contains sample files that demonstrate how to deploy the Prometheus
-monitor to gather metrics in a Red Hat OpenShift / Cloud Pak for Integration deployment.
+# Monitoring metrics in Cloud Pak for Integration
+This directory contains sample files that show how to deploy the Prometheus
+monitor to expose queue metrics for a queue manager running in a Cloud Pak for
+Integration deployment on Red Hat OpenShift.
 
-The basic steps to do this are as follows;
+The MQ Certified Container that comes in the Cloud Pak for Integration
+emits a range of [queue manager (server) scope metrics](https://www.ibm.com/docs/en/ibm-mq/9.2?topic=containers-metrics-published-by-mq-certified) but does not currently offer an option to
+publish information about queues or topics, so use of an additional Prometheus monitor pod as
+shown below allows queue (and topic) metrics to be published to Prometheus for consumption
+by OpenShift monitoring tools.
+
+The steps to do this are as follows;
 
 ```
 # Build the Prometheus monitor container as normal
@@ -34,7 +41,7 @@ oc create secret generic metrics-credentials \
 
 
 # Use the samples in this directory to deploy the Prometheus container to OpenShift
-cd mq-metric-samples/openshift
+cd mq-metric-samples/cp4i
 
 # Create a new ServiceAccount that will ensure the metrics pod is
 # deployed using the most secure Restricted SCC
