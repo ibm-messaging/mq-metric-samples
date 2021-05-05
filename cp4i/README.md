@@ -1,7 +1,9 @@
 # Monitoring metrics in Cloud Pak for Integration
 This directory contains sample files that show how to deploy the Prometheus
 monitor to expose queue metrics for a queue manager running in a Cloud Pak for
-Integration deployment on Red Hat OpenShift.
+Integration deployment on Red Hat OpenShift. The samples are accompanied by the blog post 
+[Monitoring IBM MQ queue depth in Cloud Pak for Integration](https://community.ibm.com/community/user/integration/blogs/matt-roberts1/2021/05/03/monitoring-mq-qdepth-cp4i) which provides a worked tutorial
+illustrating how to implement monitoring scenarios in a Cloud Pak for Integration deployment.
 
 The MQ Certified Container that comes in the Cloud Pak for Integration
 emits a range of [queue manager (server) scope metrics](https://www.ibm.com/docs/en/ibm-mq/9.2?topic=containers-metrics-published-by-mq-certified) but does not currently offer an option to
