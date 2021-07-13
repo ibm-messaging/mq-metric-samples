@@ -1,6 +1,12 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jul 20 2021
+* Update to use v5.2.1 of the mq-golang repository
+* Allow prometheus collector to continue running even when qmgr down
+  * Report qmgr_status metric in such a situation
+  * Updated "QMgr Status" dashboard to report the metric
+
 ### Apr 15 2021
 * Don't check for QMGR name unless config parse was a success
 

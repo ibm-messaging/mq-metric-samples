@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2019
+  Copyright (c) IBM Corporation 2016, 2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ and update the various Gauges.
 
 import (
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -37,7 +37,6 @@ import (
 )
 
 type exporter struct {
-	mutex         sync.RWMutex
 	metrics       *mqmetric.AllMetrics
 	chlStatus     *mqmetric.StatusSet
 	qStatus       *mqmetric.StatusSet
@@ -66,7 +65,6 @@ const (
 )
 
 var (
-	first                 = true
 	gaugeMap              = make(map[string]*prometheus.GaugeVec)
 	channelStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	qStatusGaugeMap       = make(map[string]*prometheus.GaugeVec)
@@ -85,14 +83,20 @@ var (
 
 /*
 Describe is called by Prometheus on startup of this monitor. It needs to tell
-the caller about all of the available metrics.
+the caller about all of the available metrics. It is also called during "unregister"
+after a reconnection to a failed qmgr has succeeded.
 */
 func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 
-	log.Infof("IBMMQ Describe started")
-
 	platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)
-	log.Infof("Platform is %s", platformString)
+
+	// Seeing this twice in succession in the logs is a bit odd. So we'll set things up that
+	// the invocation is not reported during an Unregister operation.
+	if atomic.LoadInt32(&st.collectorSilent) == 0 {
+		log.Infof("IBMMQ Describe started")
+		log.Infof("Platform is %s", platformString)
+	}
+
 	for _, cl := range e.metrics.Classes {
 		for _, ty := range cl.Types {
 			for _, elem := range ty.Elements {
@@ -132,15 +136,33 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 }
 
 /*
-Collect is called by Prometheus at regular intervals to provide current
-data
+Collect is called by Prometheus at regular intervals to provide current data
 */
 func (e *exporter) Collect(ch chan<- prometheus.Metric) {
-	e.mutex.Lock() // To protect metrics from concurrent collects.
-	defer e.mutex.Unlock()
+	var elapsed time.Duration
+	pollStatus := false
+
+	mutex.Lock() // To protect metrics from concurrent collects.
+	defer mutex.Unlock()
 
 	log.Infof("IBMMQ Collect started %o", ch)
 	collectStartTime := time.Now()
+
+	// If we're not connected, then continue to report a single metric about the qmgr status
+	// This value is created by the mqmetric package even on z/OS which doesn't support
+	// the DIS QMSTATUS command.
+	if atomic.LoadInt32(&st.connectedQMgr) == 0 {
+		log.Infof("Reporting status as disconnected")
+		if g, ok := qMgrStatusGaugeMap[mqmetric.ATTR_QMGR_STATUS]; ok {
+			// There's no MQQMSTA_STOPPED value defined .All the regular qmgr status
+			// constants start from 1. So we use "0" to indicate qmgr not available/stopped.
+			g.With(prometheus.Labels{
+				"qmgr":     strings.TrimSpace(config.cf.QMgrName),
+				"platform": platformString}).Set(0.0)
+			g.Collect(ch)
+		}
+		return
+	}
 
 	// Clear out everything we know so far. In particular, replace
 	// the map of values for each object so the collection starts
@@ -157,89 +179,133 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// Deal with all the publications that have arrived
 	err := mqmetric.ProcessPublications()
 	if err != nil {
-		log.Fatalf("Error processing publications: %v", err)
+		log.Errorf("Error processing publications: %v", err)
 	} else {
 		log.Debugf("Collected and processed resource publications successfully")
 	}
 
 	// Do we need to poll for object status on this iteration
-	pollStatus := false
-	thisPoll := time.Now()
-	elapsed := thisPoll.Sub(lastPoll)
-	if elapsed >= config.cf.PollIntervalDuration || first {
-		log.Debugf("Polling for object status")
-		lastPoll = thisPoll
-		pollStatus = true
-	} else {
-		log.Debugf("Skipping poll for object status")
-	}
-	// If there has been sufficient interval since the last explicit poll for
-	// status, then do that collection too. Don't treat errors in this block
-	// as fatal - the previous section will have caught things like the qmgr
-	// going down. But here we may have unknown objects being referenced and while
-	// it may be worth logging the error, that should not be cause to exit.
-	if pollStatus {
-		for _, attr := range e.chlStatus.Attributes {
-			channelStatusGaugeMap[attr.MetricName].Reset()
-		}
-		for _, attr := range e.qStatus.Attributes {
-			qStatusGaugeMap[attr.MetricName].Reset()
-		}
-		for _, attr := range e.qMgrStatus.Attributes {
-			qMgrStatusGaugeMap[attr.MetricName].Reset()
-		}
-		for _, attr := range e.topicStatus.Attributes {
-			topicStatusGaugeMap[attr.MetricName].Reset()
-		}
-		for _, attr := range e.subStatus.Attributes {
-			subStatusGaugeMap[attr.MetricName].Reset()
-		}
-
-		if config.cf.CC.UseStatus {
-			err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
-			if err != nil {
-				log.Errorf("Error collecting channel status: %v", err)
-			} else {
-				log.Debugf("Collected all channel status")
-			}
-
-			err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
-			if err != nil {
-				log.Errorf("Error collecting topic status: %v", err)
-			} else {
-				log.Debugf("Collected all topic status")
-			}
-
-			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
-			if err != nil {
-				log.Errorf("Error collecting subscription status: %v", err)
-			} else {
-				log.Debugf("Collected all subscription status")
-			}
-
-			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
-			if err != nil {
-				log.Errorf("Error collecting queue status: %v", err)
-			} else {
-				log.Debugf("Collected all queue status")
-			}
-		}
-
-		err = mqmetric.CollectQueueManagerStatus()
-		if err != nil {
-			log.Errorf("Error collecting queue manager status: %v", err)
+	if err == nil {
+		pollStatus = false
+		thisPoll := time.Now()
+		elapsed = thisPoll.Sub(lastPoll)
+		if elapsed >= config.cf.PollIntervalDuration || atomic.LoadInt32(&st.firstCollection) == 0 {
+			log.Debugf("Polling for object status")
+			lastPoll = thisPoll
+			pollStatus = true
 		} else {
-			log.Debugf("Collected all queue manager status")
+			log.Debugf("Skipping poll for object status")
 		}
 
-		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
-			err = mqmetric.CollectUsageStatus()
-			if err != nil {
-				log.Errorf("Error collecting bufferpool/pageset status: %v", err)
-			} else {
-				log.Debugf("Collected all buffer pool/pageset status")
+		// If there has been sufficient interval since the last explicit poll for
+		// status, then do that collection too. Don't treat errors in this block
+		// as fatal - the previous section will have caught things like the qmgr
+		// going down. But here we may have unknown objects being referenced and while
+		// it may be worth logging the error, that should not be cause to exit.
+		if pollStatus {
+			for _, attr := range e.chlStatus.Attributes {
+				channelStatusGaugeMap[attr.MetricName].Reset()
+			}
+			for _, attr := range e.qStatus.Attributes {
+				qStatusGaugeMap[attr.MetricName].Reset()
+			}
+			for _, attr := range e.qMgrStatus.Attributes {
+				qMgrStatusGaugeMap[attr.MetricName].Reset()
+			}
+			for _, attr := range e.topicStatus.Attributes {
+				topicStatusGaugeMap[attr.MetricName].Reset()
+			}
+			for _, attr := range e.subStatus.Attributes {
+				subStatusGaugeMap[attr.MetricName].Reset()
+			}
+
+			if config.cf.CC.UseStatus {
+				if err == nil {
+					err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
+					if err != nil {
+						log.Errorf("Error collecting channel status: %v", err)
+					} else {
+						log.Debugf("Collected all channel status")
+					}
+				}
+
+				if err == nil {
+					err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
+					if err != nil {
+						log.Errorf("Error collecting topic status: %v", err)
+					} else {
+						log.Debugf("Collected all topic status")
+					}
+				}
+
+				if err == nil {
+					err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
+					if err != nil {
+						log.Errorf("Error collecting subscription status: %v", err)
+					} else {
+						log.Debugf("Collected all subscription status")
+					}
+				}
+
+				if err == nil {
+					err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
+					if err != nil {
+						log.Errorf("Error collecting queue status: %v", err)
+					} else {
+						log.Debugf("Collected all queue status")
+					}
+				}
+			}
+
+			if err == nil {
+				err = mqmetric.CollectQueueManagerStatus()
+				if err != nil {
+					log.Errorf("Error collecting queue manager status: %v", err)
+				} else {
+					log.Debugf("Collected all queue manager status")
+				}
+			}
+
+			if err == nil && mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+				err = mqmetric.CollectUsageStatus()
+				if err != nil {
+					log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+				} else {
+					log.Debugf("Collected all buffer pool/pageset status")
+				}
 			}
 		}
+	}
+
+	// TODO: Clean this up a bit
+	// Look for errors that might be fatal or which might
+	// deserve a reconnection retry or which might be fatal
+	if err != nil {
+		log.Debugf("Exporter Error is %+v", err)
+
+		mqrc := ibmmq.MQRC_NONE
+		if mqe, ok := err.(mqmetric.MQMetricError); ok {
+			mqrc = mqe.MQReturn.MQRC
+		} else if mqe, ok := err.(*ibmmq.MQReturn); ok {
+			mqrc = mqe.MQRC
+		}
+
+		// Almost any error should allow us to attempt to reconnect.
+		// For example, ibmmq.MQRC_CONNECTION_BROKEN. But we might
+		// want to put some additional error codes in here to explicitly
+		// quit out of the collector.
+		switch mqrc {
+		case ibmmq.MQRC_NONE:
+			atomic.StoreInt32(&st.connectedQMgr, 1)
+		case ibmmq.MQRC_UNEXPECTED_ERROR:
+		case ibmmq.MQRC_STANDBY_Q_MGR:
+			atomic.StoreInt32(&st.collectorEnd, 1)
+			atomic.StoreInt32(&st.connectedQMgr, 0)
+		default:
+			atomic.StoreInt32(&st.connectedQMgr, 0)
+		}
+		return
+
 	}
 
 	thisDiscovery := time.Now()
@@ -259,11 +325,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// value fields and maps have been updated.
 	//
 	// Now need to set all of the real Gauges with the correct values
-	if first {
+	if atomic.LoadInt32(&st.firstCollection) == 1 {
 		// Always ignore the first loop through as there might
 		// be accumulated stuff from a while ago, and lead to
 		// a misleading range on graphs.
-		first = false
+		atomic.StoreInt32(&st.firstCollection, 0)
 	} else {
 
 		for _, cl := range e.metrics.Classes {
@@ -534,7 +600,6 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		log.Warnf("Collection time has exceeded Prometheus default scrape_timeout value of %d seconds. Ensure you have set a larger value for this job", defaultScrapeTimeout)
 		warnedScrapeTimeout = true
 	}
-
 }
 
 func allocateAllGauges() {
@@ -693,7 +758,6 @@ func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 /*
  * Create gauges for other object types. The status for these gauges is obtained via
  * a polling mechanism rather than pub/sub.
- * Only type in here for now is channels. But queues and topics may be suitable later
  */
 func newMqGaugeVecObj(name string, description string, objectType string) *prometheus.GaugeVec {
 	var labels []string

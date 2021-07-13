@@ -26,4 +26,4 @@ fi
 # echo "VERDEP=$VERDEP VERREPO=$VERREPO"
 
 # This is the directory where the binary and config files live
-OUTDIR=$HOME/tmp/mq-metric-samples/bin
+OUTDIR=${OUTDIR:-$HOME/tmp/mq-metric-samples/bin}

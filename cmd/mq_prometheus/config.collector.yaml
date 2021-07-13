@@ -3,10 +3,15 @@
 prometheus:
   port: 9157
 # We can constrain the http listener to a single adapter via the 'host' config. Default is
-# to bind to all local addresses  
+# to bind to all local addresses
 # host: 1.2.3.4
   metricsPath: "/metrics"
   namespace: ibmmq
 # We can also set keystore information if the Prometheus instance uses TLS to contact the collector
 # httpsKeyFile:  "server.key"
 # httpsCertFile: "server.crt"
+# Keep running even if the qmgr is not available - allows a "STOPPED" status to be
+# returned to the Prometheus server.
+  keepRunning: true
+# How often to check the status and to attempt to reconnect if there's been a failure  
+  reconnectInterval: 5s

@@ -62,7 +62,9 @@ COPY $MONITOR /opt/bin/$MONITOR
 
 # Set default values for some configuration settings
 ENV IBMMQ_GLOBAL_CONFIGURATIONFILE=/opt/config/$MONITOR.yaml
-ENV IBMMQ_GLOBAL_LOGLEVEL=info
+# Other env vars follow the same pattern. For example,
+#   ENV IBMMQ_GLOBAL_LOGLEVEL=info
+#   ENV IBMMQ_CONNECTION_QUEUEMANAGER=QM1
 
 # The configuration file should be mounted from the host into the /opt/config directory.
 CMD /opt/bin/$MONITOR

@@ -2,9 +2,11 @@ This directory contains scripts as examples of building and running
 the various collector programs. The files are:
 
 * `buildMonitors.sh`: Creates a container and uses it as the build environment
-to build all the collectors. Output goes to a real local directory, `$HOME/tmp/mq-metric-samples`
+to build all the collectors. Output goes to a real local directory, by default `$HOME/tmp/mq-metric-samples`,
 which holds the binaries, the default YAML configuration files and MQSC scripts that can be
-used to run the collectors as MQ Services.
+used to run the collectors as MQ Services. Depending on your system configuration, you might need
+to add `--privileged` to the `docker run` command, or set the OUTDIR environment variable  
+to point at a different directory with suitable permissions.  
 
 * `buildInDocker.sh`: Used inside the container created by the previous script. It downloads the
 MQ Redistributable Client needed for compiling the packages, and then does the `go build`
@@ -25,3 +27,5 @@ YAML files go into `%GOPATH%\bin`.
 
 * `docker-compose.yaml`: A fragment of what might go into a larger composition file. In its current
 state it tries to pull an image from a repository even though it has been built and exists locally.
+
+

@@ -21,26 +21,32 @@ package main
 import (
 	"fmt"
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
+	"time"
 )
 
 type mqExporterConfig struct {
 	cf cf.Config // Common configuration attributes for all collectors
 
-	httpListenPort string
-	httpListenHost string
-	httpMetricPath string
-	namespace      string
-	httpsCertFile  string
-	httpsKeyFile   string
+	httpListenPort            string
+	httpListenHost            string
+	httpMetricPath            string
+	namespace                 string
+	httpsCertFile             string
+	httpsKeyFile              string
+	keepRunning               bool
+	reconnectIntervalDuration time.Duration
+	reconnectInterval         string
 }
 
 type ConfigYProm struct {
-	Port          string
-	Host          string
-	MetricsPath   string `yaml:"metricsPath"`
-	Namespace     string
-	HttpsCertFile string `yaml:"httpsCertFile"`
-	HttpsKeyFile  string `yaml:"httpsKeyFile"`
+	Port              string
+	Host              string
+	MetricsPath       string `yaml:"metricsPath"`
+	Namespace         string
+	HttpsCertFile     string `yaml:"httpsCertFile"`
+	HttpsKeyFile      string `yaml:"httpsKeyFile"`
+	KeepRunning       bool   `yaml:"keepRunning"`
+	ReconnectInterval string `yaml:"reconnectInterval"`
 }
 type mqExporterConfigYaml struct {
 	Global     cf.ConfigYGlobal
@@ -50,8 +56,9 @@ type mqExporterConfigYaml struct {
 }
 
 const (
-	defaultPort      = "9157" // Reserved in the prometheus wiki for MQ
-	defaultNamespace = "ibmmq"
+	defaultPort              = "9157" // Reserved in the prometheus wiki for MQ
+	defaultNamespace         = "ibmmq"
+	defaultReconnectInterval = "5s"
 )
 
 var config mqExporterConfig
@@ -73,7 +80,8 @@ func initConfig() error {
 	cf.AddParm(&config.httpListenPort, defaultPort, cf.CP_STR, "ibmmq.httpListenPort", "prometheus", "port", "HTTP(S) Listener Port")
 	cf.AddParm(&config.httpListenHost, "", cf.CP_STR, "ibmmq.httpListenHost", "prometheus", "host", "HTTP(S) Listener Host")
 	cf.AddParm(&config.httpMetricPath, "/metrics", cf.CP_STR, "ibmmq.httpMetricPath", "prometheus", "metricsPath", "Path to exporter metrics")
-
+	cf.AddParm(&config.keepRunning, true, cf.CP_BOOL, "ibmmq.keepRunning", "prometheus", "keepRunning", "Continue running after queue manager disconnection")
+	cf.AddParm(&config.reconnectInterval, defaultReconnectInterval, cf.CP_STR, "ibmmq.reconnectInterval", "prometheus", "reconnectInterval", "How fast to validate connection attempts")
 	cf.AddParm(&config.httpsCertFile, "", cf.CP_STR, "ibmmq.httpsCertFile", "prometheus", "httpsCertFile", "TLS public certificate file")
 	cf.AddParm(&config.httpsKeyFile, "", cf.CP_STR, "ibmmq.httpsKeyFile", "prometheus", "httpsKeyFile", "TLS private key file")
 
@@ -94,6 +102,13 @@ func initConfig() error {
 
 				config.httpsCertFile = cf.CopyParmIfNotSetStr("prometheus", "httpsCertFile", cfy.Prometheus.HttpsCertFile)
 				config.httpsKeyFile = cf.CopyParmIfNotSetStr("prometheus", "httpsKeyFile", cfy.Prometheus.HttpsKeyFile)
+
+				config.keepRunning = cf.CopyParmIfNotSetBool("prometheus", "keepRunning", cfy.Prometheus.KeepRunning)
+				if cfy.Prometheus.ReconnectInterval == "" {
+					cfy.Prometheus.ReconnectInterval = defaultReconnectInterval
+				}
+				config.reconnectInterval = cf.CopyParmIfNotSetStr("prometheus", "reconnectInterval", cfy.Prometheus.ReconnectInterval)
+
 			}
 		}
 	}
@@ -104,6 +119,10 @@ func initConfig() error {
 
 	if err == nil {
 		err = cf.VerifyConfig(&config.cf, config)
+	}
+
+	if err == nil {
+		config.reconnectIntervalDuration, err = time.ParseDuration(config.reconnectInterval)
 	}
 
 	if err == nil {

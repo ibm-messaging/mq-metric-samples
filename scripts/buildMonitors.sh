@@ -41,7 +41,11 @@ then
 
   # Get some variables to pass the build information into the compile steps
   buildStamp=`date +%Y%m%d-%H%M%S`
-  gitCommit=`git rev-list -1 HEAD --abbrev-commit`
+  gitCommit=`git rev-list -1 HEAD --abbrev-commit 2>/dev/null`
+  if [ -z "$gitCommit" ]
+  then
+    gitCommit="Unknown"
+  fi
   hw=`uname -i`
   os=`uname -s`
   bp="$os/$hw"

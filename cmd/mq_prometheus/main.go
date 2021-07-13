@@ -19,11 +19,15 @@ package main
 */
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 	"os"
 
 	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
@@ -33,10 +37,30 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var BuildStamp string
-var GitCommit string
-var BuildPlatform string
-var discoverConfig mqmetric.DiscoverConfig
+// These are really booleans but I'm using atomic updates
+// to avoid potential races (though they'd likely be harmless) between
+// the main code and the callbacks
+type status struct {
+	connectedOnce   int32
+	connectedQMgr   int32
+	collectorEnd    int32
+	collectorSilent int32
+	firstCollection int32
+}
+
+var (
+	BuildStamp     string
+	GitCommit      string
+	BuildPlatform  string
+	discoverConfig mqmetric.DiscoverConfig
+	usingTLS       = false
+	server         *http.Server
+	startChannel   = make(chan bool)
+	collector      prometheus.Collector
+	mutex          sync.RWMutex
+	retryCount     = 0 // Might use this with a maxRetry to force a quit out of collector
+	st             status
+)
 
 func main() {
 	var err error
@@ -44,116 +68,206 @@ func main() {
 
 	err = initConfig()
 
-	// Print this because it's easy to get the escapes wrong from a shell script with wildcarded topics ('#')
-	log.Debugf("Monitored topics are '%s'", config.cf.MonitoredTopics)
-
 	if err == nil && config.cf.QMgrName == "" {
 		log.Errorln("Must provide a queue manager name to connect to.")
 		os.Exit(72) // Same as strmqm "queue manager name error"
 	}
 
-	if err == nil {
-		// Connect and open standard queues
-		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
-		if err == nil {
-			log.Infoln("Connected to queue manager ", config.cf.QMgrName)
-		} else {
-			if mqe, ok := err.(mqmetric.MQMetricError); ok {
-				mqrc := mqe.MQReturn.MQRC
-				mqcc := mqe.MQReturn.MQCC
-				if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
-					log.Errorln(err)
-					os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
-				} else if mqcc == ibmmq.MQCC_WARNING {
-					log.Infoln("Connected to queue manager ", config.cf.QMgrName)
-					log.Errorln(err)
-					err = nil
+	if err != nil {
+		log.Error(err)
+	} else {
+		st.connectedOnce = 0
+		st.connectedQMgr = 0
+		st.collectorEnd = 0
+		st.firstCollection = 0
+		st.collectorSilent = 0
+
+		// Start the webserver in a separate thread
+		go startServer()
+
+		// This is the main loop that tries to keep the collector connected to a queue manager
+		// even after a failure.
+		for atomic.LoadInt32(&st.collectorEnd) == 0 {
+			log.Debugf("In main loop: qMgrConnected=%d", atomic.LoadInt32(&st.connectedQMgr))
+			err = nil // Start clean on each loop
+
+			// The callback will set this flag to false if there's an error while
+			// processing the messages.
+			if atomic.LoadInt32(&st.connectedQMgr) == 0 {
+				mutex.Lock()
+				if err == nil {
+					// Connect and open standard queues
+					err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
+					if err == nil {
+						log.Infoln("Connected to queue manager " + config.cf.QMgrName)
+					} else {
+						if mqe, ok := err.(mqmetric.MQMetricError); ok {
+							mqrc := mqe.MQReturn.MQRC
+							mqcc := mqe.MQReturn.MQCC
+							if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
+								log.Errorln(err)
+								os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
+							} else if mqcc == ibmmq.MQCC_WARNING {
+								log.Infoln("Connected to queue manager " + config.cf.QMgrName)
+								log.Errorln(err)
+								err = nil
+							}
+						}
+					}
 				}
-			}
-		}
-	}
 
-	if err == nil {
-		defer mqmetric.EndConnection()
-	}
-
-	// What metrics can the queue manager provide? Find out, and
-	// subscribe.
-	if err == nil {
-		// Do we need to expand wildcarded queue names
-		// or use the wildcard as-is in the subscriptions
-		wildcardResource := true
-		if config.cf.MetaPrefix != "" {
-			wildcardResource = false
-		}
-
-		mqmetric.SetLocale(config.cf.Locale)
-		discoverConfig.MonitoredQueues.ObjectNames = config.cf.MonitoredQueues
-		discoverConfig.MonitoredQueues.SubscriptionSelector = strings.ToUpper(config.cf.QueueSubscriptionSelector)
-
-		discoverConfig.MonitoredQueues.UseWildcard = wildcardResource
-		discoverConfig.MetaPrefix = config.cf.MetaPrefix
-		err = mqmetric.DiscoverAndSubscribe(discoverConfig)
-		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
-	}
-
-	if err == nil {
-		var compCode int32
-		compCode, err = mqmetric.VerifyConfig()
-		// We could choose to fail after a warning, but instead will continue for now
-		if compCode == ibmmq.MQCC_WARNING {
-			log.Println(err)
-			err = nil
-		}
-	}
-
-	// Once everything has been discovered, and the subscriptions
-	// created, allocate the Prometheus gauges for each resource
-	if err == nil {
-		allocateAllGauges()
-	}
-
-	// Go into main loop for handling requests from Prometheus
-	if err == nil {
-		exporter := newExporter()
-		prometheus.MustRegister(exporter)
-
-		http.Handle(config.httpMetricPath, promhttp.Handler())
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write(landingPage())
-		})
-
-		address := config.httpListenHost + ":" + config.httpListenPort
-		if config.httpsKeyFile == "" && config.httpsCertFile == "" {
-			log.Infoln("Listening on http address", address)
-			log.Fatal(http.ListenAndServe(address, nil))
-		} else {
-			// TLS has been enabled for the collector (which is acting as a TLS Server)
-			// So we setup the TLS configuration from the keystores and let Prometheus
-			// contact us over the https protocol.
-			cert, err := tls.LoadX509KeyPair(config.httpsCertFile, config.httpsKeyFile)
-			if err == nil {
-				server := &http.Server{Addr: address,
-					Handler: nil,
-					// More fields could be added here for further control of the connection
-					TLSConfig: &tls.Config{
-						Certificates: []tls.Certificate{cert},
-						MinVersion:   tls.VersionTLS12,
-					},
+				if err == nil {
+					retryCount = 0
+					defer mqmetric.EndConnection()
 				}
-				log.Infoln("Listening on https address", address)
-				log.Fatal(server.ListenAndServeTLS("", ""))
+
+				// What metrics can the queue manager provide? Find out, and subscribe.
+				if err == nil {
+					// Do we need to expand wildcarded queue names
+					// or use the wildcard as-is in the subscriptions
+					wildcardResource := true
+					if config.cf.MetaPrefix != "" {
+						wildcardResource = false
+					}
+
+					mqmetric.SetLocale(config.cf.Locale)
+					discoverConfig.MonitoredQueues.ObjectNames = config.cf.MonitoredQueues
+					discoverConfig.MonitoredQueues.SubscriptionSelector = strings.ToUpper(config.cf.QueueSubscriptionSelector)
+					discoverConfig.MonitoredQueues.UseWildcard = wildcardResource
+					discoverConfig.MetaPrefix = config.cf.MetaPrefix
+					err = mqmetric.DiscoverAndSubscribe(discoverConfig)
+					mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+				}
+
+				if err == nil {
+					var compCode int32
+					compCode, err = mqmetric.VerifyConfig()
+					// We could choose to fail after a warning, but instead will continue for now
+					if compCode == ibmmq.MQCC_WARNING {
+						log.Println(err)
+						err = nil
+					}
+				}
+
+				// Once everything has been discovered, and the subscriptions
+				// created, allocate the Prometheus gauges for each resource. If this is
+				// a reconnect, then we clean up and create a new collector with new gauges
+				if err == nil {
+					allocateAllGauges()
+
+					if collector != nil {
+						atomic.StoreInt32(&st.collectorSilent, 1)
+						prometheus.Unregister(collector)
+						atomic.StoreInt32(&st.collectorSilent, 0)
+					}
+
+					collector = newExporter()
+					atomic.StoreInt32(&st.firstCollection, 1)
+					prometheus.MustRegister(collector)
+					atomic.StoreInt32(&st.connectedQMgr, 1)
+
+					if atomic.LoadInt32(&st.connectedOnce) == 0 {
+						startChannel <- true
+						atomic.StoreInt32(&st.connectedOnce, 1)
+					}
+				} else {
+					if atomic.LoadInt32(&st.connectedOnce) == 0 || !config.keepRunning {
+						// If we've never successfully connected, then exit instead
+						// of retrying as it probably means a config error
+						log.Errorf("Connection to %s has failed. %v", config.cf.QMgrName, err)
+						atomic.StoreInt32(&st.collectorEnd, 1)
+					} else {
+						log.Debug("Sleeping a bit after a failure")
+						retryCount++
+						time.Sleep(config.reconnectIntervalDuration)
+					}
+				}
+				mutex.Unlock()
 			} else {
-				log.Fatal(err)
+				log.Debug("Sleeping a bit while connected")
+				time.Sleep(config.reconnectIntervalDuration)
 			}
 		}
 	}
+	log.Info("Done.")
 
 	if err != nil {
-		log.Fatal(err)
+		os.Exit(10)
+	} else {
+		os.Exit(0)
 	}
 
-	os.Exit(0)
+}
+
+func startServer() {
+	var err error
+	// This function starts a new thread to handle the web server that will then run
+	// permanently and drive the exporter callback that processes the metric messages
+
+	// Need to wait until signalled by the main thread that it's setup the gauges
+	log.Debug("HTTP server - waiting until MQ connection ready")
+	<-startChannel
+
+	http.Handle(config.httpMetricPath, promhttp.Handler())
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write(landingPage())
+	})
+
+	address := config.httpListenHost + ":" + config.httpListenPort
+	if config.httpsKeyFile == "" && config.httpsCertFile == "" {
+		usingTLS = false
+	} else {
+		usingTLS = true
+	}
+
+	if usingTLS {
+		// TLS has been enabled for the collector (which is acting as a TLS Server)
+		// So we setup the TLS configuration from the keystores and let Prometheus
+		// contact us over the https protocol.
+		cert, err := tls.LoadX509KeyPair(config.httpsCertFile, config.httpsKeyFile)
+		if err == nil {
+			server = &http.Server{Addr: address,
+				Handler: nil,
+				// More fields could be added here for further control of the connection
+				TLSConfig: &tls.Config{
+					Certificates: []tls.Certificate{cert},
+					MinVersion:   tls.VersionTLS12,
+				},
+			}
+		} else {
+			log.Fatal(err)
+		}
+	} else {
+		server = &http.Server{Addr: address,
+			Handler: nil,
+		}
+	}
+
+	// And now we can start the protocol-appropriate server
+	if usingTLS {
+		log.Infoln("Listening on https address", address)
+		err = server.ListenAndServeTLS("", "")
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Metrics Error: Failed to handle metrics request: %v", err)
+			stopServer()
+		}
+	} else {
+		log.Infoln("Listening on http address", address)
+		err = server.ListenAndServe()
+		log.Fatalf("Metrics Error: Failed to handle metrics request: %v", err)
+		stopServer()
+	}
+}
+
+// Shutdown HTTP server
+func stopServer() {
+	timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := server.Shutdown(timeout)
+	if err != nil {
+		log.Errorf("Failed to shutdown metrics server: %v", err)
+	}
+	atomic.StoreInt32(&st.collectorEnd, 1)
 }
 
 /*

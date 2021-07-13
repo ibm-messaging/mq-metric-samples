@@ -100,3 +100,11 @@ that you can see when running the amqsrua sample program, but with some
 minor modifications to match the required style.
 
 The channel metrics all begin with `channel`.
+
+## Unavailable queue managers
+If the queue manager is not available, the collector can be configured
+to continually attempt to reconnect with the `keepRunning` parameter (provided that it was available
+and successfully connected once). In this
+mode, the web server called by Prometheus to give the metrics continues to run. It will return a single
+metric `qmgr_status` indicating that the queue manager is down. This may be the preferred
+execution model when the collector is not running as a queue manager service.
