@@ -4,6 +4,13 @@ This directory contains the code for a monitoring solution
 that exports queue manager data to an InfluxDB data collection
 system. It also contains configuration files to run the monitor program
 
+The current version of the collector is designed using the InfluxDB V2 APIs
+which are different from the V1 API and configuration parameters. 
+
+This uses a token-based authentication method rather than userid/password. 
+Influx claim that the V2 APIs can still connect to a V1 database using an apiToken of 
+a format that combines the userid and password.
+
 The monitor collects metrics published by an MQ V9 queue manager
 or the MQ appliance. The monitor program pushes
 those metrics into the database, over an HTTP connection, where
@@ -13,9 +20,10 @@ such as Grafana.
 You can see data such as disk or CPU usage, queue depths, and MQI call
 counts.
 
-An example Grafana dashboard is included, to show how queries might
-be constructed. The data shown is the same as in the corresponding
+Example Grafana dashboards are included, to show how queries might
+be constructed. The graphs shown are similar to the corresponding
 Prometheus-based dashboard, also in this repository.
+
 To use the dashboard,
 create a data source in Grafana called "MQ Influx" that points at your
 database server, and then import the JSON file.
@@ -40,16 +48,12 @@ the queue manager name, how to reach a database, and the frequency of reading
 the queue manager publications. Look at the mq_influx.sh script or the yaml
 configuration file to see how to provide these parameters.
 
-In particular, if the database requires password authentication, then the password
-is not provided as a command-line parameter, or read from the environment. It needs
-to be given via a named file.
-
 The queue manager will usually generate its publications every 10 seconds. That is also
 the default interval being used in the monitor program to read those publications.
 
 ## Configuring InfluxDB
 No special configuration is required for InfluxDB. You may want to create an MQ-specific
-database, and suitable userids to access that database.
+bucket, and suitable userids with API tokens to access that bucket.
 
 ## Metrics
 Once the monitor program has been started,

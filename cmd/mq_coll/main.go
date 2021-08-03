@@ -85,6 +85,7 @@ func main() {
 		mqmetric.SubInitAttributes()
 		mqmetric.QueueManagerInitAttributes()
 		mqmetric.UsageInitAttributes()
+		mqmetric.ClusterInitAttributes()
 	}
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.

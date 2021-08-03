@@ -86,36 +86,49 @@ func Collect() error {
 	}
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too
+	pollError := err
 	if pollStatus {
 		if config.cf.CC.UseStatus {
 			err := mqmetric.CollectQueueManagerStatus()
 			if err != nil {
 				log.Errorf("Error collecting queue manager status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all queue manager status")
 			}
 			err = mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 			if err != nil {
 				log.Errorf("Error collecting channel status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all channel status")
 			}
 			err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
 			if err != nil {
 				log.Errorf("Error collecting topic status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all topic status")
 			}
 			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
 			if err != nil {
 				log.Errorf("Error collecting subscription status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all subscription status")
+			}
+			err = mqmetric.CollectClusterStatus()
+			if err != nil {
+				log.Errorf("Error collecting cluster status: %v", err)
+				pollError = err
+			} else {
+				log.Debugf("Collected all cluster status")
 			}
 
 			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 			if err != nil {
 				log.Errorf("Error collecting queue status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all queue status")
 			}
@@ -124,11 +137,17 @@ func Collect() error {
 				err = mqmetric.CollectUsageStatus()
 				if err != nil {
 					log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+					pollError = err
 				} else {
 					log.Debugf("Collected all buffer pool/pageset status")
 				}
 			}
 		}
+		err = pollError
+	}
+
+	if err != nil {
+		log.Fatalf("Error collecting status: %v", err)
 	}
 
 	thisDiscovery := time.Now()
@@ -282,6 +301,31 @@ func Collect() error {
 				tags["subscription"] = subName
 				tags["topic"] = topicString
 				f := mqmetric.SubNormalise(attr, value.ValueInt64)
+				printPoint(series, attr.MetricName, float32(f), tags)
+			}
+		}
+	}
+
+	series = "cluster"
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes {
+		for key, value := range attr.Values {
+			if value.IsInt64 {
+				clusterName := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key].ValueString
+				qmType := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key].ValueInt64
+
+				qmTypeString := "PARTIAL"
+				if qmType == int64(ibmmq.MQQMT_REPOSITORY) {
+					qmTypeString = "FULL"
+				}
+
+				tags := map[string]string{
+					"qmgr":     config.cf.QMgrName,
+					"cluster":  clusterName,
+					"qmtype":   qmTypeString,
+					"platform": platformString,
+				}
+
+				f := mqmetric.ClusterNormalise(attr, value.ValueInt64)
 				printPoint(series, attr.MetricName, float32(f), tags)
 			}
 		}

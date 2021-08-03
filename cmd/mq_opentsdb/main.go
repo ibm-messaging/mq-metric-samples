@@ -120,6 +120,7 @@ func main() {
 		mqmetric.SubInitAttributes()
 		mqmetric.QueueManagerInitAttributes()
 		mqmetric.UsageInitAttributes()
+		mqmetric.ClusterInitAttributes()
 	}
 
 	// Go into main loop for sending data to database

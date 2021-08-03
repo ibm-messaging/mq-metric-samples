@@ -28,7 +28,9 @@ and update the various data points.
 import (
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	mqmetric "github.com/ibm-messaging/mq-golang/v5/mqmetric"
-	client "github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb-client-go/v2"
+	"sync/atomic"
+
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
@@ -36,7 +38,9 @@ import (
 
 var (
 	first              = true
-	errorCount         = 0
+	totalErrorCount    = int64(0)
+	loopErrorCount     = int64(0)
+	errorSync          = make(chan bool)
 	platformString     = ""
 	lastPoll           = time.Now()
 	lastQueueDiscovery time.Time
@@ -52,6 +56,8 @@ func Collect(c client.Client) error {
 
 	log.Infof("IBMMQ InfluxDB collection started")
 	collectStartTime := time.Now()
+	atomic.StoreInt64(&loopErrorCount, 0)
+	bp := c.WriteAPI(config.ci.Org, config.ci.BucketName)
 
 	if platformString == "" {
 		platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)
@@ -87,27 +93,29 @@ func Collect(c client.Client) error {
 		log.Debugf("Skipping poll for object status")
 	}
 	// If there has been sufficient interval since the last explicit poll for
-	// status, then do that collection too. Don't treat errors in this block
-	// as fatal - the previous section will have caught things like the qmgr
-	// going down. But here we may have unknown objects being referenced and while
-	// it may be worth logging the error, that should not be cause to exit.
+	// status, then do that collection too.
+	pollError := err
+
 	if pollStatus {
 		if config.cf.CC.UseStatus {
 			err = mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 			if err != nil {
 				log.Errorf("Error collecting channel status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all channel status")
 			}
 			err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
 			if err != nil {
 				log.Errorf("Error collecting topic status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all topic status")
 			}
 			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
 			if err != nil {
 				log.Errorf("Error collecting subscription status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all subscription status")
 			}
@@ -115,14 +123,24 @@ func Collect(c client.Client) error {
 			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 			if err != nil {
 				log.Errorf("Error collecting queue status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all queue status")
+			}
+
+			err = mqmetric.CollectClusterStatus()
+			if err != nil {
+				log.Errorf("Error collecting cluster status: %v", err)
+				pollError = err
+			} else {
+				log.Debugf("Collected all cluster status")
 			}
 
 			if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
 				err = mqmetric.CollectUsageStatus()
 				if err != nil {
 					log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+					pollError = err
 				} else {
 					log.Debugf("Collected all buffer pool/pageset status")
 				}
@@ -132,10 +150,17 @@ func Collect(c client.Client) error {
 		err = mqmetric.CollectQueueManagerStatus()
 		if err != nil {
 			log.Errorf("Error collecting queue manager status: %v", err)
+			pollError = err
 		} else {
 			log.Debugf("Collected all queue manager status")
 		}
+		err = pollError
 	}
+
+	if err != nil {
+		log.Fatalf("Error collecting status: %v", err)
+	}
+
 	thisDiscovery := time.Now()
 	elapsed = thisDiscovery.Sub(lastQueueDiscovery)
 	if config.cf.RediscoverDuration > 0 {
@@ -156,15 +181,19 @@ func Collect(c client.Client) error {
 		// a misleading range on graphs.
 		first = false
 	} else {
+
 		t := time.Now()
-		bp, _ := client.NewBatchPoints(client.BatchPointsConfig{
-			Database:  config.ci.DatabaseName,
-			Precision: "ms",
-		})
-		if err != nil {
-			// This kind of error is so unlikely, it should be treated as fatal
-			log.Fatalln("Error creating batch points: ", err)
-		}
+		log.Debugf("bp is %+v", bp)
+		errorsCh := bp.Errors()
+		go func() {
+			for err := range errorsCh {
+				log.Error(err)
+				ec1 := atomic.AddInt64(&totalErrorCount, 1)
+				ec2 := atomic.AddInt64(&loopErrorCount, 1)
+				log.Debugf("Updating error info with totals = %d %d", ec1, ec2)
+			}
+			//errorSync <- true
+		}()
 
 		// Start with a metric that shows how many publications were processed by this collection
 		series = "qmgr"
@@ -173,8 +202,8 @@ func Collect(c client.Client) error {
 			"platform": platformString,
 		}
 		fields := map[string]interface{}{"exporter_publications": float64(mqmetric.GetProcessPublicationCount())}
-		pt, _ := client.NewPoint(series, tags, fields, t)
-		bp.AddPoint(pt)
+		pt := client.NewPoint(series, tags, fields, t)
+		bp.WritePoint(pt)
 		log.Debugf("Adding point %v", pt)
 
 		for _, cl := range mqmetric.GetPublishedMetrics("").Classes {
@@ -205,8 +234,8 @@ func Collect(c client.Client) error {
 
 						}
 						fields := map[string]interface{}{elem.MetricName: f}
-						pt, _ := client.NewPoint(series, tags, fields, t)
-						bp.AddPoint(pt)
+						pt := client.NewPoint(series, tags, fields, t)
+						bp.WritePoint(pt)
 						log.Debugf("Adding point %v", pt)
 					}
 				}
@@ -242,9 +271,9 @@ func Collect(c client.Client) error {
 						f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
 						fields := map[string]interface{}{attr.MetricName: f}
 
-						pt, _ := client.NewPoint(series, tags, fields, t)
+						pt := client.NewPoint(series, tags, fields, t)
 
-						bp.AddPoint(pt)
+						bp.WritePoint(pt)
 						log.Debugf("Adding channel point %v", pt)
 					}
 				}
@@ -277,9 +306,9 @@ func Collect(c client.Client) error {
 						f := mqmetric.QueueNormalise(attr, value.ValueInt64)
 						fields := map[string]interface{}{attr.MetricName: f}
 
-						pt, _ := client.NewPoint(series, tags, fields, t)
+						pt := client.NewPoint(series, tags, fields, t)
 
-						bp.AddPoint(pt)
+						bp.WritePoint(pt)
 						log.Debugf("Adding queue point %v", pt)
 					}
 				}
@@ -303,9 +332,9 @@ func Collect(c client.Client) error {
 						f := mqmetric.TopicNormalise(attr, value.ValueInt64)
 						fields := map[string]interface{}{attr.MetricName: f}
 
-						pt, _ := client.NewPoint(series, tags, fields, t)
+						pt := client.NewPoint(series, tags, fields, t)
 
-						bp.AddPoint(pt)
+						bp.WritePoint(pt)
 						log.Debugf("Adding topic point %v", pt)
 					}
 				}
@@ -333,10 +362,39 @@ func Collect(c client.Client) error {
 						f := mqmetric.SubNormalise(attr, value.ValueInt64)
 						fields := map[string]interface{}{attr.MetricName: f}
 
-						pt, _ := client.NewPoint(series, tags, fields, t)
+						pt := client.NewPoint(series, tags, fields, t)
 
-						bp.AddPoint(pt)
+						bp.WritePoint(pt)
 						log.Debugf("Adding subscription point %v", pt)
+					}
+				}
+			}
+
+			series = "cluster"
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
+						clusterName := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key].ValueString
+						qmType := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key].ValueInt64
+
+						qmTypeString := "PARTIAL"
+						if qmType == int64(ibmmq.MQQMT_REPOSITORY) {
+							qmTypeString = "FULL"
+						}
+
+						tags := map[string]string{
+							"qmgr":     config.cf.QMgrName,
+							"cluster":  clusterName,
+							"qmtype":   qmTypeString,
+							"platform": platformString,
+						}
+
+						f := mqmetric.ClusterNormalise(attr, value.ValueInt64)
+						fields := map[string]interface{}{attr.MetricName: f}
+						pt := client.NewPoint(series, tags, fields, t)
+
+						bp.WritePoint(pt)
+						log.Debugf("Adding cluster point %v", pt)
 					}
 				}
 			}
@@ -356,9 +414,9 @@ func Collect(c client.Client) error {
 						f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
 						fields := map[string]interface{}{attr.MetricName: f}
 
-						pt, _ := client.NewPoint(series, tags, fields, t)
+						pt := client.NewPoint(series, tags, fields, t)
 
-						bp.AddPoint(pt)
+						bp.WritePoint(pt)
 						log.Debugf("Adding qmgr point %v", pt)
 					}
 				}
@@ -385,8 +443,8 @@ func Collect(c client.Client) error {
 							f := mqmetric.UsageNormalise(attr, value.ValueInt64)
 							fields := map[string]interface{}{attr.MetricName: f}
 
-							pt, _ := client.NewPoint(series, tags, fields, t)
-							bp.AddPoint(pt)
+							pt := client.NewPoint(series, tags, fields, t)
+							bp.WritePoint(pt)
 							log.Debugf("Adding bufferpool point %v", pt)
 
 						}
@@ -409,8 +467,8 @@ func Collect(c client.Client) error {
 							f := mqmetric.UsageNormalise(attr, value.ValueInt64)
 							fields := map[string]interface{}{attr.MetricName: f}
 
-							pt, _ := client.NewPoint(series, tags, fields, t)
-							bp.AddPoint(pt)
+							pt := client.NewPoint(series, tags, fields, t)
+							bp.WritePoint(pt)
 							log.Debugf("Adding pageset point %v", pt)
 
 						}
@@ -421,16 +479,12 @@ func Collect(c client.Client) error {
 		// This is where real errors might occur, including the inability to
 		// contact the database server. We will ignore (but log)  these errors
 		// up to a threshold, after which it is considered fatal.
-		err = c.Write(bp)
-		if err != nil {
-			log.Error(err)
-			errorCount++
-			if errorCount >= config.ci.MaxErrors {
-				log.Fatal("Too many errors communicating with server")
-			}
-		} else {
-			errorCount = 0
+		bp.Flush()
+
+		if atomic.LoadInt64(&totalErrorCount) >= int64(config.ci.MaxErrors) {
+			log.Fatal("Too many errors communicating with server")
 		}
+		log.Debugf("Error counts: global %d local %d", atomic.LoadInt64(&totalErrorCount), atomic.LoadInt64(&loopErrorCount))
 	}
 
 	collectStopTime := time.Now()

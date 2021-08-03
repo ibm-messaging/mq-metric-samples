@@ -96,6 +96,7 @@ func main() {
 			if atomic.LoadInt32(&st.connectedQMgr) == 0 {
 				mutex.Lock()
 				if err == nil {
+					mqmetric.EndConnection()
 					// Connect and open standard queues
 					err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 					if err == nil {

@@ -1,9 +1,12 @@
 
 # This is the collector-specific piece of the configuration
+# Note that this is the InfluxDB V2 format with an apiToken instead of
+# a password.
 influx:
-  databaseName: MQDB
+  bucketName: my-bucket
   databaseAddress: "http://localhost:8086"
-  databaseUser: admin
-  databasePasswordFile: "/tmp/mqinfluxpw.txt"
   interval: 10s
-  maxErrors: 10
+  org: my-org
+  maxErrors: 5
+  apiToken: 10101010101010101010101010101010101010101010101010101010101010101010101010101010101010==
+

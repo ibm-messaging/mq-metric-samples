@@ -26,7 +26,9 @@ import (
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
-	client "github.com/influxdata/influxdb1-client/v2"
+	client "github.com/influxdata/influxdb-client-go/v2"
+	ilog "github.com/influxdata/influxdb-client-go/v2/log"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -109,25 +111,23 @@ func main() {
 		mqmetric.SubInitAttributes()
 		mqmetric.QueueManagerInitAttributes()
 		mqmetric.UsageInitAttributes()
+		mqmetric.ClusterInitAttributes()
 	}
 
 	// Go into main loop for sending data to database
-	// Creating the client is not likely to have an error; the error will
+	// Creating the client does not return an error; the error will
 	// come during the write of the data.
 	if err == nil {
-		c, err = client.NewHTTPClient(client.HTTPConfig{
-			Addr:     config.ci.DatabaseAddress,
-			Username: config.ci.Userid,
-			Password: config.ci.Password,
-		})
-
-		if err != nil {
-			log.Error(err)
-		} else {
-			for {
-				Collect(c)
-				time.Sleep(d)
-			}
+		if config.ci.ApiToken == "" {
+			config.ci.ApiToken = config.ci.Userid + ":" + config.ci.Password
+		}
+		c = client.NewClientWithOptions(config.ci.DatabaseAddress, config.ci.ApiToken,
+			client.DefaultOptions().SetPrecision(time.Millisecond))
+		defer c.Close()
+		ilog.Log = nil
+		for {
+			Collect(c)
+			time.Sleep(d)
 		}
 
 	}

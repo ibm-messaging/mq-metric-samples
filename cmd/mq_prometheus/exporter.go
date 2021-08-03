@@ -45,6 +45,7 @@ type exporter struct {
 	qMgrStatus    *mqmetric.StatusSet
 	usageBpStatus *mqmetric.StatusSet
 	usagePsStatus *mqmetric.StatusSet
+	clusterStatus *mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
@@ -57,6 +58,7 @@ func newExporter() *exporter {
 		qMgrStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_Q_MGR),
 		usageBpStatus: mqmetric.GetObjectStatus("", mqmetric.OT_BP),
 		usagePsStatus: mqmetric.GetObjectStatus("", mqmetric.OT_PS),
+		clusterStatus: mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER),
 	}
 }
 
@@ -73,12 +75,14 @@ var (
 	qMgrStatusGaugeMap    = make(map[string]*prometheus.GaugeVec)
 	usageBpStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	usagePsStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
-	lastPoll              = time.Now()
-	lastQueueDiscovery    time.Time
-	platformString        string
-	counter               = 0
-	warnedScrapeTimeout   = false
-	pubCountDesc          *prometheus.Desc
+	clusterStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
+
+	lastPoll            = time.Now()
+	lastQueueDiscovery  time.Time
+	platformString      string
+	counter             = 0
+	warnedScrapeTimeout = false
+	pubCountDesc        *prometheus.Desc
 )
 
 /*
@@ -116,6 +120,10 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	}
 	for _, attr := range e.subStatus.Attributes {
 		subStatusGaugeMap[attr.MetricName].Describe(ch)
+	}
+
+	for _, attr := range e.clusterStatus.Attributes {
+		clusterStatusGaugeMap[attr.MetricName].Describe(ch)
 	}
 
 	// DISPLAY QMSTATUS is not supported on z/OS
@@ -198,10 +206,15 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		// If there has been sufficient interval since the last explicit poll for
-		// status, then do that collection too. Don't treat errors in this block
-		// as fatal - the previous section will have caught things like the qmgr
-		// going down. But here we may have unknown objects being referenced and while
+		// status, then do that collection too.
+		// Collect any errors - normally we'd expect an error like the qmgr being
+		// unavailable to have been picked up in the ProcessPublications call. But on
+		// systems where you're not using the pub/sub metrics then errors here will be the
+		// first ones found.
+		// But here we may have unknown objects being referenced and while
 		// it may be worth logging the error, that should not be cause to exit.
+		pollError := err
+
 		if pollStatus {
 			for _, attr := range e.chlStatus.Attributes {
 				channelStatusGaugeMap[attr.MetricName].Reset()
@@ -218,12 +231,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			for _, attr := range e.subStatus.Attributes {
 				subStatusGaugeMap[attr.MetricName].Reset()
 			}
+			for _, attr := range e.clusterStatus.Attributes {
+				clusterStatusGaugeMap[attr.MetricName].Reset()
+			}
 
 			if config.cf.CC.UseStatus {
 				if err == nil {
 					err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 					if err != nil {
 						log.Errorf("Error collecting channel status: %v", err)
+						pollError = err
 					} else {
 						log.Debugf("Collected all channel status")
 					}
@@ -233,6 +250,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
 					if err != nil {
 						log.Errorf("Error collecting topic status: %v", err)
+						pollError = err
 					} else {
 						log.Debugf("Collected all topic status")
 					}
@@ -242,6 +260,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
 					if err != nil {
 						log.Errorf("Error collecting subscription status: %v", err)
+						pollError = err
 					} else {
 						log.Debugf("Collected all subscription status")
 					}
@@ -251,6 +270,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 					if err != nil {
 						log.Errorf("Error collecting queue status: %v", err)
+						pollError = err
 					} else {
 						log.Debugf("Collected all queue status")
 					}
@@ -261,8 +281,19 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				err = mqmetric.CollectQueueManagerStatus()
 				if err != nil {
 					log.Errorf("Error collecting queue manager status: %v", err)
+					pollError = err
 				} else {
 					log.Debugf("Collected all queue manager status")
+				}
+			}
+
+			if err == nil {
+				err = mqmetric.CollectClusterStatus()
+				if err != nil {
+					log.Errorf("Error collecting cluster status: %v", err)
+					pollError = err
+				} else {
+					log.Debugf("Collected all cluster status")
 				}
 			}
 
@@ -270,10 +301,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				err = mqmetric.CollectUsageStatus()
 				if err != nil {
 					log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+					pollError = err
 				} else {
 					log.Debugf("Collected all buffer pool/pageset status")
 				}
 			}
+		}
+		if err == nil {
+			err = pollError
 		}
 	}
 
@@ -297,8 +332,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		switch mqrc {
 		case ibmmq.MQRC_NONE:
 			atomic.StoreInt32(&st.connectedQMgr, 1)
-		case ibmmq.MQRC_UNEXPECTED_ERROR:
-		case ibmmq.MQRC_STANDBY_Q_MGR:
+		case ibmmq.MQRC_UNEXPECTED_ERROR |
+			ibmmq.MQRC_STANDBY_Q_MGR |
+			ibmmq.MQRC_RECONNECT_FAILED:
 			atomic.StoreInt32(&st.collectorEnd, 1)
 			atomic.StoreInt32(&st.connectedQMgr, 0)
 		default:
@@ -498,6 +534,27 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 
+		for _, attr := range e.clusterStatus.Attributes {
+			for key, value := range attr.Values {
+				clusterName := e.clusterStatus.Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key].ValueString
+				qmType := e.clusterStatus.Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key].ValueInt64
+				qmTypeString := "PARTIAL"
+				if qmType == int64(ibmmq.MQQMT_REPOSITORY) {
+					qmTypeString = "FULL"
+				}
+				if value.IsInt64 && !attr.Pseudo {
+					g := clusterStatusGaugeMap[attr.MetricName]
+					f := mqmetric.ClusterNormalise(attr, value.ValueInt64)
+
+					g.With(prometheus.Labels{
+						"qmgr":     strings.TrimSpace(config.cf.QMgrName),
+						"cluster":  clusterName,
+						"qmtype":   qmTypeString,
+						"platform": platformString}).Set(f)
+				}
+			}
+		}
+
 		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
 			for _, attr := range e.usageBpStatus.Attributes {
 				for key, value := range attr.Values {
@@ -576,6 +633,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
+	for _, attr := range e.clusterStatus.Attributes {
+		if !attr.Pseudo {
+			g := clusterStatusGaugeMap[attr.MetricName]
+			log.Debugf("Reporting cluster  gauge for %s", attr.MetricName)
+			g.Collect(ch)
+		}
+	}
+
 	if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
 		for _, attr := range e.usageBpStatus.Attributes {
 			if !attr.Pseudo {
@@ -616,6 +681,8 @@ func allocateAllGauges() {
 	log.Debugf("Subscription Gauges allocated")
 	allocateQMgrStatusGauges()
 	log.Debugf("QMgr   Gauges allocated")
+	allocateClusterStatusGauges()
+	log.Debugf("cluster Gauges allocated")
 	if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
 		allocateUsageStatusGauges()
 		log.Debugf("BP/PS  Gauges allocated")
@@ -682,6 +749,15 @@ func allocateQMgrStatusGauges() {
 		description := attr.Description
 		g := newMqGaugeVecObj(attr.MetricName, description, "qmgr")
 		qMgrStatusGaugeMap[attr.MetricName] = g
+	}
+}
+
+func allocateClusterStatusGauges() {
+	mqmetric.ClusterInitAttributes()
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes {
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "cluster")
+		clusterStatusGaugeMap[attr.MetricName] = g
 	}
 }
 
@@ -780,6 +856,8 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 	subLabels := []string{"qmgr", "platform", objectType, "subid", "topic", "type"}
 	bpLabels := []string{"qmgr", "platform", objectType, "location", "pageclass"}
 	psLabels := []string{"qmgr", "platform", objectType, "bufferpool"}
+	clusterLabels := []string{"qmgr", "platform", "cluster", "qmtype"}
+
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
@@ -800,6 +878,8 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		labels = bpLabels
 	case "pageset":
 		labels = psLabels
+	case "cluster":
+		labels = clusterLabels
 	default:
 		log.Errorf("Tried to create gauge for unknown object type %s", objectType)
 	}

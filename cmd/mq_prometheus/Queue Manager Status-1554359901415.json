@@ -21,14 +21,10 @@
     {
       "columns": [],
       "datasource": "MQ Prometheus",
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
       "fontSize": "100%",
       "gridPos": {
-        "h": 6,
-        "w": 16,
+        "h": 5,
+        "w": 17,
         "x": 0,
         "y": 0
       },
@@ -437,9 +433,9 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 8,
-        "w": 16,
+        "w": 17,
         "x": 0,
-        "y": 6
+        "y": 5
       },
       "hiddenSeries": false,
       "id": 2,
@@ -460,7 +456,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.5",
+      "pluginVersion": "8.0.6",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -544,7 +540,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 14
+        "y": 13
       },
       "id": 6,
       "options": {
@@ -562,7 +558,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.5.5",
+      "pluginVersion": "8.0.6",
       "targets": [
         {
           "expr": "ibmmq_qmgr_exporter_publications",
@@ -577,10 +573,202 @@
       "timeShift": null,
       "title": "Processed Publications",
       "type": "stat"
+    },
+    {
+      "datasource": "MQ Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 3,
+        "y": 13
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.0.6",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "ibmmq_qmgr_mq_fdc_file_count",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "queryType": "randomWalk",
+          "refId": "A"
+        }
+      ],
+      "title": "FDC Count",
+      "type": "stat"
+    },
+    {
+      "datasource": "MQ Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": null,
+            "displayMode": "auto",
+            "filterable": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "ACTIVE"
+                },
+                "1": {
+                  "text": "SUSPENDED"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "qmtype"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Repo Type"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 11,
+        "x": 6,
+        "y": 13
+      },
+      "id": 8,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Status"
+          }
+        ]
+      },
+      "pluginVersion": "8.0.6",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "ibmmq_cluster_suspend",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "State",
+          "queryType": "randomWalk",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Cluster Status",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "platform": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "Value": 7,
+              "__name__": 1,
+              "cluster": 2,
+              "instance": 4,
+              "job": 5,
+              "platform": 6,
+              "qmgr": 3
+            },
+            "renameByName": {
+              "Value": "Status",
+              "Value #A": "Status",
+              "cluster": "Cluster",
+              "qmgr": "Queue Manager"
+            }
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 27,
+  "schemaVersion": 30,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -618,5 +806,5 @@
   "timezone": "",
   "title": "Queue Manager Status",
   "uid": "OsI0nBemz",
-  "version": 22
+  "version": 28
 }

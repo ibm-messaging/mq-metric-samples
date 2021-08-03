@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016,2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -118,11 +118,13 @@ func Collect() error {
 		log.Debugf("Skipping poll for object status")
 	}
 
+	pollError := err
 	if pollStatus {
 		if config.cf.CC.UseStatus {
 			err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 			if err != nil {
 				log.Errorf("Error collecting channel status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all channel status")
 			}
@@ -130,6 +132,7 @@ func Collect() error {
 			err = mqmetric.CollectTopicStatus(config.cf.MonitoredTopics)
 			if err != nil {
 				log.Errorf("Error collecting topic status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all topic status")
 			}
@@ -137,6 +140,7 @@ func Collect() error {
 			err = mqmetric.CollectSubStatus(config.cf.MonitoredSubscriptions)
 			if err != nil {
 				log.Errorf("Error collecting subscription status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all subscription status")
 			}
@@ -144,14 +148,24 @@ func Collect() error {
 			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
 			if err != nil {
 				log.Errorf("Error collecting queue status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all queue status")
+			}
+
+			err = mqmetric.CollectClusterStatus()
+			if err != nil {
+				log.Errorf("Error collecting cluster status: %v", err)
+				pollError = err
+			} else {
+				log.Debugf("Collected all cluster status")
 			}
 		}
 
 		err = mqmetric.CollectQueueManagerStatus()
 		if err != nil {
 			log.Errorf("Error collecting queue manager status: %v", err)
+			pollError = err
 		} else {
 			log.Debugf("Collected all queue manager status")
 		}
@@ -160,10 +174,16 @@ func Collect() error {
 			err = mqmetric.CollectUsageStatus()
 			if err != nil {
 				log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+				pollError = err
 			} else {
 				log.Debugf("Collected all buffer pool/pageset status")
 			}
 		}
+		err = pollError
+	}
+
+	if err != nil {
+		log.Fatalf("Error collecting status: %v", err)
 	}
 
 	thisDiscovery := time.Now()
@@ -371,6 +391,38 @@ func Collect() error {
 					bp = c.Flush(bp)
 
 					log.Debugf("Adding subscription point %v", pt)
+				}
+			}
+		}
+
+		series = "cluster"
+		for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes {
+			for key, value := range attr.Values {
+				if value.IsInt64 {
+
+					qMgrName := strings.TrimSpace(config.cf.QMgrName)
+					clusterName := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key].ValueString
+					qmType := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key].ValueInt64
+
+					qmTypeString := "PARTIAL"
+					if qmType == int64(ibmmq.MQQMT_REPOSITORY) {
+						qmTypeString = "FULL"
+					}
+					tags := map[string]string{
+						"qmgr":     qMgrName,
+						"platform": platformString,
+						"cluster":  clusterName,
+						"qmtype":   qmTypeString,
+					}
+
+					f := mqmetric.ClusterNormalise(attr, value.ValueInt64)
+
+					pt, _ := newPoint(series+"."+attr.MetricName, t, float64(f), tags)
+
+					bp.addPoint(pt)
+					bp = c.Flush(bp)
+
+					log.Debugf("Adding cluster point %v", pt)
 				}
 			}
 		}
