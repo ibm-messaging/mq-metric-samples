@@ -1,11 +1,15 @@
 # Changelog
 Newest updates are at the top of this file.
 
-### Jul 20 2021
-* Update to use v5.2.1 of the mq-golang repository
-* Allow prometheus collector to continue running even when qmgr down
+### Aug 03 2021 (v5.2.2)
+* Update to use v5.2.2 of the mq-golang repository
+* Update to use MQ 9.2.3
+* Allow prometheus collector to continue running even when qmgr down (#67)
   * Report qmgr_status metric in such a situation
-  * Updated "QMgr Status" dashboard to report the metric
+  * Updated "QMgr Status" sample dashboard to report both that metric and the new cluster status metric
+* Update influxdb collector to use V2 APIs (#76)
+  * Note changes to configuration attributes - in particular support for an APIToken
+  * New sample dashboard using some very basic Flux queries
 
 ### Apr 15 2021
 * Don't check for QMGR name unless config parse was a success

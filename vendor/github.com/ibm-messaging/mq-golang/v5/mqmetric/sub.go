@@ -26,7 +26,7 @@ package mqmetric
 
 /*
 Functions in this file use the DISPLAY SubStatus command to extract metrics
-about MQ queues
+about MQ subscriptions
 */
 
 import (
