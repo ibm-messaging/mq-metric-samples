@@ -489,7 +489,7 @@ func Collect(c client.Client) error {
 
 	collectStopTime := time.Now()
 	elapsedSecs := int64(collectStopTime.Sub(collectStartTime).Seconds())
-	log.Infof("Collection time = %d secs", elapsedSecs)
+	log.Debugf("Collection time = %d secs", elapsedSecs)
 
 	return err
 

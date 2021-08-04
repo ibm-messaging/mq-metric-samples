@@ -27,7 +27,6 @@ and update the various Gauges.
 
 import (
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -96,7 +95,7 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 
 	// Seeing this twice in succession in the logs is a bit odd. So we'll set things up that
 	// the invocation is not reported during an Unregister operation.
-	if atomic.LoadInt32(&st.collectorSilent) == 0 {
+	if !isCollectorSilent() {
 		log.Infof("IBMMQ Describe started")
 		log.Infof("Platform is %s", platformString)
 	}
@@ -159,7 +158,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// If we're not connected, then continue to report a single metric about the qmgr status
 	// This value is created by the mqmetric package even on z/OS which doesn't support
 	// the DIS QMSTATUS command.
-	if atomic.LoadInt32(&st.connectedQMgr) == 0 {
+	if !isConnectedQMgr() {
 		log.Infof("Reporting status as disconnected")
 		if g, ok := qMgrStatusGaugeMap[mqmetric.ATTR_QMGR_STATUS]; ok {
 			// There's no MQQMSTA_STOPPED value defined .All the regular qmgr status
@@ -197,7 +196,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		pollStatus = false
 		thisPoll := time.Now()
 		elapsed = thisPoll.Sub(lastPoll)
-		if elapsed >= config.cf.PollIntervalDuration || atomic.LoadInt32(&st.firstCollection) == 0 {
+		if elapsed >= config.cf.PollIntervalDuration || !isFirstCollection() {
 			log.Debugf("Polling for object status")
 			lastPoll = thisPoll
 			pollStatus = true
@@ -331,17 +330,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		// quit out of the collector.
 		switch mqrc {
 		case ibmmq.MQRC_NONE:
-			atomic.StoreInt32(&st.connectedQMgr, 1)
+			setConnectedQMgr(true)
 		case ibmmq.MQRC_UNEXPECTED_ERROR |
 			ibmmq.MQRC_STANDBY_Q_MGR |
 			ibmmq.MQRC_RECONNECT_FAILED:
-			atomic.StoreInt32(&st.collectorEnd, 1)
-			atomic.StoreInt32(&st.connectedQMgr, 0)
+			setCollectorEnd(true)
+			setConnectedQMgr(false)
 		default:
-			atomic.StoreInt32(&st.connectedQMgr, 0)
+			setConnectedQMgr(false)
 		}
 		return
-
 	}
 
 	thisDiscovery := time.Now()
@@ -361,11 +359,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// value fields and maps have been updated.
 	//
 	// Now need to set all of the real Gauges with the correct values
-	if atomic.LoadInt32(&st.firstCollection) == 1 {
+	if isFirstCollection() {
 		// Always ignore the first loop through as there might
 		// be accumulated stuff from a while ago, and lead to
 		// a misleading range on graphs.
-		atomic.StoreInt32(&st.firstCollection, 0)
+		setFirstCollection(false)
 	} else {
 
 		for _, cl := range e.metrics.Classes {
@@ -660,7 +658,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 	collectStopTime := time.Now()
 	elapsedSecs := int64(collectStopTime.Sub(collectStartTime).Seconds())
-	log.Infof("Collection time = %d secs", elapsedSecs)
+	log.Debugf("Collection time = %d secs", elapsedSecs)
 	if elapsedSecs > defaultScrapeTimeout && !warnedScrapeTimeout {
 		log.Warnf("Collection time has exceeded Prometheus default scrape_timeout value of %d seconds. Ensure you have set a larger value for this job", defaultScrapeTimeout)
 		warnedScrapeTimeout = true

@@ -26,7 +26,6 @@ import (
 
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -36,17 +35,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
-
-// These are really booleans but I'm using atomic updates
-// to avoid potential races (though they'd likely be harmless) between
-// the main code and the callbacks
-type status struct {
-	connectedOnce   int32
-	connectedQMgr   int32
-	collectorEnd    int32
-	collectorSilent int32
-	firstCollection int32
-}
 
 var (
 	BuildStamp     string
@@ -59,7 +47,6 @@ var (
 	collector      prometheus.Collector
 	mutex          sync.RWMutex
 	retryCount     = 0 // Might use this with a maxRetry to force a quit out of collector
-	st             status
 )
 
 func main() {
@@ -76,28 +63,34 @@ func main() {
 	if err != nil {
 		log.Error(err)
 	} else {
-		st.connectedOnce = 0
-		st.connectedQMgr = 0
-		st.collectorEnd = 0
-		st.firstCollection = 0
-		st.collectorSilent = 0
+		setConnectedOnce(false)
+		setConnectedQMgr(false)
+		setCollectorEnd(false)
+		setFirstCollection(false)
+		setCollectorSilent(false)
 
 		// Start the webserver in a separate thread
 		go startServer()
 
 		// This is the main loop that tries to keep the collector connected to a queue manager
 		// even after a failure.
-		for atomic.LoadInt32(&st.collectorEnd) == 0 {
-			log.Debugf("In main loop: qMgrConnected=%d", atomic.LoadInt32(&st.connectedQMgr))
+		for !isCollectorEnd() {
+			log.Debugf("In main loop: qMgrConnected=%v", isConnectedQMgr())
 			err = nil // Start clean on each loop
 
 			// The callback will set this flag to false if there's an error while
 			// processing the messages.
-			if atomic.LoadInt32(&st.connectedQMgr) == 0 {
+			if !isConnectedQMgr() {
 				mutex.Lock()
 				if err == nil {
 					mqmetric.EndConnection()
-					// Connect and open standard queues
+					// Connect and open standard queues. If we're going to manage reconnection from
+					// this collector, then turn off the MQ client automatic option
+					if config.keepRunning {
+						config.cf.CC.SingleConnect = true
+					} else {
+						config.cf.CC.SingleConnect = false
+					}
 					err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
 					if err == nil {
 						log.Infoln("Connected to queue manager " + config.cf.QMgrName)
@@ -157,26 +150,26 @@ func main() {
 					allocateAllGauges()
 
 					if collector != nil {
-						atomic.StoreInt32(&st.collectorSilent, 1)
+						setCollectorSilent(true)
 						prometheus.Unregister(collector)
-						atomic.StoreInt32(&st.collectorSilent, 0)
+						setCollectorSilent(false)
 					}
 
 					collector = newExporter()
-					atomic.StoreInt32(&st.firstCollection, 1)
+					setFirstCollection(true)
 					prometheus.MustRegister(collector)
-					atomic.StoreInt32(&st.connectedQMgr, 1)
+					setConnectedQMgr(true)
 
-					if atomic.LoadInt32(&st.connectedOnce) == 0 {
+					if !isConnectedOnce() {
 						startChannel <- true
-						atomic.StoreInt32(&st.connectedOnce, 1)
+						setConnectedOnce(true)
 					}
 				} else {
-					if atomic.LoadInt32(&st.connectedOnce) == 0 || !config.keepRunning {
+					if !isConnectedOnce() || !config.keepRunning {
 						// If we've never successfully connected, then exit instead
 						// of retrying as it probably means a config error
 						log.Errorf("Connection to %s has failed. %v", config.cf.QMgrName, err)
-						atomic.StoreInt32(&st.collectorEnd, 1)
+						setCollectorEnd(true)
 					} else {
 						log.Debug("Sleeping a bit after a failure")
 						retryCount++
@@ -197,7 +190,6 @@ func main() {
 	} else {
 		os.Exit(0)
 	}
-
 }
 
 func startServer() {
@@ -268,7 +260,7 @@ func stopServer() {
 	if err != nil {
 		log.Errorf("Failed to shutdown metrics server: %v", err)
 	}
-	atomic.StoreInt32(&st.collectorEnd, 1)
+	setCollectorEnd(true)
 }
 
 /*

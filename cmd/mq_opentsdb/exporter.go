@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016,2020
+  Copyright (c) IBM Corporation 2016,2021
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -496,7 +496,7 @@ func Collect() error {
 
 	collectStopTime := time.Now()
 	elapsedSecs := int64(collectStopTime.Sub(collectStartTime).Seconds())
-	log.Infof("Collection time = %d secs", elapsedSecs)
+	log.Debugf("Collection time = %d secs", elapsedSecs)
 
 	return err
 }
