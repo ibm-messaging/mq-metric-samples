@@ -25,12 +25,13 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"strconv"
 )
 
 type ConfigYGlobal struct {
-	UseObjectStatus    bool   `yaml:"useObjectStatus" default:true`
-	UseResetQStats     bool   `yaml:"useResetQStats" default:false`
-	UsePublications    bool   `yaml:"usePublications" default:true`
+	UseObjectStatus    string `yaml:"useObjectStatus" default:"true"`
+	UseResetQStats     string `yaml:"useResetQStats" default:"false"`
+	UsePublications    string `yaml:"usePublications" default:"true"`
 	LogLevel           string `yaml:"logLevel"`
 	MetaPrefix         string
 	PollInterval       string `yaml:"pollInterval"`
@@ -41,7 +42,7 @@ type ConfigYGlobal struct {
 type ConfigYConnection struct {
 	QueueManager string `yaml:"queueManager"`
 	User         string
-	Client       bool `yaml:"clientConnection"`
+	Client       string `yaml:"clientConnection" default:"false"`
 	Password     string
 	ReplyQueue   string `yaml:"replyQueue"`
 	CcdtUrl      string `yaml:"ccdtUrl"`
@@ -54,7 +55,7 @@ type ConfigYObjects struct {
 	Channels                  []string
 	Topics                    []string
 	Subscriptions             []string
-	ShowInactiveChannels      bool `yaml:"showInactiveChannels"`
+	ShowInactiveChannels      string `yaml:"showInactiveChannels" default:"false"`
 }
 
 func ReadConfigFile(f string, cmy interface{}) error {
@@ -62,18 +63,32 @@ func ReadConfigFile(f string, cmy interface{}) error {
 	data, e2 := ioutil.ReadFile(f)
 	if e2 == nil {
 		e2 = yaml.Unmarshal(data, cmy)
+		fmt.Printf("CMY: %+v\n", cmy)
 	}
 
 	return e2
 }
 
+// The Go YAML parsing is not what you might expect for booleans - you are
+// apparently unable to set a default of "true" for missing fields. So we read ut
+// as a string and parse that. The caller also sends in the default value if the string
+// cannot be decoded.
+func asBool(s string, def bool) bool {
+	b, err := strconv.ParseBool(s)
+	if err == nil {
+		return b
+	} else {
+		return def
+	}
+}
+
 // This handles the configuration parameters that are common to all the collectors. The individual
 // collectors call similar code for their own specific attributes
 func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo ConfigYObjects) {
-	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", cyg.UseObjectStatus)
-	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", cyg.UseResetQStats)
-	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", cyg.UsePublications)
-	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("objects", "showInactiveChannels", cyo.ShowInactiveChannels)
+	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", asBool(cyg.UseObjectStatus, true))
+	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", asBool(cyg.UseResetQStats, false))
+	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", asBool(cyg.UsePublications, true))
+	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("objects", "showInactiveChannels", asBool(cyo.ShowInactiveChannels, false))
 
 	cm.LogLevel = CopyParmIfNotSetStr("global", "logLevel", cyg.LogLevel)
 	cm.MetaPrefix = CopyParmIfNotSetStr("global", "metaprefix", cyg.MetaPrefix)
@@ -86,7 +101,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.CcdtUrl = CopyParmIfNotSetStr("connection", "ccdtUrl", cyc.CcdtUrl)
 	cm.CC.ConnName = CopyParmIfNotSetStr("connection", "connName", cyc.ConnName)
 	cm.CC.Channel = CopyParmIfNotSetStr("connection", "channel", cyc.Channel)
-	cm.CC.ClientMode = CopyParmIfNotSetBool("connection", "clientConnection", cyc.Client)
+	cm.CC.ClientMode = CopyParmIfNotSetBool("connection", "clientConnection", asBool(cyc.Client, false))
 	cm.CC.UserId = CopyParmIfNotSetStr("connection", "user", cyc.User)
 	cm.CC.Password = CopyParmIfNotSetStr("connection", "password", cyc.Password)
 	cm.ReplyQ = CopyParmIfNotSetStr("connection", "replyQueue", cyc.ReplyQueue)

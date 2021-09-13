@@ -368,7 +368,7 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 		log.Debugf("VerifyConfig Error : %+v", err)
 	}
 
-	//log.Fatalf("Exiting immediately") // Used this temporarily to save time
+	// log.Fatalf("Exiting immediately") // Used this temporarily to save time
 
 	return err
 }
