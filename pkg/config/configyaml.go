@@ -63,7 +63,6 @@ func ReadConfigFile(f string, cmy interface{}) error {
 	data, e2 := ioutil.ReadFile(f)
 	if e2 == nil {
 		e2 = yaml.Unmarshal(data, cmy)
-		fmt.Printf("CMY: %+v\n", cmy)
 	}
 
 	return e2

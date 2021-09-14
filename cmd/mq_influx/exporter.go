@@ -54,7 +54,7 @@ func Collect(c client.Client) error {
 	var err error
 	var series string
 
-	log.Infof("IBMMQ InfluxDB collection started")
+	log.Debugf("IBMMQ InfluxDB collection started")
 	collectStartTime := time.Now()
 	atomic.StoreInt64(&loopErrorCount, 0)
 	bp := c.WriteAPI(config.ci.Org, config.ci.BucketName)

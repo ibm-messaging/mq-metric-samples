@@ -62,7 +62,7 @@ data
 func Collect() error {
 	var err error
 	var series string
-	log.Infof("IBM MQ OpenTSDB collection started")
+	log.Debugf("IBM MQ OpenTSDB collection started")
 
 	if platformString == "" {
 		platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)

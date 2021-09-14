@@ -67,8 +67,6 @@ func initConfig() error {
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
-			// Set defaults
-			cfy.Global.UsePublications = true
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
@@ -77,7 +75,6 @@ func initConfig() error {
 				config.ci.MaxErrors = cf.CopyParmIfNotSetInt("opentsdb", "maxErrors", cfy.OpenTSDB.MaxErrors)
 				config.ci.MaxPoints = cf.CopyParmIfNotSetInt("opentsdb", "maxPoints", cfy.OpenTSDB.MaxPoints)
 				config.ci.MetricPrefix = cf.CopyParmIfNotSetStr("opentsdb", "seriesPrefix", cfy.OpenTSDB.MetricPrefix)
-
 			}
 		}
 	}

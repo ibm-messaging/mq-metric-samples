@@ -51,7 +51,7 @@ data
 func Collect() error {
 	var err error
 	series := ""
-	log.Infof("IBM MQ stdout collector started")
+	log.Debugf("IBM MQ stdout collector started")
 	if platformString == "" {
 		platformString = strings.Replace(ibmmq.MQItoString("PL", int(mqmetric.GetPlatform())), "MQPL_", "", -1)
 	}

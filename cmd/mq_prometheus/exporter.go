@@ -152,7 +152,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	mutex.Lock() // To protect metrics from concurrent collects.
 	defer mutex.Unlock()
 
-	log.Infof("IBMMQ Collect started %o", ch)
+	log.Debugf("IBMMQ Collect started %o", ch)
 	collectStartTime := time.Now()
 
 	// If we're not connected, then continue to report a single metric about the qmgr status
@@ -534,8 +534,15 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 		for _, attr := range e.clusterStatus.Attributes {
 			for key, value := range attr.Values {
-				clusterName := e.clusterStatus.Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key].ValueString
-				qmType := e.clusterStatus.Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key].ValueInt64
+				clusterName := ""
+				if cN, ok := e.clusterStatus.Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key]; ok {
+					clusterName = cN.ValueString
+				}
+
+				qmType := int64(ibmmq.MQQMT_NORMAL)
+				if qT, ok := e.clusterStatus.Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key]; ok {
+					qmType = qT.ValueInt64
+				}
 				qmTypeString := "PARTIAL"
 				if qmType == int64(ibmmq.MQQMT_REPOSITORY) {
 					qmTypeString = "FULL"

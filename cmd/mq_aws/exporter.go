@@ -62,7 +62,7 @@ data
 func Collect() error {
 	var err error
 	var series string
-	log.Infof("IBM MQ AWS collection started")
+	log.Debugf("IBM MQ AWS collection started")
 	collectStartTime := time.Now()
 
 	if platformString == "" {

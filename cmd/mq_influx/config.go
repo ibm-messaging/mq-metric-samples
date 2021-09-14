@@ -78,8 +78,6 @@ func initConfig() error {
 
 	if err == nil {
 		if config.cf.ConfigFile != "" {
-			// Set defaults
-			cfy.Global.UsePublications = true
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
@@ -94,7 +92,6 @@ func initConfig() error {
 				config.ci.ApiToken = cf.CopyParmIfNotSetStr("influx", "apiToken", cfy.Influx.ApiToken)
 				config.ci.ApiTokenFile = cf.CopyParmIfNotSetStr("influx", "apiTokenFile", cfy.Influx.ApiTokenFile)
 				config.ci.Org = cf.CopyParmIfNotSetStr("influx", "org", cfy.Influx.Org)
-
 			}
 		}
 	}

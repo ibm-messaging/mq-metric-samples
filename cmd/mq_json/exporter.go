@@ -70,7 +70,7 @@ func Collect() error {
 	var err error
 	var j jsonReportStruct
 
-	log.Infof("IBM MQ JSON collector started")
+	log.Debugf("IBM MQ JSON collector started")
 	collectStartTime := time.Now()
 
 	if platformString == "" {
