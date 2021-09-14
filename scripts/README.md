@@ -28,4 +28,6 @@ YAML files go into `%GOPATH%\bin`.
 * `docker-compose.yaml`: A fragment of what might go into a larger composition file. In its current
 state it tries to pull an image from a repository even though it has been built and exists locally.
 
-
+* `buildBuildah.sh`: An alternative approach to building a runnable container image. It uses `buildah`, `podman`
+and the Red Hat UBI containers. It uses a multi-stage model, one to compile the code and a second phase that
+uses a slimmer runtime image.
