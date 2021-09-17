@@ -1,6 +1,14 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Sep 17 2021 (v5.2.3)
+* Defaults for boolean config options not handled well by Go parser
+* Add script to build images using buildah + Red Hat UBI base
+* Temporarily override vendored mq-golang/mqmetric code to deliver fixes
+  * Deal with buffer expansion when there are lots of queues to query AND remote system is different CCSID (#75)
+  * Ensure labels - in particular object DESCR values - are valid UTF8
+  * This code is newer than the upstream version which will inherit the fixes later
+
 ### Aug 03 2021 (v5.2.2)
 * Update to use v5.2.2 of the mq-golang repository
 * Update to use MQ 9.2.3
