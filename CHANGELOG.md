@@ -1,6 +1,11 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Nov 19 2021 (v5.2.4)
+* Update to MQ 9.2.4
+* Update to use v5.2.4 of mq-golang repository
+* Reset vendored mq-golang/mqmetric from previous release as fixes now in base
+
 ### Sep 17 2021 (v5.2.3)
 * Defaults for boolean config options not handled well by Go parser
 * Add script to build images using buildah + Red Hat UBI base

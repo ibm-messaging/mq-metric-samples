@@ -48,7 +48,7 @@ esac
 # Set some variables.
 ORG="github.com/ibm-messaging"
 REPO="mq-metric-samples"
-VRMF=9.2.3.0
+VRMF=9.2.4.0
 db=`echo $COLL | sed "s/mq_//g"`
 #
 imgName="mq-metric-$db"
@@ -171,9 +171,16 @@ buildah commit -q --squash --rm $runtimeCtr $imgNameRuntime
 # to 9158 even though the collector is listening on 9157 (the assigned number for MQ).
 # Rather than having the config file embedded in the container image, you might prefer to mount it from a real local
 # filesystem.
+
+addr=`ip -4 addr | grep "state UP" -A2 | grep inet | tail -n1 | awk '{print $2}' | cut -f1 -d'/'`
+if [ "$addr" = "" ]
+then
+  addr=`hostname`
+fi
+
 podman run \
     -e IBMMQ_GLOBAL_LOGLEVEL=DEBUG \
-    -e IBMMQ_CONNECTION_CONNNAME=`hostname` \
+    -e IBMMQ_CONNECTION_CONNNAME=$addr \
     -e IBMMQ_CONNECTION_CHANNEL=SYSTEM.DEF.SVRCONN \
     -p 9158:9157 \
     $imgNameRuntime
