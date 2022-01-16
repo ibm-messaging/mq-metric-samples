@@ -17,6 +17,8 @@ This repository contains the reference Go client for InfluxDB 2.
     - [Writes in Detail](#writes)
     - [Queries in Detail](#queries)
     - [Concurrency](#concurrency)
+    - [Proxy and redirects](#proxy-and-redirects)
+    - [Checking Server State](#checking-server-state)
 - [InfluxDB 1.8 API compatibility](#influxdb-18-api-compatibility)
 - [Contributing](#contributing)
 - [License](#license)
@@ -29,7 +31,7 @@ This repository contains the reference Go client for InfluxDB 2.
         - into raw data, flux table representation
         - [How to queries](#queries)
     - Writing data using
-        - [Line Protocol](https://docs.influxdata.com/influxdb/v1.6/write_protocols/line_protocol_tutorial/) 
+        - [Line Protocol](https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/)
         - [Data Point](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2/api/write#Point)
         - Both [asynchronous](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2/api#WriteAPI) or [synchronous](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2/api#WriteAPIBlocking) ways
         - [How to writes](#writes)  
@@ -41,7 +43,12 @@ This repository contains the reference Go client for InfluxDB 2.
      
 ## Documentation
 
-Go API docs is available at: [https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2)
+This section contains links to the client library documentation.
+
+- [Product documentation](https://docs.influxdata.com/influxdb/v2.0/tools/client-libraries/), [Getting Started](#how-to-use)
+- [Examples](#examples)
+- [API Reference](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2)
+- [Changelog](CHANGELOG.md)
 
 ### Examples
 
@@ -199,6 +206,33 @@ func main() {
     client.Close()
 }
 ```
+### Handling of failed async writes
+WriteAPI by default continues with retrying of failed writes. 
+Retried are automatically writes that fail on a connection failure or when server returns response HTTP status code >= 429.
+
+Retrying algorithm uses random exponential strategy to set retry time.
+The delay for the next retry attempt is a random value in the interval _retryInterval * exponentialBase^(attempts)_ and _retryInterval * exponentialBase^(attempts+1)_.
+If writes of batch repeatedly fails, WriteAPI continues with retrying until _maxRetries_ is reached or the overall retry time of batch exceeds _maxRetryTime_. 
+
+The defaults parameters (part of the WriteOptions) are:
+ - _retryInterval_=5,000ms
+ - _exponentialBase_=2
+ - _maxRetryDelay_=125,000ms
+ - _maxRetries_=5
+ - _maxRetryTime_=180,000ms
+ 
+Retry delays are by default randomly distributed within the ranges:
+ 1. 5,000-10,000
+ 1. 10,000-20,000
+ 1. 20,000-40,000
+ 1. 40,000-80,000
+ 1. 80,000-125,000
+ 
+Setting _retryInterval_ to 0 disables retry strategy and any failed write will discard the batch. 
+
+[WriteFailedCallback](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2/api#WriteFailedCallback) allows advanced controlling of retrying. 
+It is synchronously notified in case async write fails.
+It controls further batch handling by its return value. If it returns `true`, WriteAPI continues with retrying of writes of this batch. Returned `false` means the batch should be discarded. 
 
 ### Reading async errors
 [Errors()](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2/api#WriteAPI.Errors) method returns a channel for reading errors which occurs during async writes. This channel is unbuffered and it 
@@ -464,6 +498,50 @@ func main() {
     wg.Wait()
 }
 ```
+
+### Proxy and redirects
+You can configure InfluxDB Go client behind a proxy in two ways:
+ 1. Using environment variable  
+     Set environment variable `HTTP_PROXY` (or `HTTPS_PROXY` based on the scheme of your server url).  
+     e.g. (linux) `export HTTP_PROXY=http://my-proxy:8080` or in Go code `os.Setenv("HTTP_PROXY","http://my-proxy:8080")`
+     
+ 1. Configure `http.Client` to use proxy<br>
+     Create a custom `http.Client` with a proxy configuration:
+    ```go
+    proxyUrl, err := url.Parse("http://my-proxy:8080")
+    httpClient := &http.Client{
+        Transport: &http.Transport{
+            Proxy: http.ProxyURL(proxyUrl)
+        }
+    }
+    client := influxdb2.NewClientWithOptions("http://localhost:8086", token, influxdb2.DefaultOptions().SetHTTPClient(httpClient))
+    ```
+ 
+ Client automatically follows HTTP redirects. The default redirect policy is to follow up to 10 consecutive requests.
+ Due to a security reason _Authorization_ header is not forwarded when redirect leads to a different domain.
+ To overcome this limitation you have to set a custom redirect handler:
+```go
+token := "my-token"
+
+httpClient := &http.Client{
+    CheckRedirect: func(req *http.Request, via []*http.Request) error {
+        req.Header.Add("Authorization","Token " + token)
+        return nil
+    },
+}
+client := influxdb2.NewClientWithOptions("http://localhost:8086", token, influxdb2.DefaultOptions().SetHTTPClient(httpClient))
+``` 
+
+### Checking Server State
+There are three functions for checking whether a server is up and ready for communication:
+
+| Function| Description | Availability |
+|:----------|:----------|:----------|
+| [Health()](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2#Client.Health) | Detailed info about the server status, along with version string | OSS |
+| [Ready()](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2#Client.Ready) | Server uptime info | OSS |
+| [Ping()](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2#Client.Ping) | Whether a server is up | OSS, Cloud |
+
+Only the [Ping()](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2#Client.Ping) function works in InfluxDB Cloud server.
 
 ## InfluxDB 1.8 API compatibility
   
