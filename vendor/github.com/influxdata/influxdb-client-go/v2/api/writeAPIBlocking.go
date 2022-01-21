@@ -51,7 +51,8 @@ import (
 //	}
 type WriteAPIBlocking interface {
 	// WriteRecord writes line protocol record(s) into bucket.
-	// WriteRecord writes without implicit batching. Batch is created from given number of records
+	// WriteRecord writes without implicit batching. Batch is created from given number of records.
+	// Individual arguments can also be batches (multiple records separated by newline).
 	// Non-blocking alternative is available in the WriteAPI interface
 	WriteRecord(ctx context.Context, line ...string) error
 	// WritePoint data point into bucket.
@@ -74,24 +75,16 @@ func NewWriteAPIBlocking(org string, bucket string, service http2.Service, write
 func (w *writeAPIBlocking) write(ctx context.Context, line string) error {
 	err := w.service.WriteBatch(ctx, iwrite.NewBatch(line, w.writeOptions.RetryInterval(), w.writeOptions.MaxRetryTime()))
 	if err != nil {
-		return err.Unwrap()
+		return err
 	}
 	return nil
 }
 
 func (w *writeAPIBlocking) WriteRecord(ctx context.Context, line ...string) error {
-	if len(line) > 0 {
-		var sb strings.Builder
-		for _, line := range line {
-			b := []byte(line)
-			b = append(b, 0xa)
-			if _, err := sb.Write(b); err != nil {
-				return err
-			}
-		}
-		return w.write(ctx, sb.String())
+	if len(line) == 0 {
+		return nil
 	}
-	return nil
+	return w.write(ctx, strings.Join(line, "\n"))
 }
 
 func (w *writeAPIBlocking) WritePoint(ctx context.Context, point ...*write.Point) error {
