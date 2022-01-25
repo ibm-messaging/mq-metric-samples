@@ -1,4 +1,4 @@
-# github.com/aws/aws-sdk-go v1.42.39
+# github.com/aws/aws-sdk-go v1.42.40
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil
