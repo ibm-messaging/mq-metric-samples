@@ -1,0 +1,31 @@
+{{- if .Values.postSyncJob.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trigger-test-pipeline-in-dev-app
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+spec:
+  template:
+    spec:
+      serviceAccountName: pipeline
+      containers:
+      - name: tests-in-dev-app
+        image: quay.io/rhcanada/tkn-cli
+        command:
+          - tkn
+        args:
+          - -n
+          - dev
+          - pipeline
+          - start
+          - ibm-test-pipeline-for-dev-env
+          - --param
+          - git-url="https://github.com/cloud-native-toolkit/mq-spring-app.git"
+          - --param
+          - git-revision="master"
+          - --param
+          - argoAppName="mq-spring-app-dev"
+      restartPolicy: Never
+  backoffLimit: 0
+  {{- end }}

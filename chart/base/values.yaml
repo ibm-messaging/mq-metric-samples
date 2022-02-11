@@ -1,0 +1,92 @@
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+global: {}
+
+name: mq-metrics-app
+
+replicaCount: 1
+# logLevel: "info"
+
+image:
+  repository: replace
+  tag: replace
+  pullPolicy: IfNotPresent
+  port: 9157
+
+# nameOverride: ""
+# fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 9157
+
+route:
+  enabled: true
+
+# ingress:
+#   enabled: false
+#   appid:
+#     enabled: false
+#     # web or app - https://cloud.ibm.com/docs/services/appid?topic=appid-kube-auth
+#     requestType: web
+
+# #  host: hello
+#   namespaceInHost: true
+#   subdomain: containers.appdomain.cloud
+#   path: "/"
+
+# #  tlsSecretName: ""
+
+# jaeger:
+#   enabled: false
+#   configName: jaeger-config
+#   secretName: jaeger-access
+#   collectorEndpoint: http://jaeger-all-in-one-inmemory-collector.openshift-operators.svc.cluster.local:14268/api/traces
+
+vcsInfo:
+  repoUrl: ""
+  branch: ""
+
+partOf: inventory
+
+connectsTo: "QM"
+
+configmap:
+  CHANNEL: MONITORING_CHL
+  CONNECTION_NAME: qm-dev-ibm-mq.dev.svc.cluster.local(1414)
+  QM: QM1
+  QUEUES: '*,!SYSTEM.*,!AMQ.*'
+  SUBSCRIPTIONS: '!$SYS*'
+  TOPICS: '!*'
+  USE_PUBLICATIONS: 'false'
+  USE_OBJECT_STATUS: 'true'
+  CONFIGURATION_FILE: ''
+  LOG_LEVEL: INFO
+
+# ccdt:
+#   enabled: false
+#   # IF CCDT_URL has a value, the CHANNEL, CONNECTION_NAME, and QM are configured from CCDT
+#   #CCDT_URL: https://ccdt-no-security-dev.free.beeceptor.com/
+#   CCDT_URL: file:///ccdt/ccdt.json
+#   volumeName: ccdt
+#   volumeMountPath: "/ccdt"
+#   configMapName: mq-spring-app-ccdt
+
+
+sealedsecret:
+  PASSWORD: AgCS/O/QmQTLF3nD/3XQAMx07cPlRFjqd5z59XrqSaHOa3PIzfRuQNZRnmAwPgTwK3ocRBqT1DHtKaMSu6lWbS2NZ4CwNPNKdMjOumIu9YEtPl5Cx+VAJWGRTTIPS2PzF8QO6durE4Fs7DupYx8WmrRXStx3Ng+5VMFi6+f2E1Gz2AAsdZ4Fil50Q6ijgtXQhQZgcroHrljg31eFf4ZkFzrjHmB5ivrAK+q6iBvvbN5july4VVG6ExEfJmd+9ZfgxPonhYLK5ZBwrkFLmyQCIFvRoSIPfZFt7wl8oSduOi4bxJPKK1yqc8EHK38WCy5EIGgQ0arrrjm9VPi4S8HwIaNpJqkMOTK1uVSQdplVRPliqwex0jay1yU9r99TrAKO6gCZfg0LFcxI5IlFeBFxdEMKh/lcIKdX/OfweXabVyIR4gSyxksWfKFwRR0b5teyZN5Bg8ATP4oeVkLSwHNebaMptCrObD0hanz837bV7ZvjYtUl17Kq9iXtLWGZhr3FkYnqB3jP6mNmjCEgEnxV3HynCR6d3e8NHO9cqLxQh9WMt6tQBQP4MZZVpVPjoNPebMaAk3KwfPcoGWfL6Nno4VBiR2mui9Km6aBOLaSwAaDLGXpwG6kmfHUiMFMaOfbK7VrBeDRaLpp1RaEVYiZ80VnOJd3hz9GBjoSCta2siVyEipNxlkbyRvjjmZoRzs948f8=
+  USER: AgCM7bORs1LcxZoahDH9EeKpgut5oUvG3tP0f0xRmlq3awJpc+taTlTKzJakR1PnCVVO3EPjkS7TdblLPk74qGhf24VP6IdrDXW5ElFT77d6//iRVlAPmMChgwAIpIDeeVBUdq46D0R7aeOagqj8I0AN+BfxDzVe+ioUQq/EN+gUOR/BEDwGHBpguuAZkJLxa4J/BF7ftWeUbBQEKmBt0eoP5SEyizW/1QcU2yOyO/F968MzzcXU4Fw4bwEzN4FsEvB12/vKMZ7bRmlZhxTfq18jvmGA79+rb1Vr+mDChqguoYHxRxWvMM04XVIoegFZBGReqQv/ta+sQhf/RBrEEzP+zMet5/3tWNiaO7dOa8jjl5xZqyV8nyFfeBZsxwOPneG907/pxp5A9OuZ6+0btuks0vAGDw1geADQaKIGIcQ9B1b7IKBz85XkozIQdeIwSliQM4l7/FQWICAfKo5vdAE+cyZD4Wh//BmfE0KEbqKtc5EWfyVdcZWLFSEmEMR6BuIt9dkCOO8j2Mx8PzhkM7SJgVGwQZ98zui5OAmkH8iX/+sVvXMbWuP5u7yNh/bK4Tg2ZW4iq4lTSPxfWfVsEgb9oOoiPjEp280bVQgIiyLqL+fjBBg2G+O9PXXX6nkvguodG/iUWAE1uCvhnOskYpbDwcevDU/70QbzRjBeQjgm3yDzEq34MOeaFuT8ys3PpTA=
+  isScopeClusterWide: "true"
+
+# certs:
+#   volumeName: certs
+#   certSecretName: mq-client-jks
+#   certPasswordSecretName: mq-client-jks-password
+#   volumeMountPath: "/certs"
+#   trustStoreFileName: truststore.jks
+#   keyStoreFileName: keystore.jks
+
+# security: false
+
+postSyncJob:
+  enabled: false
