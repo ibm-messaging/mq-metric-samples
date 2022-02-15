@@ -21,11 +21,11 @@ spec:
           - start
           - ibm-test-pipeline-for-dev-env
           - --param
-          - git-url="https://github.com/cloud-native-toolkit/mq-spring-app.git"
+          - git-url="https://github.com/cloud-native-toolkit/mq-metric-samples.git"
           - --param
           - git-revision="master"
           - --param
-          - argoAppName="mq-spring-app-dev"
+          - argoAppName="mq-metric-samples-dev"
       restartPolicy: Never
   backoffLimit: 0
   {{- end }}
