@@ -23,8 +23,8 @@ service:
 route:
   enabled: true
 
-# ingress:
-#   enabled: false
+ingress:
+  enabled: false
 #   appid:
 #     enabled: false
 #     # web or app - https://cloud.ibm.com/docs/services/appid?topic=appid-kube-auth
@@ -52,16 +52,16 @@ partOf: inventory
 connectsTo: QM
 
 configmap:
-  CHANNEL: MONITORING_CHL
-  CONNECTION_NAME: qm-dev-ibm-mq.dev.svc.cluster.local(1414)
-  QM: QM1
+  CHANNEL: "MONITORING_CHL"
+  CONNECTION_NAME: "qm-dev-ibm-mq.dev.svc.cluster.local(1414)"
+  QM: "QM1"
   QUEUES: \*,!SYSTEM.*,!AMQ.*
   SUBSCRIPTIONS: \!$SYS*
   TOPICS: \!*
   USE_PUBLICATIONS: "false"
   USE_OBJECT_STATUS: "true"
   CONFIGURATION_FILE: ""
-  LOG_LEVEL: INFO
+  LOG_LEVEL: "INFO"
 
 # ccdt:
 #   enabled: false
