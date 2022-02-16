@@ -2,7 +2,7 @@
 # Declare variables to be passed into your templates.
 global: {}
 
-name: mq-metrics-app
+name: mq-metric-samples
 
 replicaCount: 1
 # logLevel: "info"
