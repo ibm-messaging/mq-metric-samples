@@ -13,7 +13,7 @@ oc create secret generic mq-metric-samples-qm-credentials \
 --dry-run=client -o yaml > delete-mq-metric-samples-qm-credentials-secret.yaml
 
 # Encrypt the secret using kubeseal and private key from the cluster
-kubeseal -n ci --controller-name=${SEALED_SECRET_CONTOLLER_NAME} --controller-namespace=${SEALED_SECRET_NAMESPACE} -o yaml < delete-mq-metric-samples-qm-credentials-secret.yaml > ibm-entitled-registry-credentials-secret.yaml
+kubeseal -n dev --controller-name=${SEALED_SECRET_CONTOLLER_NAME} --controller-namespace=${SEALED_SECRET_NAMESPACE} -o yaml < delete-mq-metric-samples-qm-credentials-secret.yaml > mq-metric-samples-qm-credentials-secret.yaml 
 
 # NOTE, do not check delete-ibm-entitled-key-secret.yaml into git!
 rm delete-mq-metric-samples-qm-credentials-secret.yaml
