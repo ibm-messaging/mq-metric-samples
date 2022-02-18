@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ include "starter-kit.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  name: {{ .Chart.Name }}
+spec:
+  endpoints:
+  - bearerTokenSecret:
+      key: ''
+    port: metrics
+    scheme: http
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "starter-kit.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+
