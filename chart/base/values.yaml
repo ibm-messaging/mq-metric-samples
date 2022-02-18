@@ -61,7 +61,7 @@ configmap:
   USE_PUBLICATIONS: false
   USE_OBJECT_STATUS: true
   CONFIGURATION_FILE: ""
-  LOG_LEVEL: "INFO"
+  LOG_LEVEL: "DEBUG"
 
 # ccdt:
 #   enabled: false
