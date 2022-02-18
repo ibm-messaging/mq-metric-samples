@@ -52,12 +52,12 @@ partOf: inventory
 connectsTo: QM
 
 configmap:
-  CHANNEL: "MONITORING_CHL"
-  CONNECTION_NAME: "qm-dev-ibm-mq.dev.svc.cluster.local(1414)"
   QM: "QM1"
-  QUEUES: \*,!SYSTEM.*,!AMQ.*
-  SUBSCRIPTIONS: \!$SYS*
-  TOPICS: \!*
+  CONNECTION_NAME: "qm-dev-ibm-mq.dev.svc.cluster.local(1414)"
+  CHANNEL: "MONITORING_CHL"
+  QUEUES: "!SYSTEM.*,!AMQ.*,*"
+  SUBSCRIPTIONS: "!$SYS*"
+  TOPICS: "!*"
   USE_PUBLICATIONS: "false"
   USE_OBJECT_STATUS: "true"
   CONFIGURATION_FILE: ""
