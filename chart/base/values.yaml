@@ -58,8 +58,8 @@ configmap:
   QUEUES: "!SYSTEM.*,!AMQ.*,*"
   SUBSCRIPTIONS: "!$SYS*"
   TOPICS: "!*"
-  USE_PUBLICATIONS: "false"
-  USE_OBJECT_STATUS: "true"
+  USE_PUBLICATIONS: false
+  USE_OBJECT_STATUS: true
   CONFIGURATION_FILE: ""
   LOG_LEVEL: "INFO"
 
