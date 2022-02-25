@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jan 16 2022 (no new version)
+* Update vendored dependencies
+
 ### Nov 19 2021 (v5.2.4)
 * Update to MQ 9.2.4
 * Update to use v5.2.4 of mq-golang repository

@@ -1,3 +1,42 @@
+## 2.7.0[2022-01-20]
+### Features 
+- [#297](https://github.com/influxdata/influxdb-client-go/pull/297),[#298](https://github.com/influxdata/influxdb-client-go/pull/298) Optimized `WriteRecord` of [WriteAPIBlocking](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2/api#WriteAPIBlocking). Custom batch can be written by single argument. 
+
+### Bug fixes
+- [#294](https://github.com/influxdata/influxdb-client-go/pull/294)  `WritePoint` and `WriteRecord` of [WriteAPIBlocking](https://pkg.go.dev/github.com/influxdata/influxdb-client-go/v2/api#WriteAPIBlocking) returns always full error information.
+- [300](https://github.com/influxdata/influxdb-client-go/pull/300) Closing the response body after write batch.
+- [302](https://github.com/influxdata/influxdb-client-go/pull/302) FluxRecord.Table() returns value of the table column.
+
+## 2.6.0[2021-11-26]
+### Features
+- [#285](https://github.com/influxdata/influxdb-client-go/pull/285) Added *Client.Ping()* function as the only validation method available in both OSS and Cloud.
+- [#286](https://github.com/influxdata/influxdb-client-go/pull/286) Synced generated server API with the latest [oss.yml](https://github.com/influxdata/openapi/blob/master/contracts/oss.yml).
+- [#287](https://github.com/influxdata/influxdb-client-go/pull/287) Added *FluxRecord.Result()* function as a convenient way to retrieve the Flux result name of data.
+
+### Bug fixes
+- [#285](https://github.com/influxdata/influxdb-client-go/pull/285) Functions *Client.Health()* and *Client.Ready()* correctly report an error when called against InfluxDB Cloud.
+
+### Breaking change
+- [#285](https://github.com/influxdata/influxdb-client-go/pull/285) Function *Client.Ready()* now returns `*domain.Ready` with full uptime info.
+
+## 2.5.1[2021-09-17]
+### Bug fixes
+ - [#276](https://github.com/influxdata/influxdb-client-go/pull/276) Synchronized logging methods of _log.Logger_.
+ 
+## 2.5.0 [2021-08-20]
+### Features
+ - [#264](https://github.com/influxdata/influxdb-client-go/pull/264) Synced generated server API with the latest [oss.yml](https://github.com/influxdata/openapi/blob/master/contracts/oss.yml). 
+ - [#271](https://github.com/influxdata/influxdb-client-go/pull/271) Use exponential _random_ retry strategy 
+ - [#273](https://github.com/influxdata/influxdb-client-go/pull/273) Added `WriteFailedCallback` for `WriteAPI` allowing to be _synchronously_ notified about failed writes and decide on further batch processing. 
+
+### Bug fixes
+ - [#269](https://github.com/influxdata/influxdb-client-go/pull/269) Synchronized setters of _log.Logger_ to allow concurrent usage  
+ - [#270](https://github.com/influxdata/influxdb-client-go/pull/270) Fixed duplicate `Content-Type` header in requests to managemet API  
+
+### Documentation
+ - [#261](https://github.com/influxdata/influxdb-client-go/pull/261) Update Line Protocol document link to v2.0
+ - [#274](https://github.com/influxdata/influxdb-client-go/pull/274) Documenting proxy configuration and HTTP redirects handling
+
 ## 2.4.0 [2021-06-04]
 ### Features
  - [#256](https://github.com/influxdata/influxdb-client-go/pull/256) Allowing 'Doer' interface for HTTP requests
