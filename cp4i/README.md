@@ -1,4 +1,7 @@
 # Monitoring metrics in Cloud Pak for Integration
+
+## Using sample yamls
+
 This directory contains sample files that show how to deploy the Prometheus
 monitor to expose queue metrics for a queue manager running in a Cloud Pak for
 Integration deployment on Red Hat OpenShift. The samples are accompanied by the blog post 
@@ -87,3 +90,11 @@ time="2021-04-13T20:12:55Z" level=info msg="Collection time = 0 secs"
 time="2021-04-13T20:13:55Z" level=info msg="IBMMQ Collect started 14000003035700"
 time="2021-04-13T20:13:55Z" level=info msg="Collection time = 0 secs"
 ```
+
+## Helm Charts
+
+The `chart` directory contains all the helm charts needed to deploy the set of resources
+on an OpenShift cluster. 
+
+In this case the pod is wrapped in a deployment resource and an OpenShift route is added
+to provide access to the metrics application.
