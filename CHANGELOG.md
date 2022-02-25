@@ -1,6 +1,12 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Feb 25 2022 (v5.2.5)
+* Update to MQ 9.2.5
+* Update to use v5.2.5 of mq-golang repository
+* Update vendored dependencies
+* Permit use of local queues as well as model queues for metric replies (#100)
+
 ### Jan 16 2022 (no new version)
 * Update vendored dependencies
 

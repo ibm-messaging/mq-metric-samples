@@ -85,9 +85,6 @@ For example,
 
 ```
 
-The JSON structure has been substantially changed in this version of
-the monitor program, to give it a more deterministic layout.
-
 As an example of processing the data, this uses the jq program to filter and show
 just the channel name and the number of messages across it at each interval. It
 ignores all the other metrics produced.
@@ -98,6 +95,10 @@ jq -c '.collectionTime.timeStamp as $t | .points[] |
      select(.metrics.messages!=null) |
      {"time":$t, "chl":.tags.channel, "msg":.metrics.messages}'
 ```
+
+The configuration option `oneline`can be used to print a complete JSON record as a single
+line instead of pretty-printed across mutiple lines. That might be helpful for some tools that
+ingest JSON and prefer to have a single line inputs.
 
 ## Metrics
 Once the monitor program has been started, you will see metrics being available.

@@ -91,7 +91,7 @@ func main() {
 					} else {
 						config.cf.CC.SingleConnect = false
 					}
-					err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
+					err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, config.cf.ReplyQ2, &config.cf.CC)
 					if err == nil {
 						log.Infoln("Connected to queue manager " + config.cf.QMgrName)
 					} else {

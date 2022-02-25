@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2021
+  Copyright (c) IBM Corporation 2016, 2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,10 +25,12 @@ import (
 type mqTTYConfig struct {
 	cf       cf.Config
 	interval string
+	oneline  bool
 }
 
 type ConfigYJson struct {
 	Interval string
+	OneLine  bool
 }
 
 type mqExporterConfigYaml struct {
@@ -50,6 +52,7 @@ func initConfig() error {
 	cf.InitConfig(&config.cf)
 
 	cf.AddParm(&config.interval, "10s", cf.CP_STR, "ibmmq.interval", "json", "interval", "How long between each collection")
+	cf.AddParm(&config.oneline, false, cf.CP_BOOL, "ibmmq.oneline", "json", "oneline", "JSON output on a single line")
 
 	err = cf.ParseParms()
 
@@ -59,6 +62,7 @@ func initConfig() error {
 			if err == nil {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
 				config.interval = cf.CopyParmIfNotSetStr("json", "interval", cfy.JSON.Interval)
+				config.oneline = cf.CopyParmIfNotSetBool("json", "oneline", cfy.JSON.OneLine)
 			}
 		}
 	}

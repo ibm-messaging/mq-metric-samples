@@ -75,7 +75,7 @@ func main() {
 		log.Infoln("Starting IBM MQ metrics exporter for JSON")
 
 		// Connect and open standard queues
-		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, &config.cf.CC)
+		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, config.cf.ReplyQ2, &config.cf.CC)
 	}
 
 	if err == nil {

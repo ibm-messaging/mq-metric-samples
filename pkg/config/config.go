@@ -39,6 +39,7 @@ type Config struct {
 
 	QMgrName string
 	ReplyQ   string
+	ReplyQ2  string
 
 	MetaPrefix string
 
@@ -148,6 +149,7 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.CC.ConnName, "", CP_STR, "ibmmq.connName", "connection", "connName", "Connection Name")
 	AddParm(&cm.CC.Channel, "", CP_STR, "ibmmq.channel", "connection", "channel", "Channel Name")
 	AddParm(&cm.ReplyQ, "SYSTEM.DEFAULT.MODEL.QUEUE", CP_STR, "ibmmq.replyQueue", "connection", "replyQueue", "Reply Queue to collect data")
+	AddParm(&cm.ReplyQ2, "", CP_STR, "ibmmq.replyQueue2", "connection", "replyQueue2", "Reply Queue to collect other data ")
 
 	AddParm(&cm.MetaPrefix, "", CP_STR, "metaPrefix", "global", "metaPrefix", "Override path to monitoring resource topic")
 

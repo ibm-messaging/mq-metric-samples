@@ -48,7 +48,7 @@ esac
 # Set some variables.
 ORG="github.com/ibm-messaging"
 REPO="mq-metric-samples"
-VRMF=9.2.4.0
+VRMF=9.2.5.0
 db=`echo $COLL | sed "s/mq_//g"`
 #
 imgName="mq-metric-$db"
