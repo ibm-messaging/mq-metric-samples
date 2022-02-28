@@ -24,7 +24,7 @@ file if you wish to reload all of the dependencies by running `go mod vendor`.
 
 You will require the following programs:
 
-* Go compiler. This should be at least version 13.
+* Go compiler. This should be at least version 17.
 
 To build the programs on Linux and MacOS, you may set an environment variable to permit some compile/link flags.
 This is due to security controls in the compiler.
