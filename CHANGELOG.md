@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Mar 02 2022 (no new version)
+* Add dspmqrtj application and demo
+
 ### Feb 28 2022 (no new version)
 * Update to require Go 1.17 
 
