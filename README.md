@@ -7,6 +7,12 @@ such as Prometheus, AWS CloudWatch, etc. Statistics and status information
 can be collected from queue managers and made available in databases to enable
 dashboard and historic reporting.
 
+## The dspmqrtj program
+The repository also includes a program which traces the route a message can
+take through the MQ network. It is similar to the `dspmqrte` program that is
+part of the MQ product, but writes the output in JSON format. See 
+the `dspmqrtj` subdirectory for more information.
+
 ## Health Warning
 
 This package is provided as-is with no guarantees of support or updates.
@@ -24,7 +30,7 @@ file if you wish to reload all of the dependencies by running `go mod vendor`.
 
 You will require the following programs:
 
-* Go compiler. This should be at least version 13.
+* Go compiler. This should be at least version 17.
 
 To build the programs on Linux and MacOS, you may set an environment variable to permit some compile/link flags.
 This is due to security controls in the compiler.
@@ -267,4 +273,4 @@ must include a statement stating you accept the terms in the CLA.
 
 ## Copyright
 
-© Copyright IBM Corporation 2016, 2021
+© Copyright IBM Corporation 2016, 2022

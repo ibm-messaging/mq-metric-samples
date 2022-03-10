@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2019
+  Copyright (c) IBM Corporation 2016, 2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -477,8 +477,13 @@ func Collect() error {
 			}
 		}
 
-		b, _ := json.MarshalIndent(j, "", "  ")
-		fmt.Printf("%s\n", b)
+		if config.oneline {
+			b, _ := json.Marshal(j)
+			fmt.Printf("%s\n", b)
+		} else {
+			b, _ := json.MarshalIndent(j, "", "  ")
+			fmt.Printf("%s\n", b)
+		}
 
 	}
 

@@ -48,7 +48,8 @@ esac
 # Set some variables.
 ORG="github.com/ibm-messaging"
 REPO="mq-metric-samples"
-VRMF=9.2.4.0
+VRMF=9.2.5.0
+GOVER=1.17.2
 db=`echo $COLL | sed "s/mq_//g"`
 #
 imgName="mq-metric-$db"
@@ -76,11 +77,21 @@ buildCtr=$(buildah from registry.access.redhat.com/ubi8/ubi)
 
 # Install the Go package and a couple of other things. Failures here are going to be fatal
 # so we check that we were at least able to get started
-buildah run $buildCtr yum --disableplugin=subscription-manager -y install wget curl tar golang
+buildah run $buildCtr yum --disableplugin=subscription-manager -y install wget curl tar  gcc
 if [ $? -ne 0 ]
 then
  exit 1
 fi
+ 
+# The version of Go is not the default in the yum repositories so we get it directly from google download
+# and make the links point at it
+buildah config --env GOVER="go$GOVER" $buildCtr
+buildah run $buildCtr /bin/bash -c 'cd /tmp && curl -LO "https://dl.google.com/go/$GOVER.linux-amd64.tar.gz" \
+           && mkdir -p /usr/local \
+           && tar -C /usr/local -xzf ./*.tar.gz \
+           && rm -f /bin/go && ln -s /usr/local/go/bin/go /bin/go  \
+           && rm -f ./*.tar.gz'
+buildah run $buildCtr go version
 
 # Set up the environment that's going to be needed to download the correct
 # MQ client libraries and to strip out unneeded components from that package.
@@ -126,6 +137,7 @@ bp="$os/$hw"
 tmpfile=/tmp/build.sh.$$
 cat << EOF > $tmpfile
 cat config.common.yaml cmd/$COLL/config.collector.yaml > /opt/config/$COLL.yaml
+go version
 go build -mod=vendor -o /opt/bin/$COLL \
   -ldflags "-X \"main.BuildStamp=$buildStamp\" -X \"main.BuildPlatform=$bp\" -X \"main.GitCommit=$gitCommit\"" \
    cmd/$COLL/*.go

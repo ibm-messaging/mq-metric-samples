@@ -45,6 +45,7 @@ type ConfigYConnection struct {
 	Client       string `yaml:"clientConnection" default:"false"`
 	Password     string
 	ReplyQueue   string `yaml:"replyQueue"`
+	ReplyQueue2  string `yaml:"replyQueue2"`
 	CcdtUrl      string `yaml:"ccdtUrl"`
 	ConnName     string `yaml:"connName"`
 	Channel      string `yaml:"channel"`
@@ -104,6 +105,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.UserId = CopyParmIfNotSetStr("connection", "user", cyc.User)
 	cm.CC.Password = CopyParmIfNotSetStr("connection", "password", cyc.Password)
 	cm.ReplyQ = CopyParmIfNotSetStr("connection", "replyQueue", cyc.ReplyQueue)
+	cm.ReplyQ2 = CopyParmIfNotSetStr("connection", "replyQueue2", cyc.ReplyQueue2)
 
 	cm.MonitoredQueues = CopyParmIfNotSetStrArray("objects", "queues", cyo.Queues)
 	cm.MonitoredChannels = CopyParmIfNotSetStrArray("objects", "channels", cyo.Channels)
