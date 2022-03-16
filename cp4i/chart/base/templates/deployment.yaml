@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "starter-kit.fullname" . }}
+  annotations:
+  {{- if and .Values.vcsInfo.repoUrl .Values.vcsInfo.branch }}
+    app.openshift.io/vcs-ref: {{ .Values.vcsInfo.branch }}
+    app.openshift.io/vcs-uri: {{ trimSuffix ".git" .Values.vcsInfo.repoUrl }}
+  {{- end }}
+  {{- if .Values.connectsTo }}
+    app.openshift.io/connects-to: {{ printf "[{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":%s}]" (toJson .Values.connectsTo) | squote }}
+  {{- end }}
+  labels:
+    app.kubernetes.io/name: {{ include "starter-kit.name" . }}
+    helm.sh/chart: {{ include "starter-kit.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app: {{ .Release.Name }}
+    {{- if .Values.partOf }}
+    app.kubernetes.io/part-of: {{ .Values.partOf }}
+    {{- end}}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "starter-kit.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "starter-kit.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Values.name }}
+      {{- if .Values.image.secretName }}
+      imagePullSecrets:
+        - name: {{ .Values.image.secretName }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}          
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.name }}
+            - secretRef:
+                name: {{ .Values.name }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

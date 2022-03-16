@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}
+data:
+  IBMMQ_CONNECTION_QUEUEMANAGER: {{ .Values.configmap.QM | quote }}
+  IBMMQ_CONNECTION_CONNNAME: {{ .Values.configmap.CONNECTION_NAME | quote }}
+  IBMMQ_CONNECTION_CHANNEL: {{ .Values.configmap.CHANNEL | quote }}
+  IBMMQ_OBJECTS_QUEUES: {{ .Values.configmap.QUEUES | quote }}
+  IBMMQ_OBJECTS_SUBSCRIPTIONS: {{ .Values.configmap.SUBSCRIPTIONS | quote }}
+  IBMMQ_OBJECTS_TOPICS: {{ .Values.configmap.TOPICS | quote }}
+  IBMMQ_GLOBAL_USEPUBLICATIONS: {{ .Values.configmap.USE_PUBLICATIONS | quote }}
+  IBMMQ_GLOBAL_USEOBJECTSTATUS: {{ .Values.configmap.USE_OBJECT_STATUS | quote }}
+  IBMMQ_GLOBAL_CONFIGURATIONFILE: {{ .Values.configmap.CONFIGURATION_FILE | quote }}
+  IBMMQ_GLOBAL_LOGLEVEL: {{ .Values.configmap.LOG_LEVEL | quote }}

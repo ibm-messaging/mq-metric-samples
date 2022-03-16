@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Mar 10 2022 (no new version)
+* Add CP4I helm charts to deploy MQ metric samples application in OCP environment.
+
 ### Mar 02 2022 (no new version)
 * Add dspmqrtj application and demo
 

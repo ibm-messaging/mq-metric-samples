@@ -1,0 +1,43 @@
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+global: {}
+
+name: mq-metric-samples
+
+replicaCount: 1
+
+image:
+  repository: replace
+  tag: replace
+  pullPolicy: IfNotPresent
+  port: 9157
+
+service:
+  type: ClusterIP
+  port: 9157
+
+route:
+  enabled: true
+
+ingress:
+  enabled: false
+
+vcsInfo:
+  repoUrl: ""
+  branch: ""
+
+partOf: inventory
+
+connectsTo: QM
+
+configmap:
+  QM: "QM1"
+  CONNECTION_NAME: "qm-dev-ibm-mq.dev.svc.cluster.local(1414)"
+  CHANNEL: "MONITORING_CHL"
+  QUEUES: "!SYSTEM.*,!AMQ.*,*"
+  SUBSCRIPTIONS: "!$SYS*"
+  TOPICS: "!*"
+  USE_PUBLICATIONS: false
+  USE_OBJECT_STATUS: true
+  CONFIGURATION_FILE: ""
+  LOG_LEVEL: "INFO"
