@@ -1,5 +1,10 @@
-## 2.8.1
+## 2.8.2 [2022-04-19]
 ### Bug fixes
+- [#319](https://github.com/influxdata/influxdb-client-go/issues/319) Synchronize `WriteAPIImpl.Close` to prevent panic when closing client by multiple go-routines.
+
+## 2.8.1 [2022-03-21]
+### Bug fixes
+- [#311](https://github.com/influxdata/influxdb-client-go/pull/311) Correctly unwrapping http.Error from Server API calls
 - [#315](https://github.com/influxdata/influxdb-client-go/pull/315) Masking authorization token in log
 
 ## 2.8.0 [2022-02-18]
