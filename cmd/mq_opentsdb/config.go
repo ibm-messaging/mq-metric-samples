@@ -43,6 +43,7 @@ type mqExporterConfigYaml struct {
 	Global     cf.ConfigYGlobal
 	Connection cf.ConfigYConnection
 	Objects    cf.ConfigYObjects
+	Filters    cf.ConfigYFilters
 	OpenTSDB   ConfigYOpenTSDB `yaml:"opentsdb"`
 }
 
@@ -69,7 +70,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.ci.DatabaseAddress = cf.CopyParmIfNotSetStr("opentsdb", "databaseAddress", cfy.OpenTSDB.DatabaseAddress)
 				config.ci.Interval = cf.CopyParmIfNotSetStr("opentsdb", "interval", cfy.OpenTSDB.Interval)
 				config.ci.MaxErrors = cf.CopyParmIfNotSetInt("opentsdb", "maxErrors", cfy.OpenTSDB.MaxErrors)

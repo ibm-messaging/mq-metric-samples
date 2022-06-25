@@ -17,9 +17,10 @@ global:
 connection:
     queueManager: QM1
 
-# You can point at a CCDT here
+# You can point at a CCDT here. You probably will have to use this
+# for TLS client connections to a queue manager
     ccdtUrl:
-# Or for simple client configurations, set the connName and channel
+# For simple client configurations, set the connName and channel
     connName:
     channel:
 # If none of the channel-related attributes are set, then this can
@@ -32,9 +33,17 @@ connection:
 #    user: mqadmin
 #    password: passw0rd                                             
 
-# Which queue should be used as the template for replies from the qmgr. This must
-# be a QMODEL.
+# Which queue should be used as the template for replies from the qmgr. This will 
+# usually be a QMODEL
     replyQueue: SYSTEM.DEFAULT.MODEL.QUEUE
+# If 'replyQueue' is set to a QLOCAL, then you must also set
+#   replyQueue2: A.DIFFERENT.QLOCAL
+
+# Using durable subscriptions for queue metrics reduces the need for MAXHANDS to be increased.
+# Setting this to a non-empty value switches the collectors to use durable subs. And then the
+# replyQueue and replyQueue2 values MUST refer to distinct QLOCALs. The value of this attribute must be
+# unique for any collector program connecting to this queue manager
+    durableSubName: 
 
 objects:
     queues:
@@ -42,14 +51,26 @@ objects:
     - "!SYSTEM.*"
     - "!AMQ.*"
     - QM*
-    queueSubscriptionSelector:
-    - PUT
-    - GET
-    - GENERAL
     channels:
     - SYSTEM.*
     - TO.*
     topics:
     subscriptions:
-    showInactiveChannels: false
 
+# The "filters" section gives additional control over what is collected for various
+# object types. Some fields in here used to be in other sections, but those
+# attributes now give an error to force configurations to move to this model.
+filters:
+    # Setting this to "true" reduces the unique sets of data in the database, at the cost of
+    # hiding metrics from separate instances. 
+    hideSvrConnJobname: false
+    # Setting this to "true" shows all channels, not just those that have some kind of active status
+    showInactiveChannels: false
+    # The number of subscriptions can be reduced by selecting a subset of types. Set to "NONE" to 
+    # ignore all published queue metrics (but still keeping all queue manager metrics). The set
+    # shown here gives best balance for number of subscriptions and useful metrics. If this is an empty 
+    # list, all queue metrics are collected.
+    queueSubscriptionSelector:
+    - PUT
+    - GET
+    - GENERAL

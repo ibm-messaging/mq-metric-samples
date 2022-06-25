@@ -10,7 +10,7 @@ dashboard and historic reporting.
 ## The dspmqrtj program
 The repository also includes a program which traces the route a message can
 take through the MQ network. It is similar to the `dspmqrte` program that is
-part of the MQ product, but writes the output in JSON format. See 
+part of the MQ product, but writes the output in JSON format. See
 the `dspmqrtj` subdirectory for more information.
 
 ## Health Warning
@@ -30,7 +30,8 @@ file if you wish to reload all of the dependencies by running `go mod vendor`.
 
 You will require the following programs:
 
-* Go compiler. This should be at least version 17.
+* Go compiler. Building the InfluxDB collector requires Go 17 as the minimum compiler level. If you don't want 
+to build that particular collector then older levels can be used.
 
 To build the programs on Linux and MacOS, you may set an environment variable to permit some compile/link flags.
 This is due to security controls in the compiler.
@@ -87,9 +88,10 @@ builds all the collectors and corresponding YAML configuration files into %GOPAT
 ## Queue manager configuration
 When metrics are being collected from the publish/subscribe interface (all platforms except z/OS),
 there are some considerations:
-* MAXHANDS on queue manager: Each subscription uses an object handle. If many queues are being monitored
+* MAXHANDS on queue manager: The default configuration of these collectors uses non-durable subscriptions to get
+information about queue metrics. Each subscription uses an object handle. If many queues are being monitored
 the default MAXHANDS may need to be increased. A warning is printed if the monitor thinks this attribute
-appears too low.
+appears too low. See below for an alternative option.
 * MAXDEPTH on model queues: The model queue used as the basis for publication and reply queues in the
 monitor must have a MAXDEPTH suitable for the expected amount of data. For published metrics, this is
 estimated based on holding one minute's amount of publications; the number of monitored channels is also
@@ -98,6 +100,24 @@ monitor.
 * USEDLQ on the admin topic: The USEDLQ attribute on the topic object associated with the metrics publications (usually
 SYSTEM.ADMIN.TOPIC) determines what happens if the subscriber's queue is full. You might prefer to set this to
 NO to avoid filling the system DLQ if the collection program does not read the publications frequently enough.
+
+
+### Using durable subscriptions
+An alternative collection mechanism uses durable subscriptions for the queue metric data. This may avoid needing to increase
+the MAXHANDS attribute on a queue manager. (Queue manager-level metrics are still collected using non-durable subscriptions.)
+
+To set it up, you must provide suitable configuration options. In the
+YAML configuration, these are the attributes (command line or environment variable equivalents exist):
+- `replyQueue` must refer to a local queue (not a model queue)
+- `replyQueue2` must also be set, referring to a different local queue
+- `durableSubPrefix` is a string that is unique across any collectors that might be connected to this queue manager
+
+If you use durable subscriptions, then the named reply queues may continue to receive publications even when the
+collector is not running, so that may induce queue-full reports in the error log or events. The subscriptions can
+be manually removed using the "DELETE SUB()" MQSC command for all subscriptions where the subscription ids begin with the
+`durableSubPrefix` value. The `scripts/cleanDur.sh` program can be used for this deletion. You should also clean
+the subscriptions when the configuration of which data to collect has changed, particularly the `queueSubscriptionSelector`
+option.
 
 ## Monitor configuration
 The monitors always collect all of the available queue manager-wide metrics.
@@ -229,7 +249,8 @@ All of the exporters support
 the same configuration options for how to connect to MQ and which objects are monitored. There is
 then an exporter-specific section for additional configuration such as how to contact the back-end
 database.
-The common options are shown in a template in this directory; the exporter-specific options are in individual files in each directory. Combine the two pieces into a single file to get a complete deployable configuration.
+The common options are shown in a template in this directory; the exporter-specific options are in individual 
+files in each directory. Combine the two pieces into a single file to get a complete deployable configuration.
 
 Unlike the command line flags, lists are provided in a more natural format instead of comma-separated
 values in a single string. If an option is provided on both the command line and in the file, it is the file

@@ -54,6 +54,8 @@ if [ $? -ne 0 ]
 then
   echo "Error building dspmqrtj program"
   exit 1
+else
+  echo "Successfully built dspmqrtj program"
 fi
 
 cd ./bin

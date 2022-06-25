@@ -8,25 +8,42 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -34,6 +51,7 @@
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 1,
       "interval": "10s",
       "isNew": true,
@@ -52,7 +70,11 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null as zero",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -101,18 +123,10 @@
           "intervalFactor": 1,
           "legendFormat": "Oldest msg {{queue}}@{{qmgr}}",
           "refId": "D"
-        },
-        {
-          "expr": "ibmmq_queue_ol",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "refId": "E"
         }
       ],
       "thresholds": [],
-      "timeFrom": "15m",
       "timeRegions": [],
-      "timeShift": null,
       "title": "Queue Activity",
       "tooltip": {
         "msResolution": true,
@@ -122,33 +136,25 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "s",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -156,14 +162,25 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 6,
         "x": 18,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "avg": false,
@@ -178,13 +195,17 @@
       "linewidth": 1,
       "links": [
         {
-          "dashboard": "Message details",
+          "targetBlank": true,
           "title": "Details",
-          "type": "dashboard"
+          "url": "http://klein.hursley.uk.ibm.com:3000/d/8G1DuBDiz/message-details?orgId=1&refresh=10s"
         }
       ],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -223,45 +244,33 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Messages",
       "tooltip": {
         "shared": true,
         "sort": 0,
         "value_type": "individual"
       },
-      "transparent": false,
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -269,10 +278,20 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -280,6 +299,7 @@
         "x": 0,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 2,
       "isNew": true,
       "legend": {
@@ -295,7 +315,11 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -322,9 +346,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "CPU",
       "tooltip": {
         "msResolution": true,
@@ -334,33 +356,25 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "percent",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -368,10 +382,20 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -379,6 +403,7 @@
         "x": 8,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 3,
       "isNew": true,
       "legend": {
@@ -394,7 +419,11 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -413,9 +442,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Log write latency",
       "tooltip": {
         "msResolution": true,
@@ -425,33 +452,24 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "s",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -459,11 +477,20 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
-      "decimals": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
@@ -471,6 +498,7 @@
         "x": 16,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 4,
       "isNew": true,
       "legend": {
@@ -486,7 +514,11 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -505,6 +537,10 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "000000001"
+          },
           "expr": "ibmmq_qmgr_queue_manager_file_system_in_use_bytes",
           "format": "time_series",
           "intervalFactor": 2,
@@ -514,8 +550,14 @@
           "step": 2
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "000000001"
+          },
+          "exemplar": true,
           "expr": "ibmmq_qmgr_log_file_system_in_use_bytes",
           "format": "time_series",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "Log file system - in use [{{qmgr}}/{{platform}}]",
           "metric": "ibmmq_qmgr_log_file_system_in_use_bytes",
@@ -523,7 +565,12 @@
           "step": 2
         },
         {
-          "expr": "ibmmq_qmgr_mq_errors_file_system_free_space_percentage",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "000000001"
+          },
+          "exemplar": true,
+          "expr": "100 - ibmmq_qmgr_mq_errors_file_system_free_space_percentage",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -534,9 +581,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "File system",
       "tooltip": {
         "msResolution": true,
@@ -546,19 +591,14 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "bytes",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
@@ -571,8 +611,7 @@
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -580,17 +619,28 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 7,
-        "w": 4,
+        "w": 3,
         "x": 0,
         "y": 14
       },
+      "hiddenSeries": false,
       "id": 5,
       "isNew": true,
       "legend": {
@@ -608,7 +658,11 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -646,9 +700,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Subscriptions",
       "tooltip": {
         "msResolution": true,
@@ -658,49 +710,43 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": 0,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
       "columns": [],
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 7,
-        "w": 12,
-        "x": 4,
+        "w": 13,
+        "x": 3,
         "y": 14
       },
       "hideTimeOverride": true,
       "id": 10,
       "links": [],
-      "pageSize": null,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -710,6 +756,7 @@
       "styles": [
         {
           "alias": "State",
+          "align": "auto",
           "colorMode": "cell",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -760,7 +807,7 @@
         },
         {
           "alias": "Channel Name",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -776,7 +823,7 @@
         },
         {
           "alias": "Local QMgr",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -792,7 +839,7 @@
         },
         {
           "alias": "Status",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -808,7 +855,7 @@
         },
         {
           "alias": "Type",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -838,7 +885,7 @@
         },
         {
           "alias": "Type",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -854,7 +901,7 @@
         },
         {
           "alias": "Connection Name",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -870,7 +917,7 @@
         },
         {
           "alias": "Remote QMgr",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -886,7 +933,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -919,21 +966,32 @@
       "timeFrom": "15m",
       "title": "Channel Status",
       "transform": "table",
-      "type": "table"
+      "type": "table-old"
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 5,
         "x": 16,
         "y": 14
       },
+      "hiddenSeries": false,
       "id": 12,
       "legend": {
         "avg": false,
@@ -948,7 +1006,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -966,9 +1028,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Channel Messages",
       "tooltip": {
         "shared": true,
@@ -977,54 +1037,63 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
-      "cacheTimeout": null,
-      "colorBackground": false,
-      "colorValue": false,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
-      "datasource": "MQ Prometheus",
-      "editable": true,
-      "error": false,
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -1033,67 +1102,43 @@
         "y": 14
       },
       "id": 6,
-      "interval": null,
-      "isNew": true,
       "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
       "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
       },
-      "tableColumn": "",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
-          "expr": "sum(ibmmq_qmgr_put_persistent_messages_bytes)",
+          "exemplar": true,
+          "expr": "ibmmq_qmgr_put_non_persistent_messages_bytes",
+          "instant": true,
+          "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "Persistent bytes PUT",
+          "legendFormat": "Non-persistent bytes PUT",
           "metric": "ibmmq_qmgr_put_persistent_messages_bytes",
           "refId": "A",
           "step": 20
         }
       ],
-      "thresholds": "",
-      "title": "Persistent Bytes Put",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "avg"
+      "title": "Non-persistent Bytes Put",
+      "type": "stat"
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 16,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1131,5 +1176,6 @@
   "timezone": "browser",
   "title": "MQ Prometheus",
   "uid": "yBfT2bDik",
-  "version": 33
+  "version": 40,
+  "weekStart": ""
 }

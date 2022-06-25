@@ -224,7 +224,7 @@ func Collect() error {
 							series = "queue"
 							usage := ""
 							if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
-								if usageAttr.ValueInt64 == 1 {
+								if usageAttr.ValueInt64 == int64(ibmmq.MQUS_TRANSMISSION) {
 									usage = "XMITQ"
 								} else {
 									usage = "NORMAL"
@@ -302,7 +302,7 @@ func Collect() error {
 					tags["platform"] = platformString
 					usage := ""
 					if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
-						if usageAttr.ValueInt64 == 1 {
+						if usageAttr.ValueInt64 == int64(ibmmq.MQUS_TRANSMISSION) {
 							usage = "XMITQ"
 						} else {
 							usage = "NORMAL"

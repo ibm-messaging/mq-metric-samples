@@ -37,6 +37,7 @@ type mqExporterConfigYaml struct {
 	Global     cf.ConfigYGlobal
 	Connection cf.ConfigYConnection
 	Objects    cf.ConfigYObjects
+	Filters    cf.ConfigYFilters
 	JSON       ConfigYJson `yaml:"json"`
 }
 
@@ -60,7 +61,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.interval = cf.CopyParmIfNotSetStr("json", "interval", cfy.JSON.Interval)
 				config.oneline = cf.CopyParmIfNotSetBool("json", "oneline", cfy.JSON.OneLine)
 			}

@@ -40,6 +40,7 @@ type mqExporterConfigYaml struct {
 	Global     cf.ConfigYGlobal
 	Connection cf.ConfigYConnection
 	Objects    cf.ConfigYObjects
+	Filters    cf.ConfigYFilters
 	Collectd   ConfigYColl `yaml:"collectd"`
 }
 
@@ -62,7 +63,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects)
+				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.interval = cf.CopyParmIfNotSetStr("collectd", "interval", cfy.Collectd.Interval)
 				config.hostname = cf.CopyParmIfNotSetStr("collectd", "hostname", cfy.Collectd.Hostname)
 			}

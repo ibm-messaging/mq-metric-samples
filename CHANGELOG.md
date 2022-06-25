@@ -1,6 +1,16 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jun 23 2022 (v5.3.0)
+* Update to MQ 9.3.0
+* Update to use v5.3.0 of mq-golang repository
+* Update other vendored dependencies
+* Add filters.hideSvrConnJobname config option (#114)
+* Move objects.showInactiveChannels to new filters section (generate error to indicate move)
+- Move objects.queueSubscriptionSelection to new filters section
+* Enable use of durable subscriptions to reduce impact on MAXHANDS configuration
+  * Add script to explicitly remove durable subs
+
 ### Mar 10 2022 (no new version)
 * Add CP4I helm charts to deploy MQ metric samples application in OCP environment.
 
@@ -8,7 +18,7 @@ Newest updates are at the top of this file.
 * Add dspmqrtj application and demo
 
 ### Feb 28 2022 (no new version)
-* Update to require Go 1.17 
+* Update to require Go 1.17 because of influxdb prereq changes
 
 ### Feb 25 2022 (v5.2.5)
 * Update to MQ 9.2.5

@@ -378,17 +378,22 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						} else {
 							usage := ""
 							if usageAttr, ok := e.qStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
-								if usageAttr.ValueInt64 == 1 {
+								if usageAttr.ValueInt64 == int64(ibmmq.MQUS_TRANSMISSION) {
 									usage = "XMITQ"
 								} else {
 									usage = "NORMAL"
 								}
 							}
-							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
-								"queue":       key,
-								"usage":       usage,
-								"description": mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q),
-								"platform":    platformString}).Set(f)
+
+							// Don't submit metrics for queues where we've not done a full attribute discovery. Typically the first
+							// collection period after a rediscover/resubscribe.
+							if usage != "" {
+								g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
+									"queue":       key,
+									"usage":       usage,
+									"description": mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q),
+									"platform":    platformString}).Set(f)
+							}
 						}
 					}
 				}
@@ -457,9 +462,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			for key, value := range attr.Values {
 				if value.IsInt64 && !attr.Pseudo {
 					qName := e.qStatus.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
-					usage := "NORMAL"
+					usage := ""
 					if usageAttr, ok := e.qStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
-						if usageAttr.ValueInt64 == 1 {
+						if usageAttr.ValueInt64 == int64(ibmmq.MQUS_TRANSMISSION) {
 							usage = "XMITQ"
 						} else {
 							usage = "NORMAL"
@@ -470,12 +475,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
 					log.Debugf("queue status - key: %s qName: %s metric: %s val: %v", key, qName, attr.MetricName, f)
 
-					g.With(prometheus.Labels{
-						"qmgr":        strings.TrimSpace(config.cf.QMgrName),
-						"platform":    platformString,
-						"usage":       usage,
-						"description": mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q),
-						"queue":       qName}).Set(f)
+					// Don't submit metrics for queues where we've not done a full attribute discovery. Typically the first
+					// collection period after a rediscover/resubscribe.
+					if usage != "" {
+						g.With(prometheus.Labels{
+							"qmgr":        strings.TrimSpace(config.cf.QMgrName),
+							"platform":    platformString,
+							"usage":       usage,
+							"description": mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q),
+							"queue":       qName}).Set(f)
+					}
 				}
 			}
 		}

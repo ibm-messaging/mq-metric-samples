@@ -8,29 +8,41 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 7,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 2,
       "legend": {
         "avg": false,
@@ -45,7 +57,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -86,9 +102,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Topic Messages",
       "tooltip": {
         "shared": true,
@@ -97,9 +111,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -107,24 +119,18 @@
         {
           "decimals": 0,
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "s",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -132,14 +138,19 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 6,
       "legend": {
         "avg": false,
@@ -154,7 +165,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -179,9 +194,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Publishers and Subscribers",
       "tooltip": {
         "shared": true,
@@ -190,38 +203,32 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
       "columns": [],
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 4,
@@ -231,7 +238,6 @@
       },
       "id": 4,
       "links": [],
-      "pageSize": null,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -241,13 +247,14 @@
       "styles": [
         {
           "alias": "Time",
+          "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "pattern": "Time",
           "type": "hidden"
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -263,7 +270,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -279,7 +286,7 @@
         },
         {
           "alias": "Last message",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -295,7 +302,7 @@
         },
         {
           "alias": "Last message",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -311,7 +318,7 @@
         },
         {
           "alias": "Topic",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -327,7 +334,7 @@
         },
         {
           "alias": "QMgr",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -343,7 +350,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -359,7 +366,7 @@
         },
         {
           "alias": "Status Type",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -375,7 +382,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -408,21 +415,26 @@
       ],
       "title": "Last message for Topic",
       "transform": "table",
-      "type": "table"
+      "type": "table-old"
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 16,
         "x": 0,
         "y": 13
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "avg": false,
@@ -437,7 +449,11 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -467,9 +483,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Subscription Status",
       "tooltip": {
         "shared": true,
@@ -478,9 +492,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -488,30 +500,23 @@
         {
           "decimals": 0,
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
-          "decimals": null,
           "format": "s",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 16,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -549,5 +554,6 @@
   "timezone": "",
   "title": "Topic Status",
   "uid": "WA6rEEemk",
-  "version": 11
+  "version": 12,
+  "weekStart": ""
 }

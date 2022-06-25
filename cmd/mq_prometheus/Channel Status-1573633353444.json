@@ -8,31 +8,39 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 3,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "columns": [],
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fontSize": "100%",
       "gridPos": {
-        "h": 5,
-        "w": 12,
+        "h": 7,
+        "w": 24,
         "x": 0,
         "y": 0
       },
       "hideTimeOverride": true,
       "id": 4,
       "links": [],
-      "options": {},
-      "pageSize": null,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -42,6 +50,7 @@
       "styles": [
         {
           "alias": "State",
+          "align": "auto",
           "colorMode": "cell",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -92,7 +101,7 @@
         },
         {
           "alias": "Channel Name",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -108,7 +117,7 @@
         },
         {
           "alias": "Local QMgr",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -124,7 +133,7 @@
         },
         {
           "alias": "Status",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -140,7 +149,7 @@
         },
         {
           "alias": "Type",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -170,7 +179,7 @@
         },
         {
           "alias": "Type",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -186,7 +195,7 @@
         },
         {
           "alias": "Connection Name",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -202,7 +211,7 @@
         },
         {
           "alias": "Remote QMgr",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -218,7 +227,7 @@
         },
         {
           "alias": "",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -251,22 +260,32 @@
       "timeFrom": "15m",
       "title": "Channel Status",
       "transform": "table",
-      "type": "table"
+      "type": "table-old"
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 12,
-        "x": 12,
-        "y": 0
+        "x": 0,
+        "y": 7
       },
+      "hiddenSeries": false,
       "id": 6,
       "interval": "",
       "legend": {
@@ -283,9 +302,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -308,16 +328,14 @@
           "refId": "A"
         },
         {
-          "expr": "count by (channel)(ibmmq_channel_status)",
+          "expr": "count by (channel, qmgr)(ibmmq_channel_status)",
           "instant": false,
-          "legendFormat": "Count: {{channel}}",
+          "legendFormat": "Count: {{channel}}@{{qmgr}}",
           "refId": "B"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Channel Activity",
       "tooltip": {
         "shared": true,
@@ -326,9 +344,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -337,7 +353,6 @@
           "format": "s",
           "label": "Time since Msg",
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
@@ -346,14 +361,11 @@
           "format": "short",
           "label": "Chl instances",
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -361,15 +373,117 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 5,
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "hiddenSeries": false,
+      "id": 17,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.4.3",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "ibmmq_channel_bytes_sent{type!=\"SVRCONN\"}",
+          "legendFormat": "Byte Sent: {{channel}}[{{type}}]",
+          "refId": "B"
+        },
+        {
+          "expr": "ibmmq_channel_bytes_rcvd{type!=\"SVRCONN\"}",
+          "legendFormat": "Byte Rcvd: {{channel}}[{{type}}]",
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Channel Bytes",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 4,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 11
       },
+      "hiddenSeries": false,
       "id": 2,
       "legend": {
         "avg": false,
@@ -385,9 +499,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -400,14 +515,26 @@
           "expr": "ibmmq_channel_messages{type!=\"SVRCONN\"}",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{channel}} [{{type}}]",
+          "legendFormat": "Msg: {{channel}} [{{type}}]",
           "refId": "A"
+        },
+        {
+          "expr": "ibmmq_channel_buffers_sent{type!=\"SVRCONN\"}",
+          "legendFormat": "Buf Sent: {{channel}}[{{type}}]",
+          "refId": "B"
+        },
+        {
+          "expr": "ibmmq_channel_buffers_rcvd{type!=\"SVRCONN\"}",
+          "legendFormat": "Buf Rcvd: {{channel}}[{{type}}]",
+          "refId": "C"
+        },
+        {
+          "expr": "ibmmq_channel_buffers",
+          "refId": "D"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Channel Messages",
       "tooltip": {
         "shared": true,
@@ -416,33 +543,24 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -450,15 +568,25 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 11
       },
+      "hiddenSeries": false,
       "id": 8,
       "legend": {
         "avg": false,
@@ -474,9 +602,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -501,9 +630,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Network Transfer Time",
       "tooltip": {
         "shared": true,
@@ -512,33 +639,25 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "µs",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -546,15 +665,25 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 6,
+        "h": 5,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 15
       },
+      "hiddenSeries": false,
       "id": 10,
       "legend": {
         "avg": false,
@@ -570,9 +699,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -609,9 +739,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Channel Batches",
       "tooltip": {
         "shared": true,
@@ -620,9 +748,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -630,25 +756,20 @@
         {
           "decimals": 0,
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "decimals": 0,
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -656,15 +777,25 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 6,
+        "h": 5,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 15
       },
+      "hiddenSeries": false,
       "id": 12,
       "legend": {
         "avg": false,
@@ -680,9 +811,10 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -709,9 +841,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Transmission Queue Time",
       "tooltip": {
         "shared": true,
@@ -720,48 +850,40 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "µs",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
       "columns": [],
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fontSize": "100%",
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 12,
-        "x": 5,
-        "y": 16
+        "x": 0,
+        "y": 20
       },
       "id": 14,
-      "options": {},
-      "pageSize": null,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -771,12 +893,14 @@
       "styles": [
         {
           "alias": "Time",
+          "align": "auto",
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "pattern": "Time",
           "type": "hidden"
         },
         {
           "alias": "Count",
+          "align": "auto",
           "colorMode": "row",
           "colors": [
             "rgba(50, 172, 45, 0.97)",
@@ -796,7 +920,7 @@
         },
         {
           "alias": "Queue Manager",
-          "colorMode": null,
+          "align": "auto",
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -818,15 +942,113 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Total Active Channels",
       "transform": "table",
-      "type": "table"
+      "type": "table-old"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "id": 16,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 12,
+        "desc": true
+      },
+      "styles": [
+        {
+          "$$hashKey": "object:1510",
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "hidden"
+        },
+        {
+          "$$hashKey": "object:1534",
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "$$hashKey": "object:1511",
+          "alias": "Max Inst",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 0,
+          "pattern": "/Value #A/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "none"
+        },
+        {
+          "$$hashKey": "object:1743",
+          "alias": "Max InstC",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "/Value #B/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "none"
+        }
+      ],
+      "targets": [
+        {
+          "expr": "ibmmq_channel_attribute_max_inst{type=\"SVRCONN\"} + 0",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{channel}}",
+          "refId": "A"
+        },
+        {
+          "expr": "ibmmq_channel_attribute_max_instc{type=\"SVRCONN\"} + 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "{{channel}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Channel Attributes table",
+      "transform": "table",
+      "type": "table-old"
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 19,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -864,5 +1086,6 @@
   "timezone": "",
   "title": "Channel Status",
   "uid": "ik0Jp9-mz",
-  "version": 14
+  "version": 24,
+  "weekStart": ""
 }

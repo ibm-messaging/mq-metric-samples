@@ -8,19 +8,29 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 6,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "columns": [],
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fontSize": "100%",
       "gridPos": {
         "h": 5,
@@ -31,7 +41,6 @@
       "hideTimeOverride": false,
       "id": 4,
       "links": [],
-      "pageSize": null,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -51,7 +60,6 @@
           "$$hashKey": "object:13",
           "alias": "",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -67,7 +75,6 @@
           "$$hashKey": "object:14",
           "alias": "Connection Count",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -109,7 +116,6 @@
           "$$hashKey": "object:15",
           "alias": "CHINIT Status",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -156,7 +162,6 @@
           "$$hashKey": "object:16",
           "alias": "Queue Manager",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -174,7 +179,6 @@
           "$$hashKey": "object:17",
           "alias": "",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -192,7 +196,6 @@
           "$$hashKey": "object:18",
           "alias": "Cmd Svr Status",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -239,7 +242,6 @@
           "$$hashKey": "object:19",
           "alias": "",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -257,7 +259,6 @@
           "$$hashKey": "object:20",
           "alias": "Up Time",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -275,7 +276,6 @@
           "$$hashKey": "object:21",
           "alias": "Max Channels",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -293,7 +293,6 @@
           "$$hashKey": "object:22",
           "alias": "Max Active Channels",
           "align": "auto",
-          "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
             "rgba(237, 129, 40, 0.89)",
@@ -411,8 +410,6 @@
           "refId": "F"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Status",
       "transform": "table",
       "type": "table-old"
@@ -422,7 +419,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -456,7 +456,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.0.6",
+      "pluginVersion": "8.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -474,9 +474,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Connection Count (inc. internal processes)",
       "tooltip": {
         "shared": true,
@@ -485,9 +483,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -495,28 +491,25 @@
         {
           "decimals": 0,
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -526,10 +519,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -545,7 +534,7 @@
       "id": 6,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
@@ -558,9 +547,14 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.0.6",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "000000001"
+          },
+          "exemplar": false,
           "expr": "ibmmq_qmgr_exporter_publications",
           "instant": true,
           "interval": "",
@@ -569,19 +563,21 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Processed Publications",
       "type": "stat"
     },
     {
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -620,7 +616,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.0.6",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
           "exemplar": true,
@@ -636,14 +632,17 @@
       "type": "stat"
     },
     {
-      "datasource": "MQ Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "000000001"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
+            "align": "auto",
             "displayMode": "auto",
             "filterable": false
           },
@@ -709,6 +708,13 @@
       },
       "id": 8,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": [
           {
@@ -717,7 +723,7 @@
           }
         ]
       },
-      "pluginVersion": "8.0.6",
+      "pluginVersion": "8.4.3",
       "targets": [
         {
           "exemplar": true,
@@ -731,8 +737,6 @@
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Cluster Status",
       "transformations": [
         {
@@ -768,7 +772,7 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 30,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -806,5 +810,6 @@
   "timezone": "",
   "title": "Queue Manager Status",
   "uid": "OsI0nBemz",
-  "version": 28
+  "version": 30,
+  "weekStart": ""
 }

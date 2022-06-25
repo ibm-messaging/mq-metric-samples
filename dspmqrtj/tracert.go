@@ -264,7 +264,7 @@ func putMessage(firstOp *Operation) error {
 	// Now build the entire buffer of CFH + GROUP + Elements
 	buf = append(cfh.Bytes(), grpparm.Bytes()...)
 
-	// Add any configured additional message body, to help with 
+	// Add any configured additional message body, to help with
 	// checking things like MaxMsgLength values on queues and channels
 	msgLength := cf.MsgLength
 	if msgLength > 0 {

@@ -129,6 +129,11 @@ func InitConfig(cm *Config) {
 		fmt.Fprintf(o, "\n\nValid environment variables for configuration are :\n")
 		i := 0
 		for _, k := range keys {
+			if cp, ok := configParms[k]; ok {
+				if strings.HasPrefix(cp.cliName, "removed") {
+					continue
+				}
+			}
 			fmt.Fprintf(o, "%-32s ", k)
 			i++
 			if i%5 == 0 {
@@ -150,6 +155,7 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.CC.Channel, "", CP_STR, "ibmmq.channel", "connection", "channel", "Channel Name")
 	AddParm(&cm.ReplyQ, "SYSTEM.DEFAULT.MODEL.QUEUE", CP_STR, "ibmmq.replyQueue", "connection", "replyQueue", "Reply Queue to collect data")
 	AddParm(&cm.ReplyQ2, "", CP_STR, "ibmmq.replyQueue2", "connection", "replyQueue2", "Reply Queue to collect other data ")
+	AddParm(&cm.CC.DurableSubPrefix, "", CP_STR, "ibmmq.durableSubPrefix", "connection", "durableSubPrefix", "Collector identifier when using Durable Subscriptions")
 
 	AddParm(&cm.MetaPrefix, "", CP_STR, "metaPrefix", "global", "metaPrefix", "Override path to monitoring resource topic")
 
@@ -162,8 +168,10 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.MonitoredSubscriptions, "*", CP_STR, "ibmmq.monitoredSubscriptions", "objects", "subscriptions", "Patterns of subscriptions to monitor")
 	AddParm(&cm.MonitoredTopicsFile, "", CP_STR, "ibmmq.monitoredTopicsFile", "objects", "topicsFile", "File with patterns of topics to monitor")
 	AddParm(&cm.MonitoredSubscriptionsFile, "", CP_STR, "ibmmq.monitoredSubscriptionsFile", "objects", "subscriptionsFile", "File with patterns of subscriptions to monitor")
-	AddParm(&cm.QueueSubscriptionSelector, "", CP_STR, "ibmmq.queueSubscriptionSelector", "objects", "queueSubscriptionSelector", "Resource topic selection for queues")
-	AddParm(&cm.CC.ShowInactiveChannels, false, CP_BOOL, "ibmmq.showInactiveChannels", "objects", "showInactiveChannels", "Show inactive channels (not just stopped ones)")
+	AddParm(&cm.QueueSubscriptionSelector, "", CP_STR, "ibmmq.queueSubscriptionSelector", "filters", "queueSubscriptionSelector", "Resource topic selection for queues")
+	AddParm(&cm.CC.ShowInactiveChannels, false, CP_BOOL, "ibmmq.showInactiveChannels", "filters", "showInactiveChannels", "Show inactive channels (not just stopped ones)")
+
+	AddParm(&cm.CC.HideSvrConnJobname, false, CP_BOOL, "ibmmq.hideSvrConnJobname", "filters", "hideSvrConnJobname", "Don't create multiple instances of SVRCONN information")
 
 	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
 	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.qStatus", "global", "useObjectStatus", "Add metrics from the QSTATUS fields")
@@ -186,6 +194,9 @@ func InitConfig(cm *Config) {
 
 	// A YAML configuration file can be used instead of all the preceding parameters
 	AddParm(&cm.ConfigFile, "", CP_STR, "f", "global", "configurationFile", "Configuration file")
+
+	AddParm(&cfMoved.QueueSubscriptionSelector, "", CP_STR, "removed.queueSubscriptionSelector", "objects", "queueSubscriptionSelector", "Moved to FILTERS section")
+	AddParm(&cfMoved.ShowInactiveChannels, "", CP_STR, "removed.showInactiveChannels", "objects", "showInactiveChannels", "Moved to FILTERS section")
 
 }
 
@@ -362,6 +373,18 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 		cm.RediscoverDuration, err = time.ParseDuration(cm.rediscoverInterval)
 		if err != nil {
 			err = fmt.Errorf("Invalid value for rediscovery interval parameter: %v", err)
+		}
+	}
+
+	if err == nil {
+		if cfMoved.QueueSubscriptionSelector != "" {
+			err = fmt.Errorf("QueueSubscriptionSelector has moved to filters section of configuration")
+		}
+	}
+
+	if err == nil {
+		if cfMoved.ShowInactiveChannels != "" {
+			err = fmt.Errorf("ShowInactiveChannels has moved to filters section of configuration")
 		}
 	}
 

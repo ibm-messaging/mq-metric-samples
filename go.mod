@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.44.37
-	github.com/ibm-messaging/mq-golang/v5 v5.2.5
+	github.com/ibm-messaging/mq-golang/v5 v5.3.0
 	github.com/influxdata/influxdb-client-go/v2 v2.9.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1

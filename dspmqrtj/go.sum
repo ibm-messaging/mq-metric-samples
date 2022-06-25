@@ -3,6 +3,8 @@ github.com/ibm-messaging/mq-golang/v5 v5.2.4 h1:Sn+XpnhlTzBs/xPRAHzSx+YjCdxhmzJu
 github.com/ibm-messaging/mq-golang/v5 v5.2.4/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
 github.com/ibm-messaging/mq-golang/v5 v5.2.5 h1:lHfC7y634fBlB6weX1g3nPGBY+Yazqs3N+cdIKge3/c=
 github.com/ibm-messaging/mq-golang/v5 v5.2.5/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
+github.com/ibm-messaging/mq-golang/v5 v5.3.0 h1:BfSrGT+abBYNZd9jSdg+6nLkNxpjr4/Rulv6d9gVD34=
+github.com/ibm-messaging/mq-golang/v5 v5.3.0/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
