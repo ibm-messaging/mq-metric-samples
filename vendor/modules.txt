@@ -59,7 +59,7 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/ibm-messaging/mq-golang/v5 v5.3.0
+# github.com/ibm-messaging/mq-golang/v5 v5.3.1
 ## explicit; go 1.13
 github.com/ibm-messaging/mq-golang/v5/ibmmq
 github.com/ibm-messaging/mq-golang/v5/mqmetric
