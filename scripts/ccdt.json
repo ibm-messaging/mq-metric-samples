@@ -1,0 +1,23 @@
+{
+  "channel": [
+    {
+      "name": "SSL.SVRCONN",
+      "clientConnection": {
+        "connection": [
+          {
+            "host": "localhost",
+            "port": 1414
+          }
+        ],
+        "queueManager": "QM1"
+      },
+      "transmissionSecurity":
+      {
+        "cipherSpecification": "ANY_TLS12_OR_HIGHER",
+        "certificateLabel": "ibmwebspheremqroot",
+        "requirePartnerCertificate": false
+      },
+      "type": "clientConnection"
+    }
+  ]
+}

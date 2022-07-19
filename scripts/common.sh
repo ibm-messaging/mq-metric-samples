@@ -8,7 +8,11 @@ function latestSemVer {
 }
 
 # Go to the root of the repo
-cd ..
+if [ -z "$rootDir" ]
+then
+  cd ..
+  rootDir=`pwd`
+fi  
 
 # Assume repo tags have been created in a sensible order. Find the mq-golang
 # version in the dep file (it's the only dependency explicitly listed for now)
