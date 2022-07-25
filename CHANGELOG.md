@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### xxx xx 2022
+* Add sample showing TLS configuration in container
+
 ### Jul 07 2022 (v5.3.1)
 * Update to use v5.3.1 of mq-golang repository 
 
