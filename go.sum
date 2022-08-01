@@ -140,8 +140,8 @@ github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ibm-messaging/mq-golang/v5 v5.3.1 h1:kBKY0a5gXm/2xGiWLWLm/UOeXyNYzf5LKuJrh2MJTJI=
 github.com/ibm-messaging/mq-golang/v5 v5.3.1/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
-github.com/influxdata/influxdb-client-go/v2 v2.9.1 h1:5kbH226fmmiV0MMTs7a8L7/ECCKdJWBi1QZNNv4/TkI=
-github.com/influxdata/influxdb-client-go/v2 v2.9.1/go.mod h1:x7Jo5UHHl+w8wu8UnGiNobDDHygojXwJX4mx7rXGKMk=
+github.com/influxdata/influxdb-client-go/v2 v2.9.2 h1:Ikx1PGrowBjDdrREGfptotebzaLFmAAWv6Wq4hSdvcI=
+github.com/influxdata/influxdb-client-go/v2 v2.9.2/go.mod h1:x7Jo5UHHl+w8wu8UnGiNobDDHygojXwJX4mx7rXGKMk=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
