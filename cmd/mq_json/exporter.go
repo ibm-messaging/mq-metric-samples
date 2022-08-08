@@ -27,11 +27,12 @@ and update the various data points.
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 	log "github.com/sirupsen/logrus"
-	"strings"
-	"time"
 )
 
 var (
@@ -162,6 +163,14 @@ func Collect() error {
 				} else {
 					log.Debugf("Collected all buffer pool/pageset status")
 				}
+			} else {
+				err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
+				if err != nil {
+					log.Errorf("Error collecting AMQP status: %v", err)
+					pollError = err
+				} else {
+					log.Debugf("Collected all AMQP status")
+				}
 			}
 		}
 		err = pollError
@@ -178,6 +187,7 @@ func Collect() error {
 			err = mqmetric.RediscoverAndSubscribe(discoverConfig)
 			lastQueueDiscovery = thisDiscovery
 			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+			err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 		}
 	}
 
@@ -466,6 +476,31 @@ func Collect() error {
 								ptMap[key1] = pt
 							}
 
+						}
+					}
+				} else {
+					for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes {
+						for key, value := range attr.Values {
+							chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+							clientId := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_AMQP_CLIENT_ID].Values[key].ValueString
+							connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+							if value.IsInt64 && !attr.Pseudo {
+								key1 := "amqp/" + chlName + "/" + connName + "/" + clientId
+								if pt, ok = ptMap[key1]; !ok {
+									pt = pointsStruct{}
+									pt.ObjectType = "amqp"
+									pt.Metric = make(map[string]float64)
+									pt.Tags = make(map[string]string)
+									pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
+									pt.Tags["channel"] = chlName
+									pt.Tags["description"] = mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_AMQP)
+									pt.Tags["platform"] = platformString
+									pt.Tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
+									pt.Tags[mqmetric.ATTR_CHL_AMQP_CLIENT_ID] = clientId
+								}
+								pt.Metric[fixup(attr.MetricName)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
+								ptMap[key1] = pt
+							}
 						}
 					}
 				}

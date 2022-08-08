@@ -23,9 +23,10 @@ package config
 // Settings in that file can be overridden on the command line or via environment variable
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"strconv"
+
+	"gopkg.in/yaml.v2"
 )
 
 type ConfigYGlobal struct {
@@ -54,6 +55,7 @@ type ConfigYConnection struct {
 type ConfigYObjects struct {
 	Queues        []string
 	Channels      []string
+	AMQPChannels  []string `yaml:"amqpChannels"`
 	Topics        []string
 	Subscriptions []string
 	// These are left here for now so they can be recognised but will cause an error because the
@@ -64,6 +66,7 @@ type ConfigYObjects struct {
 
 type ConfigYFilters struct {
 	HideSvrConnJobname        string   `yaml:"hideSvrConnJobname" default:"false"`
+	HideAMQPClientId          string   `yaml:"hideAMQPClientId" default:"false"`
 	ShowInactiveChannels      string   `yaml:"showInactiveChannels" default:"false"`
 	QueueSubscriptionSelector []string `yaml:"queueSubscriptionSelector"`
 }
@@ -109,6 +112,8 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 
 	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("filters", "showInactiveChannels", asBool(cyf.ShowInactiveChannels, false))
 	cm.CC.HideSvrConnJobname = CopyParmIfNotSetBool("filters", "hideSvrConnJobname", asBool(cyf.HideSvrConnJobname, false))
+	cm.CC.HideAMQPClientId = CopyParmIfNotSetBool("filters", "hideAMQPClientId", asBool(cyf.HideAMQPClientId, false))
+
 	cm.QueueSubscriptionSelector = CopyParmIfNotSetStrArray("filters", "queueSubscriptionSelector", cyf.QueueSubscriptionSelector)
 
 	cm.LogLevel = CopyParmIfNotSetStr("global", "logLevel", cyg.LogLevel)
@@ -136,6 +141,8 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 
 	cm.MonitoredQueues = CopyParmIfNotSetStrArray("objects", "queues", cyo.Queues)
 	cm.MonitoredChannels = CopyParmIfNotSetStrArray("objects", "channels", cyo.Channels)
+	cm.MonitoredAMQPChannels = CopyParmIfNotSetStrArray("objects", "amqpChannels", cyo.AMQPChannels)
+
 	cm.MonitoredTopics = CopyParmIfNotSetStrArray("objects", "topics", cyo.Topics)
 	cm.MonitoredSubscriptions = CopyParmIfNotSetStrArray("objects", "subscriptions", cyo.Subscriptions)
 

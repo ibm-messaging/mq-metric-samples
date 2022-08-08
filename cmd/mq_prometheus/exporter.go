@@ -45,6 +45,7 @@ type exporter struct {
 	usageBpStatus *mqmetric.StatusSet
 	usagePsStatus *mqmetric.StatusSet
 	clusterStatus *mqmetric.StatusSet
+	amqpStatus    *mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
@@ -58,6 +59,7 @@ func newExporter() *exporter {
 		usageBpStatus: mqmetric.GetObjectStatus("", mqmetric.OT_BP),
 		usagePsStatus: mqmetric.GetObjectStatus("", mqmetric.OT_PS),
 		clusterStatus: mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER),
+		amqpStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP),
 	}
 }
 
@@ -75,6 +77,7 @@ var (
 	usageBpStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	usagePsStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	clusterStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
+	amqpStatusGaugeMap    = make(map[string]*prometheus.GaugeVec)
 
 	lastPoll            = time.Now()
 	lastQueueDiscovery  time.Time
@@ -138,6 +141,10 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 		}
 		for _, attr := range e.usagePsStatus.Attributes {
 			usagePsStatusGaugeMap[attr.MetricName].Describe(ch)
+		}
+	} else {
+		for _, attr := range e.amqpStatus.Attributes {
+			amqpStatusGaugeMap[attr.MetricName].Describe(ch)
 		}
 	}
 }
@@ -234,6 +241,19 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				clusterStatusGaugeMap[attr.MetricName].Reset()
 			}
 
+			if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+				for _, attr := range e.usageBpStatus.Attributes {
+					usageBpStatusGaugeMap[attr.MetricName].Reset()
+				}
+				for _, attr := range e.usagePsStatus.Attributes {
+					usagePsStatusGaugeMap[attr.MetricName].Reset()
+				}
+			} else {
+				for _, attr := range e.amqpStatus.Attributes {
+					amqpStatusGaugeMap[attr.MetricName].Reset()
+				}
+			}
+
 			if config.cf.CC.UseStatus {
 				if err == nil {
 					err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
@@ -305,6 +325,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					log.Debugf("Collected all buffer pool/pageset status")
 				}
 			}
+
+			if err == nil && mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+				err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
+				if err != nil {
+					log.Errorf("Error collecting AMQP channel status: %v", err)
+					pollError = err
+				} else {
+					log.Debugf("Collected all AMQP channel status")
+				}
+			}
 		}
 		if err == nil {
 			err = pollError
@@ -352,6 +382,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			//if err == nil {
 			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 			//}
+			err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
+
 		}
 	}
 
@@ -605,6 +637,27 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					}
 				}
 			}
+		} else {
+			for _, attr := range e.amqpStatus.Attributes {
+				for key, value := range attr.Values {
+					chlName := e.amqpStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+					clientId := e.amqpStatus.Attributes[mqmetric.ATTR_CHL_AMQP_CLIENT_ID].Values[key].ValueString
+					connName := e.amqpStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+					if value.IsInt64 && !attr.Pseudo {
+						g := amqpStatusGaugeMap[attr.MetricName]
+						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+
+						g.With(prometheus.Labels{
+							"qmgr":                           strings.TrimSpace(config.cf.QMgrName),
+							"channel":                        chlName,
+							"description":                    mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_AMQP),
+							"platform":                       platformString,
+							mqmetric.ATTR_CHL_AMQP_CLIENT_ID: clientId,
+							mqmetric.ATTR_CHL_CONNNAME:       strings.TrimSpace(connName)}).Set(f)
+
+					}
+				}
+			}
 		}
 	}
 
@@ -670,6 +723,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				g.Collect(ch)
 			}
 		}
+	} else {
+		for _, attr := range e.amqpStatus.Attributes {
+			if !attr.Pseudo {
+				g := amqpStatusGaugeMap[attr.MetricName]
+				log.Debugf("Reporting AMQP gauge for %s", attr.MetricName)
+				g.Collect(ch)
+			}
+		}
 	}
 
 	collectStopTime := time.Now()
@@ -700,6 +761,9 @@ func allocateAllGauges() {
 	if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
 		allocateUsageStatusGauges()
 		log.Debugf("BP/PS  Gauges allocated")
+	} else {
+		allocateAMQPStatusGauges()
+		log.Debugf("AMQP  Gauges allocated")
 	}
 }
 
@@ -730,6 +794,15 @@ func allocateChannelStatusGauges() {
 	}
 }
 
+func allocateAMQPStatusGauges() {
+	// These attributes do not (currently) have an NLS translated description
+	mqmetric.ChannelAMQPInitAttributes()
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes {
+		description := attr.Description
+		g := newMqGaugeVecObj(attr.MetricName, description, "amqp")
+		amqpStatusGaugeMap[attr.MetricName] = g
+	}
+}
 func allocateQStatusGauges() {
 	mqmetric.QueueInitAttributes()
 	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes {
@@ -871,6 +944,9 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 	bpLabels := []string{"qmgr", "platform", objectType, "location", "pageclass"}
 	psLabels := []string{"qmgr", "platform", objectType, "bufferpool"}
 	clusterLabels := []string{"qmgr", "platform", "cluster", "qmtype"}
+	amqpLabels := []string{"qmgr", "platform", "description", "channel",
+		mqmetric.ATTR_CHL_AMQP_CLIENT_ID,
+		mqmetric.ATTR_CHL_CONNNAME}
 
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the stats generated
@@ -894,6 +970,8 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		labels = psLabels
 	case "cluster":
 		labels = clusterLabels
+	case "amqp":
+		labels = amqpLabels
 	default:
 		log.Errorf("Tried to create gauge for unknown object type %s", objectType)
 	}

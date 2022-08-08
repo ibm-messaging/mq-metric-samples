@@ -24,13 +24,14 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	log "github.com/sirupsen/logrus"
 )
 
 // Configuration attributes shared by all the monitor sample programs
@@ -50,6 +51,8 @@ type Config struct {
 	MonitoredQueuesFile        string
 	MonitoredChannels          string
 	MonitoredChannelsFile      string
+	MonitoredAMQPChannels      string
+	MonitoredAMQPChannelsFile  string
 	MonitoredTopics            string
 	MonitoredTopicsFile        string
 	MonitoredSubscriptions     string
@@ -162,8 +165,12 @@ func InitConfig(cm *Config) {
 	// Note that there are non-empty defaults for Topics and Subscriptions
 	AddParm(&cm.MonitoredQueues, "", CP_STR, "ibmmq.monitoredQueues", "objects", "queues", "Patterns of queues to monitor")
 	AddParm(&cm.MonitoredChannels, "", CP_STR, "ibmmq.monitoredChannels", "objects", "channels", "Patterns of channels to monitor")
+	AddParm(&cm.MonitoredAMQPChannels, "", CP_STR, "ibmmq.monitoredAMQPChannels", "objects", "amqpChannels", "Patterns of AMQP channels to monitor")
+
 	AddParm(&cm.MonitoredQueuesFile, "", CP_STR, "ibmmq.monitoredQueuesFile", "objects", "queuesFile", "File with patterns of queues to monitor")
 	AddParm(&cm.MonitoredChannelsFile, "", CP_STR, "ibmmq.monitoredChannelsFile", "objects", "channelsFile", "File with patterns of channels to monitor")
+	AddParm(&cm.MonitoredAMQPChannelsFile, "", CP_STR, "ibmmq.monitoredAMQPChannelsFile", "objects", "amqpChannelsFile", "File with patterns of AMQP channels to monitor")
+
 	AddParm(&cm.MonitoredTopics, "#", CP_STR, "ibmmq.monitoredTopics", "objects", "topics", "Patterns of topics to monitor")
 	AddParm(&cm.MonitoredSubscriptions, "*", CP_STR, "ibmmq.monitoredSubscriptions", "objects", "subscriptions", "Patterns of subscriptions to monitor")
 	AddParm(&cm.MonitoredTopicsFile, "", CP_STR, "ibmmq.monitoredTopicsFile", "objects", "topicsFile", "File with patterns of topics to monitor")
@@ -172,6 +179,7 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.CC.ShowInactiveChannels, false, CP_BOOL, "ibmmq.showInactiveChannels", "filters", "showInactiveChannels", "Show inactive channels (not just stopped ones)")
 
 	AddParm(&cm.CC.HideSvrConnJobname, false, CP_BOOL, "ibmmq.hideSvrConnJobname", "filters", "hideSvrConnJobname", "Don't create multiple instances of SVRCONN information")
+	AddParm(&cm.CC.HideAMQPClientId, false, CP_BOOL, "ibmmq.hideAMQPClientId", "filters", "hideAMQPClientId", "Don't create multiple instances of ClientID information")
 
 	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
 	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.qStatus", "global", "useObjectStatus", "Add metrics from the QSTATUS fields")
@@ -316,6 +324,15 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 			cm.MonitoredChannels, err = mqmetric.ReadPatterns(cm.MonitoredChannelsFile)
 			if err != nil {
 				err = fmt.Errorf("Failed to parse monitored channels file - %v", err)
+			}
+		}
+	}
+
+	if err == nil {
+		if cm.MonitoredAMQPChannelsFile != "" {
+			cm.MonitoredAMQPChannels, err = mqmetric.ReadPatterns(cm.MonitoredAMQPChannelsFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored AMQP channels file - %v", err)
 			}
 		}
 	}

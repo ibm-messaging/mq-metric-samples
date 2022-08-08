@@ -45,6 +45,8 @@ connection:
 # unique for any collector program connecting to this queue manager
     durableSubName: 
 
+# "channels" is for all the traditional MQ channels including SVRCONNs. "amqpChannels" shows
+# status for the AMQP objects
 objects:
     queues:
     - APP.*
@@ -56,6 +58,8 @@ objects:
     - TO.*
     topics:
     subscriptions:
+    amqpChannels:
+    - "*"
 
 # The "filters" section gives additional control over what is collected for various
 # object types. Some fields in here used to be in other sections, but those
@@ -66,6 +70,9 @@ filters:
     hideSvrConnJobname: false
     # Setting this to "true" shows all channels, not just those that have some kind of active status
     showInactiveChannels: false
+    # Similar to the hideSvrJobname attribute, but for AMQP channels. Reduces the number of unique
+    # elements when set to "true"
+    hideAMQPClientId: false
     # The number of subscriptions can be reduced by selecting a subset of types. Set to "NONE" to 
     # ignore all published queue metrics (but still keeping all queue manager metrics). The set
     # shown here gives best balance for number of subscriptions and useful metrics. If this is an empty 

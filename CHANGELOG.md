@@ -3,6 +3,8 @@ Newest updates are at the top of this file.
 
 ### xxx xx 2022
 * Add sample showing TLS configuration in container
+* Update vendored dependencies
+* Update Prometheus channel status sample dashboard to show channel instance counts
 
 ### Jul 07 2022 (v5.3.1)
 * Update to use v5.3.1 of mq-golang repository 

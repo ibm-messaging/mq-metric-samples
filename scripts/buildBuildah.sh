@@ -57,7 +57,7 @@ imgNameRuntime=$imgName-runtime
 imgNameBuild=$imgName-build
 
 # This is a convenient way to tidy up old images, espcially after experimenting
-if [ "$1" = "CLEAN" ]
+if $clean
 then
   buildah list -a -n | grep ubi-working-container | awk '{print $1}' | xargs buildah rm  2>/dev/null
   buildah list -a -n | grep ubi-minimal-working-container | awk '{print $1}' | xargs buildah rm  2>/dev/null
