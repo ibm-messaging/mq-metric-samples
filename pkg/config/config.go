@@ -24,13 +24,14 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	log "github.com/sirupsen/logrus"
 )
 
 // Configuration attributes shared by all the monitor sample programs
@@ -399,17 +400,17 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 }
 
 func PrintInfo(title string, stamp string, commit string, buildPlatform string) {
-	fmt.Println(title)
+	fmt.Fprintln(os.Stderr, title)
 	if stamp != "" {
-		fmt.Println("Build         : " + stamp)
+		fmt.Fprintln(os.Stderr, "Build         : "+stamp)
 	}
 	if commit != "" {
-		fmt.Println("Commit Level  : " + commit)
+		fmt.Fprintln(os.Stderr, "Commit Level  : "+commit)
 	}
 	if buildPlatform != "" {
-		fmt.Println("Build Platform: " + buildPlatform)
+		fmt.Fprintln(os.Stderr, "Build Platform: "+buildPlatform)
 	}
-	fmt.Println("")
+	fmt.Fprintln(os.Stderr, "")
 }
 
 func InitLog(cm Config) {
