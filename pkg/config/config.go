@@ -402,15 +402,15 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 func PrintInfo(title string, stamp string, commit string, buildPlatform string) {
 	fmt.Fprintln(os.Stderr, title)
 	if stamp != "" {
-		fmt.Fprintln(os.Stderr, "Build         : "+stamp)
+		fmt.Fprintf(os.Stderr, "Build         : %s\n", stamp)
 	}
 	if commit != "" {
-		fmt.Fprintln(os.Stderr, "Commit Level  : "+commit)
+		fmt.Fprintf(os.Stderr, "Commit Level  : %s\n", commit)
 	}
 	if buildPlatform != "" {
-		fmt.Fprintln(os.Stderr, "Build Platform: "+buildPlatform)
+		fmt.Fprintf(os.Stderr, "Build Platform: %s\n", buildPlatform)
 	}
-	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintf(os.Stderr, "\n")
 }
 
 func InitLog(cm Config) {
