@@ -91,6 +91,8 @@ func main() {
 		discoverConfig.MonitoredQueues.SubscriptionSelector = strings.ToUpper(config.cf.QueueSubscriptionSelector)
 		discoverConfig.MetaPrefix = config.cf.MetaPrefix
 		err = mqmetric.DiscoverAndSubscribe(discoverConfig)
+		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+		mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 	}
 
@@ -112,6 +114,8 @@ func main() {
 		mqmetric.QueueManagerInitAttributes()
 		mqmetric.UsageInitAttributes()
 		mqmetric.ClusterInitAttributes()
+		mqmetric.ChannelAMQPInitAttributes()
+
 	}
 
 	// Go into main loop for sending data to database

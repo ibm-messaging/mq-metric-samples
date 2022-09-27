@@ -326,7 +326,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				}
 			}
 
-			if err == nil && mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+			if err == nil && mqmetric.GetPlatform() != ibmmq.MQPL_ZOS && config.cf.MonitoredAMQPChannels != "" {
 				err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
 				if err != nil {
 					log.Errorf("Error collecting AMQP channel status: %v", err)
@@ -424,6 +424,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 									"queue":       key,
 									"usage":       usage,
 									"description": mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q),
+									"cluster":     mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME),
 									"platform":    platformString}).Set(f)
 							}
 						}
@@ -515,6 +516,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 							"platform":    platformString,
 							"usage":       usage,
 							"description": mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q),
+							"cluster":     mqmetric.GetQueueAttribute(qName, ibmmq.MQCA_CLUSTER_NAME),
 							"queue":       qName}).Set(f)
 					}
 				}
@@ -645,7 +647,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					connName := e.amqpStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
 					if value.IsInt64 && !attr.Pseudo {
 						g := amqpStatusGaugeMap[attr.MetricName]
-						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+						f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
 
 						g.With(prometheus.Labels{
 							"qmgr":                           strings.TrimSpace(config.cf.QMgrName),
@@ -883,7 +885,7 @@ with both the queue and qmgr name; for the qmgr-wide entries, we
 only need the single label.
 */
 func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
-	queueLabelNames := []string{"queue", "qmgr", "platform", "usage", "description"}
+	queueLabelNames := []string{"queue", "qmgr", "platform", "usage", "description", "cluster"}
 	qmgrLabelNames := []string{"qmgr", "platform"}
 
 	labels := qmgrLabelNames
@@ -951,7 +953,7 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
-	queueLabels := []string{"qmgr", "platform", objectType, "usage", "description"}
+	queueLabels := []string{"qmgr", "platform", objectType, "usage", "description", "cluster"}
 
 	switch objectType {
 	case "channel":

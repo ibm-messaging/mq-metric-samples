@@ -5,6 +5,8 @@ Newest updates are at the top of this file.
 * Add sample showing TLS configuration in container
 * Update vendored dependencies
 * Update Prometheus channel status sample dashboard to show channel instance counts
+* Add AMQP channel status reporting to all collectors
+* Add single CLUSTER tag to queues (#191) 
 
 ### Jul 07 2022 (v5.3.1)
 * Update to use v5.3.1 of mq-golang repository 

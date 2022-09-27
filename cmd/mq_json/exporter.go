@@ -164,12 +164,14 @@ func Collect() error {
 					log.Debugf("Collected all buffer pool/pageset status")
 				}
 			} else {
-				err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
-				if err != nil {
-					log.Errorf("Error collecting AMQP status: %v", err)
-					pollError = err
-				} else {
-					log.Debugf("Collected all AMQP status")
+				if config.cf.MonitoredAMQPChannels != "" {
+					err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
+					if err != nil {
+						log.Errorf("Error collecting AMQP status: %v", err)
+						pollError = err
+					} else {
+						log.Debugf("Collected all AMQP status")
+					}
 				}
 			}
 		}
@@ -230,6 +232,7 @@ func Collect() error {
 								pt.Tags["usage"] = usageString
 								pt.ObjectType = "queue"
 								pt.Tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
+								pt.Tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
 
 							}
 						}
@@ -315,6 +318,7 @@ func Collect() error {
 								pt.Tags["queue"] = qName
 								pt.Tags["usage"] = usageString
 								pt.Tags["description"] = mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q)
+								pt.Tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
 								pt.Tags["platform"] = platformString
 							}
 
@@ -498,7 +502,7 @@ func Collect() error {
 									pt.Tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
 									pt.Tags[mqmetric.ATTR_CHL_AMQP_CLIENT_ID] = clientId
 								}
-								pt.Metric[fixup(attr.MetricName)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
+								pt.Metric[fixup(attr.MetricName)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
 								ptMap[key1] = pt
 							}
 						}

@@ -130,6 +130,7 @@ func main() {
 		err = mqmetric.DiscoverAndSubscribe(discoverConfig)
 		// Also get the static attributes for any configured channels
 		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+		// And do it again for AMQP channels
 		mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 	}

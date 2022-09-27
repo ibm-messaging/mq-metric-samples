@@ -43,7 +43,7 @@ connection:
 # Setting this to a non-empty value switches the collectors to use durable subs. And then the
 # replyQueue and replyQueue2 values MUST refer to distinct QLOCALs. The value of this attribute must be
 # unique for any collector program connecting to this queue manager
-    durableSubName: 
+    durableSubPrefix: 
 
 # "channels" is for all the traditional MQ channels including SVRCONNs. "amqpChannels" shows
 # status for the AMQP objects
@@ -58,8 +58,8 @@ objects:
     - TO.*
     topics:
     subscriptions:
-    amqpChannels:
-    - "*"
+#    amqpChannels:
+#    - "*"
 
 # The "filters" section gives additional control over what is collected for various
 # object types. Some fields in here used to be in other sections, but those

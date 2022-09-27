@@ -86,6 +86,8 @@ func main() {
 		mqmetric.QueueManagerInitAttributes()
 		mqmetric.UsageInitAttributes()
 		mqmetric.ClusterInitAttributes()
+		mqmetric.ChannelAMQPInitAttributes()
+
 	}
 	// What metrics can the queue manager provide? Find out, and
 	// subscribe.
@@ -102,6 +104,8 @@ func main() {
 
 		// Also get the static attributes for any configured channels
 		mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+		mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
+
 	}
 
 	// Go into main loop for sending data to stdout
