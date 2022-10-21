@@ -6,7 +6,7 @@ storage mechanisms including Prometheus and InfluxDB.
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2021
+  Copyright (c) IBM Corporation 2016, 2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -89,8 +89,9 @@ type ObjInfo struct {
 	firstCollection bool // To indicate discard needed of first stat
 	Description     string
 	// These are used for queue information
-	AttrMaxDepth int64 // The queue attribute value. Not the max depth reported by RESET QSTATS
-	AttrUsage    int64 // Normal or XMITQ
+	AttrMaxDepth int64  // The queue attribute value. Not the max depth reported by RESET QSTATS
+	AttrUsage    int64  // Normal or XMITQ
+	Cluster      string // The name of a single cluster in which the queue is shared (CLUSTERNL not supported here)
 	// Some channel information
 	AttrMaxInst  int64
 	AttrMaxInstC int64
@@ -108,9 +109,11 @@ const maxBufSize = 100 * 1024 * 1024 // 100 MB
 
 const defaultMaxQDepth = 5000
 
-var qInfoMap map[string]*ObjInfo
-var chlInfoMap map[string]*ObjInfo
+var qInfoMap map[string]*ObjInfo   // These maps probably need to be moved into the ci.si structures but at least they
+var chlInfoMap map[string]*ObjInfo // are not public interface elements
 var amqpInfoMap map[string]*ObjInfo
+
+//var nhaInfoMap map[string]*ObjInfo
 
 var locale string
 
@@ -216,6 +219,10 @@ func DiscoverAndSubscribe(dc DiscoverConfig) error {
 	redo := false
 
 	qInfoMap = make(map[string]*ObjInfo)
+	//nhaInfoMap = make(map[string]*ObjInfo)
+	//nhaInfoElem := new(ObjInfo)
+	//nhaInfoElem.exists = true
+	//nhaInfoMap["#"] = nhaInfoElem
 
 	err := discoverAndSubscribe(dc, redo)
 
@@ -273,8 +280,8 @@ func RediscoverAttributes(objectType int32, objectPatterns string) error {
 	if err == nil {
 		err = fn(objectPatterns, infoMap)
 
-		for key, ci := range infoMap {
-			if !ci.exists {
+		for key, oi := range infoMap {
+			if !oi.exists {
 				delete(infoMap, key)
 			}
 		}
@@ -657,7 +664,12 @@ func discoverStats(dc DiscoverConfig) error {
 				for _, elem := range ty.Elements {
 					name := elem.MetricName
 					if strings.Contains(ty.ObjectTopic, "%s") {
-						name = "object_" + name
+						switch cl.Name {
+						//case "NHAREPLICA":
+						//	name = "nha_" + name
+						default:
+							name = "object_" + name
+						}
 					}
 					if _, ok := nameSet[name]; ok {
 						err = fmt.Errorf("Non-unique metric description '%s'", elem.MetricName)
@@ -991,7 +1003,10 @@ func createSubscriptions() error {
 			// For now, we are only dealing with queues and so can assume use of qInfoMap
 			if strings.Contains(ty.ObjectTopic, "%s") {
 				im := qInfoMap
-
+				//switch cl.Name {
+				//case "NHAREPLICA":
+				//	im = nhaInfoMap
+				//}
 				for key, _ := range im {
 					if len(key) == 0 {
 						continue

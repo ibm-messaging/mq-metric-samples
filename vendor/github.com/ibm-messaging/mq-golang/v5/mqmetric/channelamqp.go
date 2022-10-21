@@ -365,7 +365,7 @@ func parseAMQPChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	return key
 }
 
-// Issue the INQUIRE_CHANNEL call for wildcarded queue names and
+// Issue the INQUIRE_CHANNEL call for wildcarded channel names and
 // extract the required attributes
 func inquireAMQPChannelAttributes(objectPatternsList string, infoMap map[string]*ObjInfo) error {
 	var err error

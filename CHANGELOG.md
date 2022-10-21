@@ -1,12 +1,14 @@
 # Changelog
 Newest updates are at the top of this file.
 
-### xxx xx 2022
-* Add sample showing TLS configuration in container
-* Update vendored dependencies
+### Oct 18 2022 (v5.3.2)
+* Update to MQ 9.3.1
+* Update to use v5.3.2 of mq-golang repository
+* Update all vendored dependencies
+* Add sample script showing TLS configuration in container
 * Update Prometheus channel status sample dashboard to show channel instance counts
 * Add AMQP channel status reporting to all collectors
-* Add single CLUSTER tag to queues (#191) 
+* Add single CLUSTER tag to queues (ibm-messaging/mq-golang#191) 
 
 ### Jul 07 2022 (v5.3.1)
 * Update to use v5.3.1 of mq-golang repository 

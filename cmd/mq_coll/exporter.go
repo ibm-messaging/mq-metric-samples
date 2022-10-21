@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2021
+  Copyright (c) IBM Corporation 2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -195,13 +195,26 @@ func Collect() error {
 						for key, value := range elem.Values {
 							f := mqmetric.Normalise(elem, key, value)
 							tags = map[string]string{
-								"qmgr": config.cf.QMgrName,
+								"qmgr":     config.cf.QMgrName,
+								"platform": platformString,
 							}
 
 							series = "qmgr"
 							if key != mqmetric.QMgrMapKey {
 								series = "queue"
 								tags[series] = key
+								usage := ""
+								if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+									if usageAttr.ValueInt64 == 1 {
+										usage = "XMITQ"
+									} else {
+										usage = "NORMAL"
+									}
+								}
+
+								tags["usage"] = usage
+								tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
+								tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
 							}
 							printPoint(series, elem.MetricName, float32(f), tags)
 						}

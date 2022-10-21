@@ -1,7 +1,7 @@
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2021
+  Copyright (c) IBM Corporation 2016, 2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ const (
 var connectionMap = make(map[string]*connectionInfo)
 var connectionKey string
 
+const DUMMY_STRING = "-" // To provide a non-empty value for certain fields
 const DEFAULT_CONNECTION_KEY = "@defaultConnection"
 
 // This are used externally so we need to maintain them as public exports until

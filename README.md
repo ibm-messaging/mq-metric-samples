@@ -1,7 +1,7 @@
 # mq-metric-samples
 
-This repository contains a collection of IBM® MQ monitoring agents that utilize
-the [IBM® MQ golang metric packages](https://github.com/ibm-messaging/mq-golang)
+This repository contains a collection of IBM MQ monitoring agents that utilize
+the [IBM MQ golang metric packages](https://github.com/ibm-messaging/mq-golang)
 to provide programs that can be used with existing monitoring technologies
 such as Prometheus, AWS CloudWatch, etc. Statistics and status information
 can be collected from queue managers and made available in databases to enable
@@ -19,7 +19,7 @@ This package is provided as-is with no guarantees of support or updates.
 There are also no guarantees of compatibility with any future versions of the package;
 interfaces and functions are subject to change based on any feedback.
 
-These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.pu
+These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.
 Those packages are in the [mq-golang repository](https://github.com/ibm-messaging/mq-golang)
 and are also included in the `vendor` tree of this repository. They are referenced in the `go.mod`
 file if you wish to reload all of the dependencies by running `go mod vendor`.
@@ -30,49 +30,52 @@ file if you wish to reload all of the dependencies by running `go mod vendor`.
 
 You will require the following programs:
 
-* Go compiler. Building the InfluxDB collector requires Go 17 as the minimum compiler level. If you don't want 
-to build that particular collector then older levels can be used.
+* Go compiler - version 1.17 is the minimum defined here
+* C compiler
 
-To build the programs on Linux and MacOS, you may set an environment variable to permit some compile/link flags.
-This is due to security controls in the compiler.
 
-```
-export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
-```
+### MQ Client SDK
+The MQ Client SDK for C programs is required in order to compile and run Go programs. You may have this from an MQ Client installation image (eg rpm, dep formats for Linux, msi for Windows). 
+
+For Linux x64 and Windows systems, you may also choose to use the 
+MQ Redistributable Client package which is a simple zip/tar file that does not need
+any privileges to install:
+
+* Download [IBM MQ redistributable client](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist)
+* Unpack archive to fixed directory. E.g. `c:\IBM-MQC-Redist-Win64`  or `/opt/mqm`.
+
+See the README file in the mq-golang repository for more information about any environment variables that may
+be required to point at non-default directories for the MQ C SDK.
 
 ### Building a component
 
 * You need to have the MQ client libraries installed first.
-* Set up an environment for compiling Go programs
-```
-  export GOPATH=~/go (or wherever you want to put it)
-  export GOROOT=/usr/lib/golang  (or wherever you have installed it)
-  mkdir -p $GOPATH/src
-  cd $GOPATH/src
-```
-
-* Change directory to your go path. (`cd $GOPATH`). Although GOPATH is no longer needed in the module world,
-it's still a convenient variable when cloning and building the programs.
-* Use git to get a copy of this repository into a new directory in the workspace:
+* Create a directory where you want to work with the programs. 
+* Change to that directory.
+* Use git to get a copy of this repository into a new directory in the workspace. For example:
 
 ```
 git clone https://github.com/ibm-messaging/mq-metric-samples.git src/github.com/ibm-messaging/mq-metric-samples
 ```
 
-* Navigate to the mq-metric-samples root directory (`$GOPATH/src/github.com/ibm-messaging/mq-metric-samples`)
+* Navigate to the mq-metric-samples root directory (`./src/github.com/ibm-messaging/mq-metric-samples`)
 * All the prereq packages are already available in the vendor directory, but you can run `go mod vendor` to reload them
 
 * From this root directory of the repository you can then compile the code. For example,
 
 ```
-  cd $GOPATH/src/github.com/ibm-messaging/mq-metric-samples
+  cd ./src/github.com/ibm-messaging/mq-metric-samples
   export CGO_LDFLAGS_ALLOW='-Wl,-rpath.*'
-  go build -o $GOPATH/bin/mq_prometheus ./cmd/mq_prometheus/*.go
+  mkdir -p /tmp/go/bin
+  go build -mod=vendor -o /tmp/go/bin/mq_prometheus ./cmd/mq_prometheus/*.go
 ```
 
-At this point, you should have a compiled copy of the code in `$GOPATH/bin`. Each
+At this point, you should have a compiled copy of the code in `/tmp/go/bin`. Each
 monitor agent directory also has sample scripts, configuration files etc to help
 with getting the agent running in your specific environment.
+
+The `-mod=vendor` option is important so that the build process does not need to 
+download additional files from external repositories.
 
 ## Using a Docker container to build the programs
 You can use the `buildMonitors.sh` script in the `scripts` subdirectory to build a Docker container that
@@ -97,10 +100,10 @@ monitor must have a MAXDEPTH suitable for the expected amount of data. For publi
 estimated based on holding one minute's amount of publications; the number of monitored channels is also
 used as an estimate, although that does not need to be time-based as the data is requested directly by the
 monitor.
-* USEDLQ on the admin topic: The USEDLQ attribute on the topic object associated with the metrics publications (usually
-SYSTEM.ADMIN.TOPIC) determines what happens if the subscriber's queue is full. You might prefer to set this to
-NO to avoid filling the system DLQ if the collection program does not read the publications frequently enough.
+* USEDLQ on the admin topic: The USEDLQ attribute on the topic object associated with the metrics publications (usually `SYSTEM.ADMIN.TOPIC`) determines what happens if the subscriber's queue is full. You might prefer to set this to NO to avoid filling the system DLQ if the collection program does not read the publications frequently enough.
 
+### Local and client connections
+Connections to the queue manager can be made with either local or client bindings. Running the collector "alongside" the queue manager is usually preferred, with the collector configured to run as a service. Sample scripts in this repository show how to define an appropriate MQ SERVICE. Client connections can be made by specifying the channel and connName information in the basic configuration; in this mode, only plaintext communication is available (similar to the MQSERVER environment variable). For secure communication using TLS, then you must provide connection information via a CCDT. Use the `ccdtUrl` configuration option or environment variables to point at a CCDT that can be in either binary or JSON format. The `runMonitorTLS.sh` script gives a simple example of setting up a container to use TLS.
 
 ### Using durable subscriptions
 An alternative collection mechanism uses durable subscriptions for the queue metric data. This may avoid needing to increase
@@ -131,7 +134,7 @@ via flags, via environment variables, or in a YAML file described below.
 ### Wildcard Patterns for Queues
 The sets of queues to be monitored can be given either directly on the command line with the
 `-ibmmq.monitoredQueues` flag, put into a separate file which is also
-named on the command line, with the `-ibmmq.monitoredQueuesFile` flag, or in the YAML configuration.
+named on the command line, with the `-ibmmq.monitoredQueuesFile` flag, or in the equivalent YAML configuration.
 
 The parameter can include both positive and negative
 wildcards. For example `ibmmq.monitoredQueues=A*,!AB*"` will collect data on
@@ -151,8 +154,7 @@ The channels to be monitored are set on the command line, similarly to
 the queue patterns, with `-ibmmq.monitoredChannels` or `-ibmmq.monitoredChannelFile`.
 Unlike the queue monitoring, wildcards are handled automatically by the channel
 status API. So you do not need to restart this monitor in order to pick up newly-defined
-channels that match an existing pattern. Only positive wildcards are allowed here; you cannot
-explicitly exclude channels.
+channels that match an existing pattern. Only positive wildcards are allowed here; you cannot explicitly exclude channels.
 
 Another parameter is `pollInterval`. This determines how frequently the
 channel status is collected. You may want to have it collected at a different rate to
@@ -166,7 +168,7 @@ A short-lived channel that connects and then disconnects in between collection i
 will leave no trace in the status or metrics.
 
 #### Channel Metrics
-A few of the responses from the DISPLAY CHSTATUS command have been selected
+Some the responses from the DISPLAY CHSTATUS command have been selected
 as metrics. The key values returned include the status and number of messages processed.
 
 The message count for SVRCONN channels is the number of MQI calls made by the client program.
@@ -203,18 +205,16 @@ To also see the inactive channels, then set the showInactiveChannels
 configuration attribute to true.
 
 ### z/OS Support
-Because the DIS QSTATUS and DIS CHSTATUS commands can be used on z/OS, the monitors can now
-support showing some limited information from a z/OS queue manager. There is nothing special needed to configure it, beyond the client
+Because the DIS QSTATUS and DIS CHSTATUS commands can be used on z/OS, the monitors 
+support showing some information from a z/OS queue manager. There is nothing special needed to configure it, beyond the client
 connectivity that allows an application to connect to the z/OS system.
 
 The `-ibmmq.useStatus` (command line) or `useObjectStatus` (YAML) parameter must be set to `true` to use the DIS QSTATUS command.
 
 There is also support for using the RESET QSTATS command on z/OS. This needs to be explicitly enabled
 by setting the `-ibmmq.resetQStats` (command line) or `useResetQStats` (YAML) flag to true. While this option allows tracking of the number
-of messages put/got to a queue (which is otherwise unavailable from z/OS queue manager status queries), it
-should not be used if there are any other active monitoring solutions that are already using that command.
-Only one monitor program can reliably use RESET QSTATS on a particular queue manager, to avoid the information
-being split between them.
+of messages put/got to a queue (which is otherwise unavailable from z/OS queue manager status queries), it should not be used if there are any other active monitoring solutions that are already using that command.
+Only one monitor program can reliably use RESET QSTATS on a particular queue manager, to avoid the information being split between them.
 
 Statistics are available for pagesets and bufferpools, similar to the DISPLAY USAGE command.
 
@@ -224,8 +224,7 @@ same channel name. For example, multiple users of the same SVRCONN definition. O
 platforms, the JOBNAME attribute does that job; for z/OS, the channel start date/time is
 used in this package as a discriminator, and used as the `jobname` label in the metrics.
 That may cause the stats to be slightly wrong if two instances of the same channel
-are started simultaneously from the same remote address. The sample dashboard showing z/OS
-status includes counts of the unique channels seen over the monitoring period.
+are started simultaneously from the same remote address. The sample dashboard showing z/OS status includes counts of the unique channels seen over the monitoring period.
 
 ### Authentication
 Monitors can be configured to authenticate to the queue manager,
@@ -257,24 +256,18 @@ values in a single string. If an option is provided on both the command line and
 that takes precedence. Not all strings need to be surrounded by quote characters in the file, but some (eg "!SYSTEM*")
 seem to need it. The example files have used quotes where they have been found to be necessary.
 
-The field names are slightly different in the YAML file to try to make them a bit more consistent and
-structured. The command flags are not being changed to preserve compatibility with previous versions.
+The field names are slightly different in the YAML file to try to make them a bit more consistent and structured. The command flags are not being changed to preserve compatibility with previous versions.
 
-User passwords can be provided in the file, but it is not recommended that you do that. Instead provide the password
-either on the command line or piped via stdin to the program.
+User passwords can be provided in the file, but it is not recommended that you do that. Instead provide the password either on the command line or piped via stdin to the program.
 
 ## Environment variable configuration for all exporters
-As a further alternative for configuration, parameters can be set by environment variables. This may be more
-convenient when running collectors in a container as the variables may be easier to modify for each container than
-setting up different YAML files. The names of the variables follow the YAML naming pattern with an IBMMQ prefix, underscore
-separators, and in uppercase.
+As a further alternative for configuration, parameters can be set by environment variables. This may be more convenient when running collectors in a container as the variables may be easier to modify for each container than setting up different YAML files. The names of the variables follow the YAML naming pattern with an IBMMQ prefix, underscore separators, and in uppercase.
 
-For example, the queue manager name can be set with "IBMMQ_CONNECTION_QUEUEMANAGER"
+For example, the queue manager name can be set with `IBMMQ_CONNECTION_QUEUEMANAGER`.
 You can use the "-h" parameter to the collector to see the complete set of options.
 
 ### Precedence of configuration options
-The command line flags are highest precedence. Environment variables override settings in the YAML file, And the YAML
-override the hardcoded default values.
+The command line flags are highest precedence. Environment variables override settings in the YAML file, And the YAML overrides the hardcoded default values.
 
 ## More information
 Each of the sample monitor programs has its own README file describing any particular

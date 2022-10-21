@@ -71,8 +71,6 @@ const (
 	SQUASH_CHL_STATUS_STOPPED    = 0
 	SQUASH_CHL_STATUS_TRANSITION = 1
 	SQUASH_CHL_STATUS_RUNNING    = 2
-
-	DUMMY_STRING = "-" // To provide a non-empty value for certain fields
 )
 
 /*
@@ -438,20 +436,20 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 		jobName = DUMMY_STRING
 	}
 
-	if chlType == ibmmq.MQCHT_SVRCONN && ci.hideSvrConnJobname {
-		jobName = DUMMY_STRING
+	if chlType == ibmmq.MQCHT_SVRCONN {
+		if ci.hideSvrConnJobname {
+			jobName = DUMMY_STRING
+		} else if ci.si.platform == ibmmq.MQPL_ZOS {
+			// The jobName does not exist on z/OS so it cannot be used to distinguish
+			// unique instances of the same channel name. Instead, we try to fake it with
+			// the channel start timestamp. That may still be wrong if lots of channel
+			// instances start at the same time, but it's a lot better than combining the
+			// instances badly.
+			jobName = startDate + ":" + startTime
+		}
 	}
 
 	// Create a unique key for this channel instance
-	//
-	// The jobName does not exist on z/OS so it cannot be used to distinguish
-	// unique instances of the same channel name. Instead, we try to fake it with
-	// the channel start timestamp. That may still be wrong if lots of channel
-	// instances start at the same time, but it's a lot better than combining the
-	// instances badly.
-	if jobName == DUMMY_STRING && ci.si.platform == ibmmq.MQPL_ZOS {
-		jobName = startDate + ":" + startTime
-	}
 	key = chlName + "/" + connName + "/" + rqmName + "/" + jobName
 
 	// Look to see if we've already seen a Current channel status that matches
@@ -559,7 +557,7 @@ func ChannelNormalise(attr *StatusAttribute, v int64) float64 {
 	return f
 }
 
-// Issue the INQUIRE_CHANNEL call for wildcarded queue names and
+// Issue the INQUIRE_CHANNEL call for wildcarded channel names and
 // extract the required attributes
 func inquireChannelAttributes(objectPatternsList string, infoMap map[string]*ObjInfo) error {
 	var err error

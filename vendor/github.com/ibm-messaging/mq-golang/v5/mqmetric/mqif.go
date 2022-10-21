@@ -1,7 +1,7 @@
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2020
+  Copyright (c) IBM Corporation 2016, 2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 					evEnabled := v[ibmmq.MQIA_PERFORMANCE_EVENT].(int32)
 					if ci.useResetQStats && evEnabled == 0 {
 						errorString = "Requested use of RESET QSTATS but queue manager has PERFMEV(DISABLED)"
-						//err = fmt.Errorf(errorString) // Bypass the error for a while
+						err = fmt.Errorf(errorString)
 					}
 				} else {
 					if cc.UsePublications == true {
