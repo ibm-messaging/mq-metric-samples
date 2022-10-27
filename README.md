@@ -17,7 +17,8 @@ the `dspmqrtj` subdirectory for more information.
 
 This package is provided as-is with no guarantees of support or updates.
 There are also no guarantees of compatibility with any future versions of the package;
-interfaces and functions are subject to change based on any feedback.
+interfaces and functions are subject to change based on any feedback. You cannot use
+IBM formal support channels (Cases/PMRs) for assistance with material in this repository.
 
 These programs use a specific version of the `mqmetric` and `ibmmq` golang packages.
 Those packages are in the [mq-golang repository](https://github.com/ibm-messaging/mq-golang)
@@ -281,9 +282,10 @@ See [CHANGELOG](CHANGELOG.md) in this directory.
 
 For feedback and issues relating specifically to this package, please use the [GitHub issue tracker](https://github.com/ibm-messaging/mq-metric-samples/issues).
 
-Contributions to this package can be accepted under the terms of the IBM Contributor License
-Agreement, found in the [CLA file](CLA.md) of this repository. When submitting a pull request, you
-must include a statement stating you accept the terms in the CLA.
+Contributions to this package can be accepted under the terms of the Developer's Certificate
+of Origin, found in the [DCO file](DCO1.1.txt) of this repository. When
+submitting a pull request, you must include a statement stating you accept the terms
+in the DCO.
 
 ## Copyright
 
