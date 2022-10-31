@@ -1,3 +1,15 @@
+## 2.12.0 [2022-10-27]
+### Features
+- [#358](https://github.com/influxdata/influxdb-client-go/pull/358):
+    - Added possibility to set an application name, which will be part of the User-Agent HTTP header:
+        - Set using `Options.SetApplicationName`
+        - Warning message is written to log if an application name is not set 
+          - This may change to be logged as an error in a future release
+    - Added example how to fully override `User-Agent` header using `Doer` interface
+
+### Bug fixes
+- [#359](https://github.com/influxdata/influxdb-client-go/pull/359) `WriteAPIBlocking.Flush()` correctly returns nil error. 
+
 ## 2.11.0 [2022-09-29]
 ### Features
 - [#353](https://github.com/influxdata/influxdb-client-go/pull/353) Simplify generated code.
