@@ -73,7 +73,7 @@ ENV EXPORTER=${EXPORTER} \
 RUN mkdir -p /opt/bin \
     && chmod -R 777 /opt/bin \
     && mkdir -p /opt/mqm \
-    && chmod a+rx /opt/mqm \
+    && chmod 775 /opt/mqm \
     && mkdir -p /opt/config \
     && chmod a+rx /opt/config
 
