@@ -1,6 +1,15 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jan 10 2023 (v5.3.3)
+* Copy in metrics.txt summary of available metrics from mq-golang
+* JSON exporter - consistent objecttype for qmgr, merge published and 
+  polled metrics (#188)
+* JSON exporter - allow configuration (`recordmax`) for number of objects
+  printed in a single JSON record (also #188)
+* AWS exporter -correct interval processing (#192)
+* Simplified build/run in a single Dockerfile (#194)
+
 ### Oct 18 2022 (v5.3.2)
 * Update to MQ 9.3.1
 * Update to use v5.3.2 of mq-golang repository

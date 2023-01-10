@@ -41,6 +41,7 @@ var (
 	lastPoll           = time.Now()
 	lastQueueDiscovery = time.Now()
 	platformString     = ""
+	fixupString        = make(map[string]string)
 )
 
 const (
@@ -62,6 +63,8 @@ type jsonReportStruct struct {
 	CollectionTime collectionTimeStruct `json:"collectionTime"`
 	Points         []pointsStruct       `json:"points"`
 }
+
+var AllPoints []pointsStruct
 
 /*
 Collect is called by the main routine at regular intervals to provide current
@@ -210,7 +213,7 @@ func Collect() error {
 
 		// All of the metrics for a given set of tags are printed in a single
 		// JSON object.
-		ptMap := make(map[string]pointsStruct)
+		ptMapPub := make(map[string]pointsStruct)
 		var pt pointsStruct
 		var ok bool
 
@@ -218,15 +221,19 @@ func Collect() error {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
 					for key, value := range elem.Values {
-						if pt, ok = ptMap[key]; !ok {
+
+						//log.Debugf("Proccesing published metrics for key %s", key)
+						if pt, ok = ptMapPub[key]; !ok {
 							pt = pointsStruct{}
 							pt.Tags = make(map[string]string)
 							pt.Metric = make(map[string]float64)
 
 							pt.Tags["qmgr"] = config.cf.QMgrName
-							pt.ObjectType = "queueManager"
+							pt.ObjectType = "qmgr"
 							pt.Tags["platform"] = platformString
-							if key != mqmetric.QMgrMapKey {
+							if key == mqmetric.QMgrMapKey {
+								pt.Tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+							} else {
 								usageString := getUsageString(key)
 								pt.Tags["queue"] = key
 								pt.Tags["usage"] = usageString
@@ -238,7 +245,7 @@ func Collect() error {
 						}
 
 						pt.Metric[fixup(elem.MetricName)] = mqmetric.Normalise(elem, key, value)
-						ptMap[key] = pt
+						ptMapPub[key] = pt
 					}
 				}
 			}
@@ -246,16 +253,10 @@ func Collect() error {
 
 		// Add a metric that shows how many publications were processed by this collection
 		key := mqmetric.QMgrMapKey
-		if pt, ok = ptMap[key]; ok {
-			pt = ptMap[key]
+		if pt, ok = ptMapPub[key]; ok {
+			pt = ptMapPub[key]
 			pt.Metric[fixup("exporter_publications")] = float64(mqmetric.GetProcessPublicationCount())
-			ptMap[key] = pt
-		}
-
-		// After all the points have been created, add them to the JSON structure
-		// for printing out
-		for _, pt := range ptMap {
-			j.Points = append(j.Points, pt)
+			ptMapPub[key] = pt
 		}
 
 		// Next we extract the info for channel status. Several of the attributes
@@ -309,17 +310,19 @@ func Collect() error {
 
 							key1 := "queue/" + qName
 
-							if pt, ok = ptMap[key1]; !ok {
-								pt = pointsStruct{}
-								pt.ObjectType = "queue"
-								pt.Metric = make(map[string]float64)
-								pt.Tags = make(map[string]string)
-								pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
-								pt.Tags["queue"] = qName
-								pt.Tags["usage"] = usageString
-								pt.Tags["description"] = mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q)
-								pt.Tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
-								pt.Tags["platform"] = platformString
+							if pt, ok = ptMapPub[qName]; !ok {
+								if pt, ok = ptMap[key1]; !ok {
+									pt = pointsStruct{}
+									pt.ObjectType = "queue"
+									pt.Metric = make(map[string]float64)
+									pt.Tags = make(map[string]string)
+									pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
+									pt.Tags["queue"] = qName
+									pt.Tags["usage"] = usageString
+									pt.Tags["description"] = mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q)
+									pt.Tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+									pt.Tags["platform"] = platformString
+								}
 							}
 
 							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueNormalise(attr, value.ValueInt64)
@@ -359,15 +362,17 @@ func Collect() error {
 
 							key1 := "qmgr/" + qMgrName
 
-							if pt, ok = ptMap[key1]; !ok {
-								pt = pointsStruct{}
-								pt.ObjectType = "qmgr"
-								pt.Metric = make(map[string]float64)
-								pt.Tags = make(map[string]string)
-								pt.Tags["qmgr"] = strings.TrimSpace(qMgrName)
-								pt.Tags["platform"] = platformString
+							if pt, ok = ptMapPub[mqmetric.QMgrMapKey]; !ok {
+								if pt, ok = ptMap[key1]; !ok {
+									pt = pointsStruct{}
+									pt.ObjectType = "qmgr"
+									pt.Metric = make(map[string]float64)
+									pt.Tags = make(map[string]string)
+									pt.Tags["qmgr"] = strings.TrimSpace(qMgrName)
+									pt.Tags["platform"] = platformString
+									pt.Tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+								}
 							}
-
 							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
 							ptMap[key1] = pt
 						}
@@ -511,17 +516,28 @@ func Collect() error {
 
 			}
 
+			// Make sure we start with an empty array, and then add the xxSTATUS metrics
+			AllPoints = nil
 			for _, pt := range ptMap {
-				j.Points = append(j.Points, pt)
+				AllPoints = append(AllPoints, pt)
 			}
 		}
 
-		if config.oneline {
-			b, _ := json.Marshal(j)
-			fmt.Printf("%s\n", b)
-		} else {
-			b, _ := json.MarshalIndent(j, "", "  ")
-			fmt.Printf("%s\n", b)
+		// Now add the published metrics, which might have some of the xxSTATUS metrics merged
+		for _, pt := range ptMapPub {
+			AllPoints = append(AllPoints, pt)
+		}
+
+		// Finally split the records, if requested, so that each block is not TOO long
+		for _, chunk := range chunk(AllPoints, config.recordmax) {
+			j.Points = chunk
+			if config.oneline {
+				b, _ := json.Marshal(j)
+				fmt.Printf("%s\n", b)
+			} else {
+				b, _ := json.MarshalIndent(j, "", "  ")
+				fmt.Printf("%s\n", b)
+			}
 		}
 
 	}
@@ -551,6 +567,12 @@ func getUsageString(key string) string {
 func fixup(s1 string) string {
 	// Another reformatting of the metric name - this one converts
 	// something like queue_avoided_bytes into queueAvoidedBytes
+
+	// The new name is cached, so next time round we can find it immediately
+	if s2, ok := fixupString[s1]; ok {
+		return s2
+	}
+
 	s2 := ""
 	c := ""
 	nextCaseUpper := false
@@ -569,5 +591,25 @@ func fixup(s1 string) string {
 		}
 
 	}
+
+	fixupString[s1] = s2
 	return s2
+}
+
+// Split an array/slice into several chunks so that not all points are
+// dumped in the same JSON array.
+func chunk(slice []pointsStruct, chunkSize int) [][]pointsStruct {
+	var chunks [][]pointsStruct
+
+	if chunkSize <= 0 { // Allow the size to be unlimited: 0 & -1 both achieve that
+		chunkSize = len(slice)
+	}
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+		if end > len(slice) {
+			end = len(slice)
+		}
+		chunks = append(chunks, slice[i:end])
+	}
+	return chunks
 }

@@ -83,17 +83,14 @@ RUN apt-get update \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install MQ client 
+# Create MQ client directories
 WORKDIR /opt/mqm
-RUN curl -LO "$RDURL/$VRMF-$RDTAR" \
-    && tar -zxf ./*.tar.gz \
-    && rm -f ./*.tar.gz \
-    && bin/genmqpkg.sh -b /opt/mqm \
-    && mkdir -p /IBM/MQ/data/errors \
+RUN mkdir -p /IBM/MQ/data/errors \
     && mkdir -p /.mqm \
     && chmod -R 777 /IBM \
     && chmod -R 777 /.mqm
 
-COPY --chmod=777 --from=builder /go/bin/${EXPORTER} /opt/bin/${EXPORTER}
+COPY --chmod=555 --from=builder /go/bin/${EXPORTER} /opt/bin/${EXPORTER}
+COPY             --from=builder /opt/mqm/ /opt/mqm/
 
 CMD ["sh", "-c", "/opt/bin/${EXPORTER}"]

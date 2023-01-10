@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016,2021
+  Copyright (c) IBM Corporation 2016,2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -245,23 +245,25 @@ func Collect() error {
 							}
 
 							series = "qmgr"
-							if key != mqmetric.QMgrMapKey {
+							if key == mqmetric.QMgrMapKey {
+								tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+							} else {
 								tags["queue"] = key
 								series = "queue"
-							}
 
-							usage := ""
-							if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
-								if usageAttr.ValueInt64 == 1 {
-									usage = "XMITQ"
-								} else {
-									usage = "NORMAL"
+								usage := ""
+								if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+									if usageAttr.ValueInt64 == 1 {
+										usage = "XMITQ"
+									} else {
+										usage = "NORMAL"
+									}
 								}
-							}
 
-							tags["usage"] = usage
-							tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
-							tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+								tags["usage"] = usage
+								tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
+								tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+							}
 
 							pt, _ := newPoint(series+"."+elem.MetricName, t, float64(f), tags)
 							bp.addPoint(pt)
@@ -451,8 +453,9 @@ func Collect() error {
 						qMgrName := strings.TrimSpace(config.cf.QMgrName)
 
 						tags := map[string]string{
-							"qmgr":     qMgrName,
-							"platform": platformString,
+							"qmgr":        qMgrName,
+							"platform":    platformString,
+							"description": mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR),
 						}
 
 						f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)

@@ -96,9 +96,17 @@ jq -c '.collectionTime.timeStamp as $t | .points[] |
      {"time":$t, "chl":.tags.channel, "msg":.metrics.messages}'
 ```
 
-The configuration option `oneline`can be used to print a complete JSON record as a single
+### Collector configuration options
+The collector-specific options can be seen in `config.collector.yaml` in this directory.
+
+* The `oneline` option can be used to print a complete JSON record as a single
 line instead of pretty-printed across mutiple lines. That might be helpful for some tools that
 ingest JSON and prefer to have a single line inputs.
+
+* The `recordmax` option declares how many objects are printed in a single array at each interval. If
+more objects have been recorded, then additional arrays are printed. This may help if processing tools
+have limits on the total record size that can be handled for a single JSON object. Setting the value to `0`
+means there is no effective limit.
 
 ## Metrics
 Once the monitor program has been started, you will see metrics being available.

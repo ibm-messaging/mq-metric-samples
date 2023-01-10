@@ -1,5 +1,10 @@
 
 
 # This is the collector-specific piece of the configuration
+# The defaults here record the output on single lines, with at most 100 objects reported in 
+# each JSON object. Additional objects will be reported in a separate JSON object with the same 
+# timestamp.
 json:
   interval: 10s
+  oneline: true
+  recordmax: 100

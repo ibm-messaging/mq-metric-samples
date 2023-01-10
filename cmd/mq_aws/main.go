@@ -49,7 +49,7 @@ func main() {
 
 	if err == nil {
 		interval := config.ci.Interval
-		d, err := time.ParseDuration(interval)
+		d, err = time.ParseDuration(interval)
 		if err != nil || d.Seconds() <= 1 {
 			log.Errorln("Invalid value or too short for interval parameter: ", err)
 			os.Exit(1)

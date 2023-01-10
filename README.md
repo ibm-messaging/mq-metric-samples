@@ -48,7 +48,7 @@ any privileges to install:
 See the README file in the mq-golang repository for more information about any environment variables that may
 be required to point at non-default directories for the MQ C SDK.
 
-### Building a component
+### Building a component on your system directly
 
 * You need to have the MQ client libraries installed first.
 * Create a directory where you want to work with the programs. 
@@ -78,14 +78,24 @@ with getting the agent running in your specific environment.
 The `-mod=vendor` option is important so that the build process does not need to 
 download additional files from external repositories.
 
-## Using a Docker container to build the programs
-You can use the `buildMonitors.sh` script in the `scripts` subdirectory to build a Docker container that
-in turn will build all the binary programs and copy them to a local directory. That script also
-sets some extra version-related flags that will be shown when the program starts. The container will
-automatically download and install the MQ client runtime files needed for compilation.
+## Using containers to build the programs
+The `Dockerfile` in the root directory gives a simple way to both build and run a collector program through
+containers. You still need to provide the configuration file at runtime, perhaps as a mounted volume. For example:
 
-## Building on Windows
-There is a `buildMonitors.bat` file that may help with building on Windows. It assumes you have
+```
+  docker build -t mqprom:1.0 .
+  docker run   -v <directory>/mq_prometheus.yaml:/opt/config/mq_prometheus.yaml mqprom:1.0
+```  
+
+As a more flexible example, you can use the `buildMonitors.sh` script in the `scripts` subdirectory to 
+build a Docker container that in turn will build all the binary programs and copy them to a local directory. 
+That script also sets some extra version-related flags that will be shown when the program starts. The container will
+automatically download and install the MQ client runtime files needed for compilation. This might be a preferred approach when you want to run a collector program alongside 
+a queue manager (perhaps as an MQ SERVICE) and you need to copy the binaries to the
+target system.
+
+## Building to run on Windows
+There is a `buildMonitors.bat` file to help with building on Windows. It assumes you have
 the [tdm-gcc-64](https://jmeubank.github.io/tdm-gcc/download/) 64-bit compiler suite installed. It
 builds all the collectors and corresponding YAML configuration files into %GOPATH%/bin
 
@@ -111,7 +121,7 @@ An alternative collection mechanism uses durable subscriptions for the queue met
 the MAXHANDS attribute on a queue manager. (Queue manager-level metrics are still collected using non-durable subscriptions.)
 
 To set it up, you must provide suitable configuration options. In the
-YAML configuration, these are the attributes (command line or environment variable equivalents exist):
+YAML configuration, these are the attributes (command line or environment variable equivalents also exist):
 - `replyQueue` must refer to a local queue (not a model queue)
 - `replyQueue2` must also be set, referring to a different local queue
 - `durableSubPrefix` is a string that is unique across any collectors that might be connected to this queue manager
@@ -237,7 +247,7 @@ That allows it to be piped from an external stash file or some other
 mechanism. Using the command line flags for controlling passwords is not
 recommended for security-sensitive environments.
 
-Where authentication is needed for access to the database, passwords for those can
+Where authentication is needed for access to a database, passwords for those can
 also be passed via stdin.
 
 ## YAML configuration for all exporters
@@ -272,7 +282,8 @@ The command line flags are highest precedence. Environment variables override se
 
 ## More information
 Each of the sample monitor programs has its own README file describing any particular
-considerations.
+considerations. The metrics.txt file in this directory has a summary of the available
+metrics for each object type.
 
 ## History
 
@@ -289,4 +300,4 @@ in the DCO.
 
 ## Copyright
 
-© Copyright IBM Corporation 2016, 2022
+© Copyright IBM Corporation 2016, 2023

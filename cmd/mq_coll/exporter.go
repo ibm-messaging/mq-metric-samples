@@ -200,7 +200,10 @@ func Collect() error {
 							}
 
 							series = "qmgr"
-							if key != mqmetric.QMgrMapKey {
+							if key == mqmetric.QMgrMapKey {
+								tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+
+							} else {
 								series = "queue"
 								tags[series] = key
 								usage := ""
@@ -365,8 +368,9 @@ func Collect() error {
 					qMgrName := strings.TrimSpace(config.cf.QMgrName)
 
 					tags := map[string]string{
-						"qmgr":     qMgrName,
-						"platform": platformString,
+						"qmgr":        qMgrName,
+						"platform":    platformString,
+						"description": mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR),
 					}
 
 					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)

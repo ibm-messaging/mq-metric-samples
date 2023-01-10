@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2021
+  Copyright (c) IBM Corporation 2016, 2022
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -170,9 +170,12 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		if g, ok := qMgrStatusGaugeMap[mqmetric.ATTR_QMGR_STATUS]; ok {
 			// There's no MQQMSTA_STOPPED value defined .All the regular qmgr status
 			// constants start from 1. So we use "0" to indicate qmgr not available/stopped.
+			// This must have the same set of tags as other qmgr-level metrics.
+			desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
 			g.With(prometheus.Labels{
-				"qmgr":     strings.TrimSpace(config.cf.QMgrName),
-				"platform": platformString}).Set(0.0)
+				"qmgr":        strings.TrimSpace(config.cf.QMgrName),
+				"description": desc,
+				"platform":    platformString}).Set(0.0)
 			g.Collect(ch)
 		}
 		return
@@ -405,8 +408,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						f := mqmetric.Normalise(elem, key, value)
 						g := gaugeMap[makeKey(elem)]
 						if key == mqmetric.QMgrMapKey {
+							desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+
 							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
-								"platform": platformString}).Set(f)
+								"platform":    platformString,
+								"description": desc}).Set(f)
 						} else {
 							usage := ""
 							if usageAttr, ok := e.qStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
@@ -567,10 +573,12 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				if value.IsInt64 && !attr.Pseudo {
 					g := qMgrStatusGaugeMap[attr.MetricName]
 					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+					desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
 
 					g.With(prometheus.Labels{
-						"qmgr":     strings.TrimSpace(config.cf.QMgrName),
-						"platform": platformString}).Set(f)
+						"qmgr":        strings.TrimSpace(config.cf.QMgrName),
+						"description": desc,
+						"platform":    platformString}).Set(f)
 				}
 			}
 		}
@@ -880,13 +888,14 @@ func makeKey(elem *mqmetric.MonElement) string {
 
 /*
 newMqGaugeVec returns the structure which will contain the
-values and suitable labels. For queues we tag each entry
-with both the queue and qmgr name; for the qmgr-wide entries, we
-only need the single label.
+values and suitable labels. These tags have to all be used
+when the metrics are collected by Prometheus.
 */
 func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 	queueLabelNames := []string{"queue", "qmgr", "platform", "usage", "description", "cluster"}
-	qmgrLabelNames := []string{"qmgr", "platform"}
+	// If the qmgr tags change, then check the special metric indicating qmgr unavailable as that's
+	// not part of the regular collection blocks.
+	qmgrLabelNames := []string{"qmgr", "platform", "description"}
 
 	labels := qmgrLabelNames
 	prefix := "qmgr_"
@@ -938,7 +947,9 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		mqmetric.ATTR_CHL_CONNNAME,
 		mqmetric.ATTR_CHL_JOBNAME}
 
-	qmgrLabels := []string{"qmgr", "platform"}
+	// These labels have to be the same set as those used by the published
+	// resources.
+	qmgrLabels := []string{"qmgr", "platform", "description"}
 
 	// With topic status, need to know if type is "pub" or "sub"
 	topicLabels := []string{"qmgr", "platform", objectType, "type"}

@@ -23,14 +23,16 @@ import (
 )
 
 type mqTTYConfig struct {
-	cf       cf.Config
-	interval string
-	oneline  bool
+	cf        cf.Config
+	interval  string
+	oneline   bool
+	recordmax int
 }
 
 type ConfigYJson struct {
-	Interval string
-	OneLine  bool
+	Interval  string
+	OneLine   bool `yaml:"oneline"`
+	RecordMax int  `yaml:"recordmax"`
 }
 
 type mqExporterConfigYaml struct {
@@ -54,6 +56,7 @@ func initConfig() error {
 
 	cf.AddParm(&config.interval, "10s", cf.CP_STR, "ibmmq.interval", "json", "interval", "How long between each collection")
 	cf.AddParm(&config.oneline, false, cf.CP_BOOL, "ibmmq.oneline", "json", "oneline", "JSON output on a single line")
+	cf.AddParm(&config.recordmax, 100, cf.CP_INT, "ibmmq.recordmax", "json", "recordmax", "Max records in a single JSON array")
 
 	err = cf.ParseParms()
 
@@ -64,6 +67,7 @@ func initConfig() error {
 				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.interval = cf.CopyParmIfNotSetStr("json", "interval", cfy.JSON.Interval)
 				config.oneline = cf.CopyParmIfNotSetBool("json", "oneline", cfy.JSON.OneLine)
+				config.recordmax = cf.CopyParmIfNotSetInt("json", "recordmax", cfy.JSON.RecordMax)
 			}
 		}
 	}
