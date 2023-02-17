@@ -131,6 +131,7 @@ func main() {
 					discoverConfig.MetaPrefix = config.cf.MetaPrefix
 					err = mqmetric.DiscoverAndSubscribe(discoverConfig)
 					mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+					log.Debugf("Returned from RediscoverAttributes with error %v", err)
 				}
 
 				if err == nil {

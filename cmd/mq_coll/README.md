@@ -55,7 +55,7 @@ The example Grafana dashboard shows how queries can be constructed to extract da
 about specific queues or the queue manager.
 
 More information on the metrics collected through the publish/subscribe
-interface can be found in the [MQ KnowledgeCenter](https://www.ibm.com/support/knowledgecenter/SSFKSJ_latest/com.ibm.mq.mon.doc/mo00013_.htm)
+interface can be found in the [MQ KnowledgeCenter](https://www.ibm.com/docs/en/ibm-mq/latest?topic=trace-metrics-published-system-topics)
 with further description in [an MQDev blog entry](https://community.ibm.com/community/user/integration/viewdocument/statistics-published-to-the-system?CommunityKey=183ec850-4947-49c8-9a2e-8e7c7fc46c64&tab=librarydocuments)
 
 The metrics stored in the database are named after the

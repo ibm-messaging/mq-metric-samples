@@ -233,6 +233,14 @@ func Collect() error {
 							pt.Tags["platform"] = platformString
 							if key == mqmetric.QMgrMapKey {
 								pt.Tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+								hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+								if hostname != mqmetric.DUMMY_STRING {
+									pt.Tags["hostname"] = hostname
+								}
+							} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
+								pt.Tags["nhainstance"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
+								pt.ObjectType = "nha"
+
 							} else {
 								usageString := getUsageString(key)
 								pt.Tags["queue"] = key
@@ -259,11 +267,11 @@ func Collect() error {
 			ptMapPub[key] = pt
 		}
 
-		// Next we extract the info for channel status. Several of the attributes
-		// are used to build the tags that uniquely identify a channel instance.
+		// Next we extract the info for object status.
 		if pollStatus {
 			ptMap := make(map[string]pointsStruct)
 
+			// Several of the attributes are used to build the tags that uniquely identify a channel instance.
 			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes {
 				for key, value := range attr.Values {
 					if value.IsInt64 {
@@ -371,6 +379,10 @@ func Collect() error {
 									pt.Tags["qmgr"] = strings.TrimSpace(qMgrName)
 									pt.Tags["platform"] = platformString
 									pt.Tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+									hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+									if hostname != mqmetric.DUMMY_STRING {
+										pt.Tags["hostname"] = hostname
+									}
 								}
 							}
 							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)

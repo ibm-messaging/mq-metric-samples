@@ -1,7 +1,7 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/ibm-messaging/mq-golang/v5 v5.3.3 h1:hm8qmEsRCN0BZHkaHBgl7ju1o0HuQMZD0JzwU7C/Mk0=
-github.com/ibm-messaging/mq-golang/v5 v5.3.3/go.mod h1:NELV8CYOIIH1QmY6pPvulRKjwuih9YAIL9rg8+UNzNw=
+github.com/ibm-messaging/mq-golang/v5 v5.4.0 h1:XukBPK8Kion57MZS459z84EAOaJYkdWXH/J+HcRmaN8=
+github.com/ibm-messaging/mq-golang/v5 v5.4.0/go.mod h1:NELV8CYOIIH1QmY6pPvulRKjwuih9YAIL9rg8+UNzNw=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=

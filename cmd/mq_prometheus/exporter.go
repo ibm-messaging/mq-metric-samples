@@ -172,10 +172,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			// constants start from 1. So we use "0" to indicate qmgr not available/stopped.
 			// This must have the same set of tags as other qmgr-level metrics.
 			desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
-			g.With(prometheus.Labels{
+			labels := prometheus.Labels{
 				"qmgr":        strings.TrimSpace(config.cf.QMgrName),
 				"description": desc,
-				"platform":    platformString}).Set(0.0)
+				"platform":    platformString}
+			if supportsHostnameLabel() {
+				labels["hostname"] = mqmetric.DUMMY_STRING
+			}
+			g.With(labels).Set(0.0)
 			g.Collect(ch)
 		}
 		return
@@ -344,8 +348,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
-	// TODO: Clean this up a bit
-	// Look for errors that might be fatal or which might
+	// Possible enhancements: Be more discriminatory on errors that might
 	// deserve a reconnection retry or which might be fatal
 	if err != nil {
 		log.Debugf("Exporter Error is %+v", err)
@@ -410,10 +413,20 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						if key == mqmetric.QMgrMapKey {
 							desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
 
-							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
+							labels := prometheus.Labels{"qmgr": config.cf.QMgrName,
 								"platform":    platformString,
-								"description": desc}).Set(f)
-						} else {
+								"description": desc}
+							if supportsHostnameLabel() {
+								labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+							}
+							g.With(labels).Set(f)
+						} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
+							instanceName := strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
+							//log.Debugf("Adding NativeHA metric %s for %s", elem.MetricName, instanceName)
+							g.With(prometheus.Labels{"qmgr": config.cf.QMgrName,
+								"nhainstance": instanceName,
+								"platform":    platformString}).Set(f)
+						} else { // It must be a queue
 							usage := ""
 							if usageAttr, ok := e.qStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
 								if usageAttr.ValueInt64 == int64(ibmmq.MQUS_TRANSMISSION) {
@@ -433,6 +446,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 									"cluster":     mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME),
 									"platform":    platformString}).Set(f)
 							}
+
 						}
 					}
 				}
@@ -457,12 +471,13 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			[]string{"qmgr", "platform"},
 			nil)
 	}
-	// Tags must be in same order as created in the Description
+	// Tags must be in same order as created in the Description. But we don't need to have exactly the same tags
+	// as all the other qmgr-level metrics
 	ch <- prometheus.MustNewConstMetric(pubCountDesc, prometheus.GaugeValue, float64(mqmetric.GetProcessPublicationCount()), config.cf.QMgrName, platformString)
 
-	// Next we extract the info for channel status. Several of the attributes
-	// are used to build the tags that uniquely identify a channel instance
+	// Next we extract the info for the object status metrics.
 	if pollStatus {
+		//Several of the attributes are used to build the tags that uniquely identify a channel instance
 		for _, attr := range e.chlStatus.Attributes {
 			for key, value := range attr.Values {
 				if value.IsInt64 && !attr.Pseudo {
@@ -516,6 +531,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 					// Don't submit metrics for queues where we've not done a full attribute discovery. Typically the first
 					// collection period after a rediscover/resubscribe.
+					// Labels here must be the same as the queue labels in the published metrics collected and reported above
 					if usage != "" {
 						g.With(prometheus.Labels{
 							"qmgr":        strings.TrimSpace(config.cf.QMgrName),
@@ -575,10 +591,15 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
 					desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
 
-					g.With(prometheus.Labels{
+					// Labels here must be the same as the qmgr labels in the published metrics collected and reported above
+					labels := prometheus.Labels{
 						"qmgr":        strings.TrimSpace(config.cf.QMgrName),
 						"description": desc,
-						"platform":    platformString}).Set(f)
+						"platform":    platformString}
+					if supportsHostnameLabel() {
+						labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+					}
+					g.With(labels).Set(f)
 				}
 			}
 		}
@@ -677,7 +698,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, attr := range e.chlStatus.Attributes {
 		if !attr.Pseudo {
 			g := channelStatusGaugeMap[attr.MetricName]
-			log.Debugf("Reporting chanl gauge for %s", attr.MetricName)
+			log.Debugf("Reporting chl   gauge for %s", attr.MetricName)
 			g.Collect(ch)
 		}
 	}
@@ -698,7 +719,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, attr := range e.subStatus.Attributes {
 		if !attr.Pseudo {
 			g := subStatusGaugeMap[attr.MetricName]
-			log.Debugf("Reporting subscription gauge for %s", attr.MetricName)
+			log.Debugf("Reporting subs  gauge for %s", attr.MetricName)
 			g.Collect(ch)
 		}
 	}
@@ -805,7 +826,6 @@ func allocateChannelStatusGauges() {
 }
 
 func allocateAMQPStatusGauges() {
-	// These attributes do not (currently) have an NLS translated description
 	mqmetric.ChannelAMQPInitAttributes()
 	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes {
 		description := attr.Description
@@ -893,16 +913,26 @@ when the metrics are collected by Prometheus.
 */
 func newMqGaugeVec(elem *mqmetric.MonElement) *prometheus.GaugeVec {
 	queueLabelNames := []string{"queue", "qmgr", "platform", "usage", "description", "cluster"}
+	nhaLabelNames := []string{"qmgr", "platform", "nhainstance"}
 	// If the qmgr tags change, then check the special metric indicating qmgr unavailable as that's
 	// not part of the regular collection blocks.
+	// "Hostname" was added to DIS QMSTATUS on Distributed platforms at version 9.3.2
 	qmgrLabelNames := []string{"qmgr", "platform", "description"}
-
+	if supportsHostnameLabel() {
+		qmgrLabelNames = append(qmgrLabelNames, "hostname")
+	}
 	labels := qmgrLabelNames
 	prefix := "qmgr_"
 
-	if strings.Contains(elem.Parent.ObjectTopic, "%s") {
-		labels = queueLabelNames
-		prefix = "queue_"
+	ot := elem.Parent.ObjectTopic
+	if strings.Contains(ot, "%s") {
+		if strings.Contains(ot, "/NHAREPLICA/") {
+			labels = nhaLabelNames
+			prefix = "nha_"
+		} else {
+			labels = queueLabelNames
+			prefix = "queue_"
+		}
 	}
 
 	// After the change that makes the prefix "queue" to indicate the object type (instead of
@@ -950,7 +980,9 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 	// These labels have to be the same set as those used by the published
 	// resources.
 	qmgrLabels := []string{"qmgr", "platform", "description"}
-
+	if supportsHostnameLabel() {
+		qmgrLabels = append(qmgrLabels, "hostname")
+	}
 	// With topic status, need to know if type is "pub" or "sub"
 	topicLabels := []string{"qmgr", "platform", objectType, "type"}
 	subLabels := []string{"qmgr", "platform", objectType, "subid", "topic", "type"}
@@ -999,4 +1031,11 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 
 	log.Debugf("Created gauge for '%s%s' ", prefix, name)
 	return gaugeVec
+}
+
+func supportsHostnameLabel() bool {
+	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS && mqmetric.GetCommandLevel() >= ibmmq.MQCMDL_LEVEL_932 {
+		return true
+	}
+	return false
 }

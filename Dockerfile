@@ -61,7 +61,7 @@ ARG EXPORTER
 ENV EXPORTER=${EXPORTER} \
     RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
     RDTAR="IBM-MQC-Redist-LinuxX64.tar.gz" \
-    VRMF=9.3.1.0 \
+    VRMF=9.3.2.0 \
     genmqpkg_incnls=1 \
     genmqpkg_incsdk=1 \
     genmqpkg_inctls=1 \

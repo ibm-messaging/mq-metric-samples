@@ -202,7 +202,13 @@ func Collect() error {
 							series = "qmgr"
 							if key == mqmetric.QMgrMapKey {
 								tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
-
+								hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+								if hostname != mqmetric.DUMMY_STRING {
+									tags["hostname"] = hostname
+								}
+							} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
+								series = "nha"
+								tags["nhainstance"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
 							} else {
 								series = "queue"
 								tags[series] = key
@@ -371,6 +377,10 @@ func Collect() error {
 						"qmgr":        qMgrName,
 						"platform":    platformString,
 						"description": mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR),
+					}
+					hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+					if hostname != mqmetric.DUMMY_STRING {
+						tags["hostname"] = hostname
 					}
 
 					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)

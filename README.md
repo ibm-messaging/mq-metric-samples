@@ -215,6 +215,17 @@ only shows channels with a known state and does not report on inactive channels.
 To also see the inactive channels, then set the showInactiveChannels
 configuration attribute to true.
 
+### NativeHA
+When NativeHA is used, the queue manager publishes some metrics on its status. These
+are automatically collected whenever available, and can be seen in the metric lists. The metrics
+are given a prefix or series of "nha". For example, `ibmmq_nha_synchronous_log_sent_bytes` is one
+metric shown in Prometheus. The NativeHA "instance" - the names given to the replicas - is added
+as the `nhainstance` tag to the metrics.
+
+Depending on configuration, the collector may be able to automatically reconnect to the new instance
+after a failover. If that is not possible, you will need to have a process to restart the collector
+once the new replica has taken over.
+
 ### z/OS Support
 Because the DIS QSTATUS and DIS CHSTATUS commands can be used on z/OS, the monitors 
 support showing some information from a z/OS queue manager. There is nothing special needed to configure it, beyond the client

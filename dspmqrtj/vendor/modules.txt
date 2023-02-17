@@ -1,4 +1,4 @@
-# github.com/ibm-messaging/mq-golang/v5 v5.3.3
+# github.com/ibm-messaging/mq-golang/v5 v5.4.0
 ## explicit; go 1.16
 github.com/ibm-messaging/mq-golang/v5/ibmmq
 # github.com/sirupsen/logrus v1.8.1

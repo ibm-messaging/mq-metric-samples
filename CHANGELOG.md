@@ -1,6 +1,11 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Feb 17 2023 (v5.4.0)
+* Update to MQ 9.3.2
+* Add hostname tag for qmgrs running 9.3.2
+* Add NativeHA metrics to all collectors
+
 ### Jan 10 2023 (v5.3.3)
 * Copy in metrics.txt summary of available metrics from mq-golang
 * JSON exporter - consistent objecttype for qmgr, merge published and 
