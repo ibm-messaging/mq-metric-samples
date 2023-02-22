@@ -9,13 +9,15 @@ ARG EXPORTER=mq_prometheus
 FROM golang:1.19 AS builder
 
 ARG EXPORTER
+ARG GOARCH=amd64
+ARG MQARCH=X64
 
 ENV EXPORTER=${EXPORTER} \
     ORG="github.com/ibm-messaging" \
     REPO="mq-metric-samples" \
     RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
-    RDTAR="IBM-MQC-Redist-LinuxX64.tar.gz" \
-    VRMF=9.3.1.0 \
+    RDTAR="IBM-MQC-Redist-Linux${MQARCH}.tar.gz" \
+    VRMF=9.3.2.0 \
     CGO_CFLAGS="-I/opt/mqm/inc/" \
     CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
     genmqpkg_incnls=1 \
@@ -57,10 +59,12 @@ RUN go build -mod=vendor -o /go/bin/${EXPORTER} ./*.go
 FROM golang:1.19
 
 ARG EXPORTER
+ARG GOARCH=amd64
+ARG MQARCH=X64
 
 ENV EXPORTER=${EXPORTER} \
     RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
-    RDTAR="IBM-MQC-Redist-LinuxX64.tar.gz" \
+    RDTAR="IBM-MQC-Redist-Linux${MQARCH}.tar.gz" \
     VRMF=9.3.2.0 \
     genmqpkg_incnls=1 \
     genmqpkg_incsdk=1 \
