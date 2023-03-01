@@ -8,7 +8,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.12.2
 	github.com/prometheus/client_golang v1.14.0
 	github.com/sirupsen/logrus v1.8.1
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	golang.org/x/crypto v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
