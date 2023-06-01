@@ -7,7 +7,7 @@ require (
 	github.com/ibm-messaging/mq-golang/v5 v5.4.0
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/prometheus/client_golang v1.15.1
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.2
 	golang.org/x/crypto v0.9.0
 	gopkg.in/yaml.v2 v2.4.0
 )
