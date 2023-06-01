@@ -9,3 +9,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "monthly"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/dspmqrtj" # Location of package manifests
+    schedule:
+      interval: "monthly"
