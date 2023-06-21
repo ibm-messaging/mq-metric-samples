@@ -1,5 +1,9 @@
 # MQ Exporter for Prometheus monitoring
 
+This README should be read in conjunction with the repository-wide
+[README](https://github.com/ibm-messaging/mq-metric-samples/blob/master/README.md) 
+that covers features common to all of the collectors in this repository.
+
 This directory contains the code for a monitoring solution
 that exports queue manager data to a Prometheus data collection
 system. It also contains configuration files to run the monitor program

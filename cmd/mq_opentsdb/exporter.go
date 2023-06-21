@@ -35,6 +35,8 @@ import (
 
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	errors "github.com/ibm-messaging/mq-metric-samples/v5/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -178,9 +180,7 @@ func Collect() error {
 			err = pollError
 		}
 
-		if err != nil {
-			log.Fatalf("Error collecting status: %v", err)
-		}
+		errors.HandleStatus(err)
 
 		thisDiscovery := time.Now()
 		elapsed = thisDiscovery.Sub(lastQueueDiscovery)

@@ -45,6 +45,9 @@ connection:
 # unique for any collector program connecting to this queue manager
     durableSubPrefix: 
 
+# Maximum time (seconds) to wait for a status response from qmgr. 
+    waitInterval: 3
+
 # "channels" is for all the traditional MQ channels including SVRCONNs. "amqpChannels" shows
 # status for the AMQP objects
 objects:
@@ -81,3 +84,6 @@ filters:
     - PUT
     - GET
     - GENERAL
+
+# Collector-specific configuration may also need to be added here. The example build
+# scripts will concatenate default definitions from the cmd/mq_* directories.

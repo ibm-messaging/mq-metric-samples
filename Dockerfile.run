@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2020
+# © Copyright IBM Corporation 2020,2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=ubuntu:18.04
+ARG BASE_IMAGE=ubuntu:20.04
 FROM $BASE_IMAGE
+
+ARG GOARCH=amd64
+ARG MQARCH=X64
 
 # Create location for the git clone and MQ installation
 RUN mkdir -p /opt/bin \
@@ -30,8 +33,8 @@ RUN apt-get update \
 
 # Location of the downloadable MQ client package \
 ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
-    RDTAR="IBM-MQC-Redist-LinuxX64.tar.gz" \
-    VRMF=9.3.2.0
+    RDTAR="IBM-MQC-Redist-Linux${MQARCH}.tar.gz" \
+    VRMF=9.3.3.0
 
 # Install the MQ client from the Redistributable package. This also contains the
 # header files we need to compile against. Setup the subset of the package

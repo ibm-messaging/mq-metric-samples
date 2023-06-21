@@ -1,6 +1,11 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jun 20 2023 (v5.5.0)
+* Update to MQ 9.3.3
+* Update Dockerfile to support platforms without Redist client (#209)
+* Update all vendored dependencies
+
 ### Feb 17 2023 (v5.4.0)
 * Update to MQ 9.3.2
 * Add hostname tag for qmgrs running 9.3.2

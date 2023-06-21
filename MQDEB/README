@@ -1,0 +1,5 @@
+If you are using the Dockerfile in the root of this repository
+to build and run an exporter/collector program:
+
+For Linux platforms without a Redistributable Client package, copy
+the .deb installation files into this directory.

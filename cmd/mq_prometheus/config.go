@@ -60,6 +60,7 @@ const (
 	defaultPort              = "9157" // Reserved in the prometheus wiki for MQ
 	defaultNamespace         = "ibmmq"
 	defaultReconnectInterval = "5s"
+	defaultMetricPath        = "/metrics"
 )
 
 var config mqExporterConfig
@@ -80,7 +81,7 @@ func initConfig() error {
 
 	cf.AddParm(&config.httpListenPort, defaultPort, cf.CP_STR, "ibmmq.httpListenPort", "prometheus", "port", "HTTP(S) Listener Port")
 	cf.AddParm(&config.httpListenHost, "", cf.CP_STR, "ibmmq.httpListenHost", "prometheus", "host", "HTTP(S) Listener Host")
-	cf.AddParm(&config.httpMetricPath, "/metrics", cf.CP_STR, "ibmmq.httpMetricPath", "prometheus", "metricsPath", "Path to exporter metrics")
+	cf.AddParm(&config.httpMetricPath, defaultMetricPath, cf.CP_STR, "ibmmq.httpMetricPath", "prometheus", "metricsPath", "Path to exporter metrics")
 	cf.AddParm(&config.keepRunning, true, cf.CP_BOOL, "ibmmq.keepRunning", "prometheus", "keepRunning", "Continue running after queue manager disconnection")
 	cf.AddParm(&config.reconnectInterval, defaultReconnectInterval, cf.CP_STR, "ibmmq.reconnectInterval", "prometheus", "reconnectInterval", "How fast to validate connection attempts")
 	cf.AddParm(&config.httpsCertFile, "", cf.CP_STR, "ibmmq.httpsCertFile", "prometheus", "httpsCertFile", "TLS public certificate file")
@@ -111,6 +112,15 @@ func initConfig() error {
 				config.reconnectInterval = cf.CopyParmIfNotSetStr("prometheus", "reconnectInterval", cfy.Prometheus.ReconnectInterval)
 
 			}
+		}
+	}
+
+	if err == nil {
+		if config.httpMetricPath == "" {
+			config.httpMetricPath = defaultMetricPath
+		}
+		if config.namespace == "" {
+			config.namespace = defaultNamespace
 		}
 	}
 

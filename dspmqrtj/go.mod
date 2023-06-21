@@ -3,7 +3,7 @@ module dspmqrtj/v5
 go 1.17
 
 require (
-	github.com/ibm-messaging/mq-golang/v5 v5.4.0
+	github.com/ibm-messaging/mq-golang/v5 v5.5.0
 	github.com/sirupsen/logrus v1.9.2
 	golang.org/x/crypto v0.9.0
 )

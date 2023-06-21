@@ -30,6 +30,8 @@ import (
 
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	mqmetric "github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	errors "github.com/ibm-messaging/mq-metric-samples/v5/pkg/errors"
+
 	client "github.com/influxdata/influxdb-client-go/v2"
 
 	"strings"
@@ -168,9 +170,7 @@ func Collect(c client.Client) error {
 			err = pollError
 		}
 
-		if err != nil {
-			log.Fatalf("Error collecting status: %v", err)
-		}
+		errors.HandleStatus(err)
 
 		thisDiscovery := time.Now()
 		elapsed = thisDiscovery.Sub(lastQueueDiscovery)

@@ -36,7 +36,7 @@ You will require the following programs:
 
 
 ### MQ Client SDK
-The MQ Client SDK for C programs is required in order to compile and run Go programs. You may have this from an MQ Client installation image (eg rpm, dep formats for Linux, msi for Windows). 
+The MQ Client SDK for C programs is required in order to compile and run Go programs. You may have this from an MQ Client installation image (eg rpm, deb formats for Linux, msi for Windows). 
 
 For Linux x64 and Windows systems, you may also choose to use the 
 MQ Redistributable Client package which is a simple zip/tar file that does not need
@@ -84,8 +84,16 @@ containers. You still need to provide the configuration file at runtime, perhaps
 
 ```
   docker build -t mqprom:1.0 .
-  docker run   -v <directory>/mq_prometheus.yaml:/opt/config/mq_prometheus.yaml mqprom:1.0
+  docker run   -p 9157:9157 -v <directory>/mq_prometheus.yaml:/opt/config/mq_prometheus.yaml mqprom:1.0
 ```  
+
+### Platform support
+This Dockerfile should work for a variety of platforms. For those with a Redistributable client, it uses
+`curl` to automatically download and unpack the required MQ files. For other platforms, it assumes that
+you have an `MQDEB` subdirectory under this root, and then copied the `.deb` files from your
+real MQ installation tree into it.
+
+### Additional container scripts
 
 As a more flexible example, you can use the `buildMonitors.sh` script in the `scripts` subdirectory to 
 build a Docker container that in turn will build all the binary programs and copy them to a local directory. 

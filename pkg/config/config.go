@@ -1,7 +1,7 @@
 package config
 
 /*
-  Copyright (c) IBM Corporation 2016, 2021
+  Copyright (c) IBM Corporation 2016, 2023
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -89,6 +89,8 @@ const (
 	defaultPollInterval       = "0s"
 	defaultTZOffset           = "0h"
 	defaultRediscoverInterval = "1h"
+	defaultWaitInterval       = 3   // seconds
+	defaultWaitIntervalStr    = "3" // seconds
 )
 
 const (
@@ -159,6 +161,8 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.ReplyQ, "SYSTEM.DEFAULT.MODEL.QUEUE", CP_STR, "ibmmq.replyQueue", "connection", "replyQueue", "Reply Queue to collect data")
 	AddParm(&cm.ReplyQ2, "", CP_STR, "ibmmq.replyQueue2", "connection", "replyQueue2", "Reply Queue to collect other data ")
 	AddParm(&cm.CC.DurableSubPrefix, "", CP_STR, "ibmmq.durableSubPrefix", "connection", "durableSubPrefix", "Collector identifier when using Durable Subscriptions")
+
+	AddParm(&cm.CC.WaitInterval, defaultWaitInterval, CP_INT, "ibmmq.waitInterval", "connection", "waitInterval", "Maximum wait time for queue manager responses")
 
 	AddParm(&cm.MetaPrefix, "", CP_STR, "metaPrefix", "global", "metaPrefix", "Override path to monitoring resource topic")
 
@@ -426,6 +430,7 @@ func PrintInfo(title string, stamp string, commit string, buildPlatform string) 
 	if buildPlatform != "" {
 		fmt.Fprintf(os.Stderr, "Build Platform: %s\n", buildPlatform)
 	}
+	fmt.Fprintf(os.Stderr, "MQ Go Version : %s\n", MqGolangVersion)
 	fmt.Fprintf(os.Stderr, "\n")
 }
 

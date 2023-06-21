@@ -51,6 +51,7 @@ type ConfigYConnection struct {
 	CcdtUrl          string `yaml:"ccdtUrl"`
 	ConnName         string `yaml:"connName"`
 	Channel          string `yaml:"channel"`
+	WaitInterval     string `yaml:"waitInterval"`
 }
 type ConfigYObjects struct {
 	Queues        []string
@@ -102,6 +103,19 @@ func asBool(s string, def bool) bool {
 	}
 }
 
+func asInt(s string, def int) int {
+	if s != "" {
+		i, err := strconv.Atoi(s)
+		if err == nil {
+			return int(i)
+		} else {
+			return def
+		}
+	} else {
+		return def
+	}
+}
+
 // This handles the configuration parameters that are common to all the collectors. The individual
 // collectors call similar code for their own specific attributes
 func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo ConfigYObjects, cyf ConfigYFilters) {
@@ -130,6 +144,9 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.ClientMode = CopyParmIfNotSetBool("connection", "clientConnection", asBool(cyc.Client, false))
 	cm.CC.UserId = CopyParmIfNotSetStr("connection", "user", cyc.User)
 	cm.CC.Password = CopyParmIfNotSetStr("connection", "password", cyc.Password)
+
+	tmpInt := CopyParmIfNotSetStr("connection", "waitInterval", cyc.WaitInterval)
+	cm.CC.WaitInterval = asInt(tmpInt, defaultWaitInterval)
 
 	// This is one where we want to use the default non-null value if it's not been provided
 	tmpQ := CopyParmIfNotSetStr("connection", "replyQueue", cyc.ReplyQueue)
@@ -227,6 +244,8 @@ func CopyDeprecatedParmIfNotSetStrArray(section string, name string, val []strin
 
 func CopyParmIfNotSetInt(section string, name string, val int) int {
 	v, s := copyParmIfNotSet(section, name, false)
+	//fmt.Printf("Name:%s Val:%d s:%v v:%v\n", name, val, s, v)
+
 	if s {
 		return *(v).(*int)
 	} else {

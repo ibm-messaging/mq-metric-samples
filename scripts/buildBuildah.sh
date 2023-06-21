@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2021
+# © Copyright IBM Corporation 2021,2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ esac
 # Set some variables.
 ORG="github.com/ibm-messaging"
 REPO="mq-metric-samples"
-VRMF=9.3.2.0
+VRMF=9.3.3.0
 GOVER=1.17.2
 db=`echo $COLL | sed "s/mq_//g"`
 #
@@ -152,7 +152,7 @@ buildah run  $buildCtr /bin/bash ./build.sh
 echo "Compilation finished"
 
 # We now have a container image with the compiled code. Complete its generation with a 'commit'
-echo "Comitting builder image"
+echo "Committing builder image"
 buildah commit -q --squash --rm $buildCtr $imgNameBuild
 
 ###########################################################################
@@ -172,7 +172,7 @@ buildah config --env IBMMQ_GLOBAL_CONFIGURATIONFILE=/opt/config/$COLL.yaml $runt
 
 # Complete the runtime container with an entrypoint
 buildah config --entrypoint /opt/bin/$COLL $runtimeCtr
-echo "Commiting runtime image"
+echo "Committing runtime image"
 buildah commit -q --squash --rm $runtimeCtr $imgNameRuntime
 
 # Now run the image. The assumption is that you have a queue manager running on this machine on port 1414.

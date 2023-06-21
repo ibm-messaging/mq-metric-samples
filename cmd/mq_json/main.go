@@ -25,6 +25,7 @@ import (
 
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	mqmetric "github.com/ibm-messaging/mq-golang/v5/mqmetric"
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -46,6 +47,7 @@ func printInfo(title string, stamp string, commit string, buildPlatform string) 
 	if buildPlatform != "" {
 		log.Infoln("Build Platform: " + buildPlatform)
 	}
+	log.Infoln("MQ Go Version : " + cf.MqGolangVersion)
 	log.Println("")
 }
 
