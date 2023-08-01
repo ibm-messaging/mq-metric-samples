@@ -8,7 +8,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/prometheus/client_golang v1.16.0
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/crypto v0.10.0
+	golang.org/x/crypto v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/term v0.9.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/term v0.10.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 )
