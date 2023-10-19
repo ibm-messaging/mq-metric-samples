@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.45.19
-	github.com/ibm-messaging/mq-golang/v5 v5.5.0
+	github.com/ibm-messaging/mq-golang/v5 v5.5.1
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/prometheus/client_golang v1.17.0
 	github.com/sirupsen/logrus v1.9.3
@@ -24,7 +24,7 @@ require (
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect

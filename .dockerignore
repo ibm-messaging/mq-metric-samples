@@ -1,2 +1,7 @@
-.git/
 .github/
+.git/
+
+# We use a file in the .git/refs directory to try to extract current commit level
+# so exclude that directory from the exclusions
+!.git/refs
+

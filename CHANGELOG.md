@@ -1,6 +1,13 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Oct 19 2023 (v5.5.1)
+* Update to MQ 9.3.4
+* Fix Prometheus label cardinality when reporting disconnect (#245)
+* Add hints about monitoring "large" queue managers in TUNING.md
+* Make sure missing YAML configuration attributes have reasonable defaults
+* Update all vendored dependencies
+
 ### Jun 20 2023 (v5.5.0)
 * Update to MQ 9.3.3
 * Update Dockerfile to support platforms without Redist client (#209)

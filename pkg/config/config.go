@@ -375,6 +375,9 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 
 	// Do not use VerifyPatterns for monitoredTopics or Subs as they follow a very different style
 	if err == nil {
+		if cm.TZOffsetString == "" {
+			cm.TZOffsetString = defaultTZOffset
+		}
 		offset, err := time.ParseDuration(cm.TZOffsetString)
 		if err != nil {
 			err = fmt.Errorf("Invalid value for time offset parameter: %v", err)
@@ -384,13 +387,19 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 	}
 
 	if err == nil {
+		if cm.pollInterval == "" {
+			cm.pollInterval = defaultPollInterval
+		}
 		cm.PollIntervalDuration, err = time.ParseDuration(cm.pollInterval)
 		if err != nil {
-			err = fmt.Errorf("Invalid value for poll interval parameter: %v", err)
+			err = fmt.Errorf("Invalid value %s for poll interval parameter: %v", cm.pollInterval, err)
 		}
 	}
 
 	if err == nil {
+		if cm.rediscoverInterval == "" {
+			cm.rediscoverInterval = defaultRediscoverInterval
+		}
 		cm.RediscoverDuration, err = time.ParseDuration(cm.rediscoverInterval)
 		if err != nil {
 			err = fmt.Errorf("Invalid value for rediscovery interval parameter: %v", err)
@@ -430,7 +439,7 @@ func PrintInfo(title string, stamp string, commit string, buildPlatform string) 
 	if buildPlatform != "" {
 		fmt.Fprintf(os.Stderr, "Build Platform: %s\n", buildPlatform)
 	}
-	fmt.Fprintf(os.Stderr, "MQ Go Version : %s\n", MqGolangVersion)
+	fmt.Fprintf(os.Stderr, "MQ Go Version : %s\n", MqGolangVersion())
 	fmt.Fprintf(os.Stderr, "\n")
 }
 

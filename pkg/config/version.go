@@ -18,6 +18,27 @@ package config
      Mark Taylor - Initial Contribution
 */
 
-// This should match the version of the mq-golang dependency that is pulled in.
-// It will also be the same as the mq-metric-samples repo.
-const MqGolangVersion = "v5.5.0"
+// This reports the version of the mq-golang dependency that is pulled in.
+import (
+	"runtime/debug"
+	//"fmt"
+	"strings"
+)
+
+func MqGolangVersion() string {
+	mqGolangVersion := "Unknown"
+
+	bi, ok := debug.ReadBuildInfo()
+	if ok {
+		//fmt.Printf("BuildInfo: %v\n", bi)
+
+		for _, mod := range bi.Deps {
+			if strings.Contains(mod.Path, "ibm-messaging/mq-golang") {
+				mqGolangVersion = mod.Version
+			}
+			//fmt.Printf("Module: %s Version: %s\n", mod.Path, mod.Version)
+		}
+	}
+
+	return mqGolangVersion
+}

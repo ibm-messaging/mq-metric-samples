@@ -31,7 +31,7 @@ file if you wish to reload all of the dependencies by running `go mod vendor`.
 
 You will require the following programs:
 
-* Go compiler - version 1.17 is the minimum defined here
+* Go compiler - version 1.19 is the minimum defined here
 * C compiler
 
 
@@ -88,9 +88,9 @@ containers. You still need to provide the configuration file at runtime, perhaps
 ```  
 
 ### Platform support
-This Dockerfile should work for a variety of platforms. For those with a Redistributable client, it uses
-`curl` to automatically download and unpack the required MQ files. For other platforms, it assumes that
-you have an `MQDEB` subdirectory under this root, and then copied the `.deb` files from your
+This Dockerfile should work for a variety of platforms. For those with a Redistributable client, it uses `curl` to
+automatically download and unpack the required MQ files. For other platforms, it assumes that you have an `MQINST`
+subdirectory under this root, and then copied the `.deb` files (or the `.tar.gz` file for Linux/arm64 systems) from your
 real MQ installation tree into it.
 
 ### Additional container scripts

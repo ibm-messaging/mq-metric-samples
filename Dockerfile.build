@@ -16,7 +16,7 @@ ARG BASE_IMAGE=ubuntu:20.04
 FROM $BASE_IMAGE
 
 ARG GOPATH_ARG="/go"
-ARG GOVERSION=1.17        
+ARG GOVERSION=1.19        
 ARG GOARCH=amd64
 ARG MQARCH=X64
 
@@ -61,7 +61,7 @@ RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg \
 # Location of the downloadable MQ client package \
 ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
     RDTAR="IBM-MQC-Redist-Linux${MQARCH}.tar.gz" \
-    VRMF=9.3.3.0
+    VRMF=9.3.4.0
 
 # Install the MQ client from the Redistributable package. This also contains the
 # header files we need to compile against. Setup the subset of the package
@@ -77,24 +77,19 @@ RUN cd /opt/mqm \
  && bin/genmqpkg.sh -b /opt/mqm
 
 # Insert the script that will do the build
-COPY scripts/buildInDocker.sh $GOPATH
-RUN chmod 777 $GOPATH/buildInDocker.sh
+COPY --chmod=777 scripts/buildInDocker.sh $GOPATH
 
 WORKDIR $GOPATH/src/$ORG/$REPO
-COPY go.mod .
-COPY go.sum .
-RUN chmod 777 go.*
+COPY --chmod=777 go.mod .
+COPY --chmod=777 go.sum .
+COPY --chmod=777 config.common.yaml .
 
-COPY config.common.yaml .
-RUN chmod 777 config.common.yaml
-
-#RUN /usr/lib/go-${GOVERSION}/bin/go mod download
+# RUN /usr/lib/go-${GOVERSION}/bin/go mod download
 
 # Copy the rest of the source tree from this directory into the container and
 # make sure it's readable by the user running the container
 ENV  REPO="mq-metric-samples"
-COPY . $GOPATH/src/$ORG/$REPO
-RUN chmod -R a+rwx $GOPATH/src/$ORG/$REPO
+COPY --chmod=777 . $GOPATH/src/$ORG/$REPO
 
 # Set the entrypoint to the script that will do the compilation
 ENTRYPOINT $GOPATH/buildInDocker.sh

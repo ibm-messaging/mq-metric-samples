@@ -4,7 +4,7 @@ package ibmmq
 ****************************************************************
 *
 *
-*                     IBM MQ for Go on LinuxS390
+*                     IBM MQ for Go on Linux ARM
 * FILE NAME:      CMQC
 *
 * This file contains the MQI definitions needed for a
@@ -1433,13 +1433,13 @@ const (
 	MQDCC_NONE                     int32  = 0
 	MQDCC_SOURCE_ENC_FACTOR        int32  = 16
 	MQDCC_SOURCE_ENC_MASK          int32  = 240
-	MQDCC_SOURCE_ENC_NATIVE        int32  = 16
+	MQDCC_SOURCE_ENC_NATIVE        int32  = 32
 	MQDCC_SOURCE_ENC_NORMAL        int32  = 16
 	MQDCC_SOURCE_ENC_REVERSED      int32  = 32
 	MQDCC_SOURCE_ENC_UNDEFINED     int32  = 0
 	MQDCC_TARGET_ENC_FACTOR        int32  = 256
 	MQDCC_TARGET_ENC_MASK          int32  = 3840
-	MQDCC_TARGET_ENC_NATIVE        int32  = 256
+	MQDCC_TARGET_ENC_NATIVE        int32  = 512
 	MQDCC_TARGET_ENC_NORMAL        int32  = 256
 	MQDCC_TARGET_ENC_REVERSED      int32  = 512
 	MQDCC_TARGET_ENC_UNDEFINED     int32  = 0
@@ -1522,7 +1522,7 @@ const (
 	MQENC_INTEGER_NORMAL           int32  = 1
 	MQENC_INTEGER_REVERSED         int32  = 2
 	MQENC_INTEGER_UNDEFINED        int32  = 0
-	MQENC_NATIVE                   int32  = 273
+	MQENC_NATIVE                   int32  = 546
 	MQENC_NORMAL                   int32  = 273
 	MQENC_RESERVED_MASK            int32  = -4096
 	MQENC_REVERSED                 int32  = 546

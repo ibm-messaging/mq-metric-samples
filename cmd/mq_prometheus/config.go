@@ -133,6 +133,9 @@ func initConfig() error {
 	}
 
 	if err == nil {
+		if config.reconnectInterval == "" {
+			config.reconnectInterval = defaultReconnectInterval
+		}
 		config.reconnectIntervalDuration, err = time.ParseDuration(config.reconnectInterval)
 	}
 

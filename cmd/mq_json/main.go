@@ -47,7 +47,7 @@ func printInfo(title string, stamp string, commit string, buildPlatform string) 
 	if buildPlatform != "" {
 		log.Infoln("Build Platform: " + buildPlatform)
 	}
-	log.Infoln("MQ Go Version : " + cf.MqGolangVersion)
+	log.Infoln("MQ Go Version : " + cf.MqGolangVersion())
 	log.Println("")
 }
 

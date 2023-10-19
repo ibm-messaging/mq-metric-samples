@@ -1,8 +1,8 @@
 #
 # This is the section of the configuration file
-# that is common for all collectors. It gets combined
-# with the collector-specific portion to create the real
-# configuration file.
+# that is common for all collectors. You must combine it
+# with the collector-specific portion from the relevant
+# subdirectory to create the complete configuration file.
 
 global:
   useObjectStatus: true
@@ -85,5 +85,5 @@ filters:
     - GET
     - GENERAL
 
-# Collector-specific configuration may also need to be added here. The example build
+# Collector-specific configuration will also need to be added here. Some of the sample build
 # scripts will concatenate default definitions from the cmd/mq_* directories.

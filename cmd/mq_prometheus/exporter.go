@@ -64,7 +64,7 @@ func newExporter() *exporter {
 }
 
 const (
-	defaultScrapeTimeout = 10 // Prometheus default scrape_timeout is 10s
+	defaultScrapeTimeout = 15 // Prometheus default scrape_timeout is 15s
 )
 
 var (
@@ -79,12 +79,16 @@ var (
 	clusterStatusGaugeMap = make(map[string]*prometheus.GaugeVec)
 	amqpStatusGaugeMap    = make(map[string]*prometheus.GaugeVec)
 
-	lastPoll            = time.Now()
-	lastQueueDiscovery  time.Time
-	platformString      string
-	counter             = 0
-	warnedScrapeTimeout = false
-	pubCountDesc        *prometheus.Desc
+	lastPoll              = time.Now()
+	lastQueueDiscovery    time.Time
+	platformString        string
+	counter               = 0
+	scrapeWarningIssued   = false
+	scrapeWarningPossible = false
+	pubCountDesc          *prometheus.Desc
+	collectionTimeDesc    *prometheus.Desc
+
+	supportsHostnameLabelVal *bool
 )
 
 /*
@@ -150,6 +154,14 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 }
 
 /*
+I put the actual collection callback in this function to make it easy to
+add timing/debug around it
+*/
+func CollectWrap(g *prometheus.GaugeVec, ch chan<- prometheus.Metric) {
+	g.Collect(ch)
+}
+
+/*
 Collect is called by Prometheus at regular intervals to provide current data
 */
 func (e *exporter) Collect(ch chan<- prometheus.Metric) {
@@ -180,7 +192,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				labels["hostname"] = mqmetric.DUMMY_STRING
 			}
 			g.With(labels).Set(0.0)
-			g.Collect(ch)
+			CollectWrap(g, ch)
 		}
 		return
 	}
@@ -198,11 +210,13 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// Deal with all the publications that have arrived
+	pubProcessTime := time.Now()
 	err := mqmetric.ProcessPublications()
+	pubProcessSecs := int64(time.Now().Sub(pubProcessTime).Seconds())
 	if err != nil {
 		log.Errorf("Error processing publications: %v", err)
 	} else {
-		log.Debugf("Collected and processed resource publications successfully")
+		log.Debugf("Collected and processed %d resource publications successfully in %d secs", mqmetric.GetProcessPublicationCount(), pubProcessSecs)
 	}
 
 	// Do we need to poll for object status on this iteration
@@ -403,7 +417,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		// a misleading range on graphs.
 		setFirstCollection(false)
 	} else {
-
+		scrapeWarningPossible = true
 		for _, cl := range e.metrics.Classes {
 			for _, ty := range cl.Types {
 				for _, elem := range ty.Elements {
@@ -497,7 +511,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					connName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
 					jobName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
 
-					log.Debugf("channel status - key: %s channelName: %s metric: %s val: %v", key, chlName, attr.MetricName, f)
+					// log.Debugf("channel status - key: %s channelName: %s metric: %s val: %v", key, chlName, attr.MetricName, f)
 
 					g.With(prometheus.Labels{
 						"qmgr":                     strings.TrimSpace(config.cf.QMgrName),
@@ -527,7 +541,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 					g := qStatusGaugeMap[attr.MetricName]
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
-					log.Debugf("queue status - key: %s qName: %s metric: %s val: %v", key, qName, attr.MetricName, f)
+					// log.Debugf("queue status - key: %s qName: %s metric: %s val: %v", key, qName, attr.MetricName, f)
 
 					// Don't submit metrics for queues where we've not done a full attribute discovery. Typically the first
 					// collection period after a rediscover/resubscribe.
@@ -699,35 +713,35 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		if !attr.Pseudo {
 			g := channelStatusGaugeMap[attr.MetricName]
 			log.Debugf("Reporting chl   gauge for %s", attr.MetricName)
-			g.Collect(ch)
+			CollectWrap(g, ch)
 		}
 	}
 	for _, attr := range e.qStatus.Attributes {
 		if !attr.Pseudo {
 			g := qStatusGaugeMap[attr.MetricName]
 			log.Debugf("Reporting queue gauge for %s", attr.MetricName)
-			g.Collect(ch)
+			CollectWrap(g, ch)
 		}
 	}
 	for _, attr := range e.topicStatus.Attributes {
 		if !attr.Pseudo {
 			g := topicStatusGaugeMap[attr.MetricName]
 			//log.Debugf("Reporting topic gauge for %s", attr.MetricName)
-			g.Collect(ch)
+			CollectWrap(g, ch)
 		}
 	}
 	for _, attr := range e.subStatus.Attributes {
 		if !attr.Pseudo {
 			g := subStatusGaugeMap[attr.MetricName]
 			log.Debugf("Reporting subs  gauge for %s", attr.MetricName)
-			g.Collect(ch)
+			CollectWrap(g, ch)
 		}
 	}
 	for _, attr := range e.qMgrStatus.Attributes {
 		if !attr.Pseudo {
 			g := qMgrStatusGaugeMap[attr.MetricName]
 			log.Debugf("Reporting qmgr  gauge for %s", attr.MetricName)
-			g.Collect(ch)
+			CollectWrap(g, ch)
 		}
 	}
 
@@ -735,7 +749,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		if !attr.Pseudo {
 			g := clusterStatusGaugeMap[attr.MetricName]
 			log.Debugf("Reporting cluster  gauge for %s", attr.MetricName)
-			g.Collect(ch)
+			CollectWrap(g, ch)
 		}
 	}
 
@@ -744,14 +758,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			if !attr.Pseudo {
 				g := usageBpStatusGaugeMap[attr.MetricName]
 				log.Debugf("Reporting BPool gauge for %s", attr.MetricName)
-				g.Collect(ch)
+				CollectWrap(g, ch)
 			}
 		}
 		for _, attr := range e.usagePsStatus.Attributes {
 			if !attr.Pseudo {
 				g := usagePsStatusGaugeMap[attr.MetricName]
 				log.Debugf("Reporting Pageset gauge for %s", attr.MetricName)
-				g.Collect(ch)
+				CollectWrap(g, ch)
 			}
 		}
 	} else {
@@ -759,7 +773,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			if !attr.Pseudo {
 				g := amqpStatusGaugeMap[attr.MetricName]
 				log.Debugf("Reporting AMQP gauge for %s", attr.MetricName)
-				g.Collect(ch)
+				CollectWrap(g, ch)
 			}
 		}
 	}
@@ -767,10 +781,26 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	collectStopTime := time.Now()
 	elapsedSecs := int64(collectStopTime.Sub(collectStartTime).Seconds())
 	log.Debugf("Collection time = %d secs", elapsedSecs)
-	if elapsedSecs > defaultScrapeTimeout && !warnedScrapeTimeout {
-		log.Warnf("Collection time has exceeded Prometheus default scrape_timeout value of %d seconds. Ensure you have set a larger value for this job", defaultScrapeTimeout)
-		warnedScrapeTimeout = true
+
+	// Issue a warning if it looks like we've exceeded the default scrape_timeout. Don't do it on the first full iteration as that
+	// appears to sometimes be quite a bit slower anyway.
+	if elapsedSecs > defaultScrapeTimeout && !scrapeWarningIssued && scrapeWarningPossible {
+		log.Warnf("Collection time (%d secs) has exceeded Prometheus default scrape_timeout value of %d seconds. Ensure you have set a larger value for this job.", elapsedSecs, defaultScrapeTimeout)
+		scrapeWarningIssued = true
 	}
+	// We will also send a pseudo-gauge that shows how long it took to process the collection request.
+	// Note that this is going to be less than the value reported by Prometheus itself because the flow back
+	// to the database may still be going on in another background thread
+	if collectionTimeDesc == nil {
+		fqName := prometheus.BuildFQName(config.namespace, "qmgr", "exporter_collection_time")
+		collectionTimeDesc = prometheus.NewDesc(fqName,
+			"How long the last collection took",
+			[]string{"qmgr", "platform"},
+			nil)
+	}
+	// Tags must be in same order as created in the Description. But we don't need to have exactly the same tags
+	// as all the other qmgr-level metrics
+	ch <- prometheus.MustNewConstMetric(collectionTimeDesc, prometheus.GaugeValue, float64(elapsedSecs), config.cf.QMgrName, platformString)
 }
 
 func allocateAllGauges() {
@@ -1029,13 +1059,25 @@ func newMqGaugeVecObj(name string, description string, objectType string) *prome
 		labels,
 	)
 
-	log.Debugf("Created gauge for '%s%s' ", prefix, name)
+	log.Debugf("Created gauge for '%s%s' from '%s'", prefix, name, description)
 	return gaugeVec
 }
 
 func supportsHostnameLabel() bool {
-	if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS && mqmetric.GetCommandLevel() >= ibmmq.MQCMDL_LEVEL_932 {
-		return true
+	rc := false
+	// First time through, work out whether we're connected to a qmgr that has the
+	// hostname status attribute. Stash that so it doesn't get reset if we're in a reconnect
+	// sequence
+	if supportsHostnameLabelVal == nil {
+		if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS && mqmetric.GetCommandLevel() >= ibmmq.MQCMDL_LEVEL_932 {
+			rc = true
+		}
+
+		supportsHostnameLabelVal = new(bool)
+		*supportsHostnameLabelVal = rc
+	} else {
+		rc = *supportsHostnameLabelVal
 	}
-	return false
+	//log.Debugf("supportsHostnameLabel: %v", rc)
+	return rc
 }

@@ -45,13 +45,13 @@ func HandleStatus(err error) {
 	if err != nil {
 		statusCollectionErrors++
 		if statusCollectionErrors > maxStatusCollectionErrors {
-			log.Fatalf("Error collecting status: %v. Maximum permitted failures reached.", err)
 			if mqe, ok := err.(mqmetric.MQMetricError); ok {
 				mqrc := mqe.MQReturn.MQRC
 				if mqrc == ibmmq.MQRC_NO_MSG_AVAILABLE {
 					log.Errorf("  Not all responses received in time. Perhaps queue manager is running slowly.")
 				}
 			}
+			log.Fatalf("Error collecting status: %v. Maximum permitted failures reached.", err)
 		} else {
 			log.Errorf("Error collecting status: %v. Continuing for now.", err)
 		}
