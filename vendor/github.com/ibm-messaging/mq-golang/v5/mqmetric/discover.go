@@ -344,13 +344,9 @@ func discoverAndSubscribe(dc DiscoverConfig, redo bool) error {
 	// If you are using publications for some resource metrics, but have chosen not to collect the topics that might contain queue depth,
 	// then there's still a possibility to find that particular value from QSTATUS responses as an alternative. The SubscriptionSelector has had
 	// two topics, depending on the MQ version, which give the depth.
-	subSel := dc.MonitoredQueues.SubscriptionSelector
-	if subSel != "" && !strings.Contains(subSel, "GENERAL") && !strings.Contains(subSel, "GET") {
+	if !strings.Contains(dc.MonitoredQueues.SubscriptionSelector, "GENERAL") && !strings.Contains(dc.MonitoredQueues.SubscriptionSelector, "GET") {
 		logDebug("Setting connection to grab qdepth via QSTATUS")
 		ci.useDepthFromStatus = true
-	} else {
-		logDebug("Setting connection to grab qdepth via Publication")
-		ci.useDepthFromStatus = false
 	}
 
 	traceExitErr("discoverAndSubscribe", 0, err)
