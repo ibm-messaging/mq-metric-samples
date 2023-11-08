@@ -2,17 +2,18 @@
 
 ## Using sample yamls
 
-This directory contains sample files that show how to deploy the Prometheus
-monitor to expose queue metrics for a queue manager running in a Cloud Pak for
-Integration deployment on Red Hat OpenShift. The samples are accompanied by the blog post 
-[Monitoring IBM MQ queue depth in Cloud Pak for Integration](https://community.ibm.com/community/user/integration/blogs/matt-roberts1/2021/05/03/monitoring-mq-qdepth-cp4i) which provides a worked tutorial
-illustrating how to implement monitoring scenarios in a Cloud Pak for Integration deployment.
+This directory contains sample files that show how to deploy the Prometheus monitor to expose queue metrics for a queue
+manager running in a Cloud Pak for Integration deployment on Red Hat OpenShift. The samples are accompanied by the blog
+post
+[Monitoring IBM MQ queue depth in Cloud Pak for Integration](https://community.ibm.com/community/user/integration/blogs/matt-roberts1/2021/05/03/monitoring-mq-qdepth-cp4i)
+which provides a worked tutorial illustrating how to implement monitoring scenarios in a Cloud Pak for Integration
+deployment.
 
-The MQ Certified Container that comes in the Cloud Pak for Integration
-emits a range of [queue manager (server) scope metrics](https://www.ibm.com/docs/en/ibm-mq/9.2?topic=containers-metrics-published-by-mq-certified) but does not currently offer an option to
-publish information about queues or topics, so use of an additional Prometheus monitor pod as
-shown below allows queue (and topic) metrics to be published to Prometheus for consumption
-by OpenShift monitoring tools.
+The MQ Certified Container that comes in the Cloud Pak for Integration emits a range of
+[queue manager (server) scope metrics](https://www.ibm.com/docs/en/ibm-mq/latest?topic=operator-metrics-published-when-using-mq)
+but does not currently offer an option to publish information about queues or topics, so use of an additional Prometheus
+monitor pod as shown below allows queue (and topic) metrics to be published to Prometheus for consumption by OpenShift
+monitoring tools.
 
 The steps to do this are as follows;
 
@@ -22,8 +23,8 @@ cd mq-metric-samples/scripts
 ./buildRuntime.sh mq_prometheus
 
 # Tag and push the Docker image to the container registry used by your OpenShift cluster
-docker tag mq-metric-prometheus:5.2.0 your.repo/your-namespace/mq-metric-prometheus:1.0
-docker push your.repo/your-namespace/mq-metric-prometheus:1.0
+docker tag mq-metric-prometheus:5.2.0 your.repo/your-namespace/mq-metric-prometheus:1.0 docker push
+your.repo/your-namespace/mq-metric-prometheus:1.0
 
 # Create a ConfigMap and Secret to configure the settings that you wish to apply to your monitor.
 # Update these to suit your requirements
@@ -68,9 +69,8 @@ oc apply -f ./metrics-service.yaml
 ```
 
 
-Once the metrics pod is deployed you can see it in action by looking at the logs
-for the pod, and the "IBMMQ Collect" statements showing that the metrics are being
-scraped by the Prometheus agent running in your OpenShift cluster.
+Once the metrics pod is deployed you can see it in action by looking at the logs for the pod, and the "IBMMQ Collect"
+statements showing that the metrics are being scraped by the Prometheus agent running in your OpenShift cluster.
 ```
 oc logs mq-metric-prometheus
 
@@ -93,8 +93,7 @@ time="2021-04-13T20:13:55Z" level=info msg="Collection time = 0 secs"
 
 ## Helm Charts
 
-The `chart` directory contains all the helm charts needed to deploy the set of resources
-on an OpenShift cluster. 
+The `chart` directory contains all the helm charts needed to deploy the set of resources on an OpenShift cluster.
 
-In this case the pod is wrapped in a deployment resource and an OpenShift route is added
-to provide access to the metrics application.
+In this case the pod is wrapped in a deployment resource and an OpenShift route is added to provide access to the
+metrics application.

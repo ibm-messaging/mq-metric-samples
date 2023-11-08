@@ -297,6 +297,9 @@ func cliSet(n string) bool {
 func VerifyConfig(cm *Config, fullCf interface{}) error {
 	var err error
 
+	// These are the resource metric classes that we currently know about for queue statistics, with "NONE" being a special case
+	validQueueSubscriptionSelectors := map[string]bool{"PUT": true, "GET": true, "GENERAL": true, "OPENCLOSE": true, "INQSET": true, "NONE": true}
+
 	// If someone has explicitly said not to use publications, then they
 	// must require use of the xxSTATUS commands. So override that flag even if they
 	// have set UseStatus to false on the command line.
@@ -370,6 +373,17 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 		err = mqmetric.VerifyPatterns(cm.MonitoredChannels)
 		if err != nil {
 			err = fmt.Errorf("Invalid value for monitored channels: %v", err)
+		}
+	}
+
+	if err == nil {
+		if cm.QueueSubscriptionSelector != "" {
+			subSel := strings.Split(cm.QueueSubscriptionSelector, ",")
+			for _, sel := range subSel {
+				if _, ok := validQueueSubscriptionSelectors[sel]; !ok {
+					err = fmt.Errorf("Invalid value %s for queue subscription selector", sel)
+				}
+			}
 		}
 	}
 

@@ -2,7 +2,7 @@
 
 If you have a large queue manager - perhaps several thousands of queues - then a lot of data could be produced for
 monitoring those queues. Some default configuration options might need tuning to get acceptable performance. Reducing
-the frequency of generation and/or collection may be appropriate. There may be several places where tuning might be
+the frequency of generation and/or collection may be appropriate. There are several places where tuning might be
 done: in this collector, in the database configuration, and in the queue manager.
 
 The following sections describe different pieces that you might want to look at. 
@@ -20,20 +20,20 @@ If you cannot avoid running as a client (for example, you are trying to monitor 
 network latency between the queue manager and collector as low as possible. For z/OS, you might consider running the
 collector in a zLinux LPAR on the same machine. Or perhaps in a zCX container.
 
-Also configure the client to take advantage of readahead when getting publications. This is done by setting
-`DEFREADA(YES)` on the nominated ReplyQueue(s).
+If you are running as a client, then configure it to take advantage of readahead when getting publications. This is done by 
+setting `DEFREADA(YES)` on the nominated ReplyQueue(s).
 
 ## Collection processing time
 The collector reports on how long it takes to collect and process the data on each interval. You can see this in a debug
 log. The Prometheus collector also has a `ibmmq_qmgr_exporter_collection_time` metric. Note that this time is the value
-as seen by the main collection thread; the real total time as seen by Prometheus is usually longer. There is likely
-still work going on in the background to send metrics to the database, and for it to be successfully ingested.
+as seen by the main collection thread; the real total time as seen by Prometheus is usually longer. This is because there 
+is likely still work going on in the background to send metrics to the database, and for it to be successfully ingested.
 
 The first time that the collection time exceeds the Prometheus default `scrape_timeout` value, a warning message is
 emitted. This can be ignored if you are expecting a scrape to take a longer period. But it can be helpful if you didn't
 know that you might need to do some tuning.
 
-The true total time taken for a scrape can be seen in Prometheus directly. For example, you can use the admininistrative
+The true total time taken for a scrape can be seen in Prometheus directly. For example, you can use the administrative
 interface at `http://<server>:9090/targets?search=` and find the target corresponding to your queue manager.
 
 For other collectors, there is no specific metric. But the timestamps on each collection block allow you to deduce the

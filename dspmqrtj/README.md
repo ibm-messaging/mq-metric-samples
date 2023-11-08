@@ -17,7 +17,7 @@ Other dependencies are included in the `vendor` tree or can be refreshed with th
 
 ## How to use it
 
-It is similar to **dspmqrte** - [here](https://www.ibm.com/docs/en/ibm-mq/9.2?topic=reference-dspmqrte-display-route-information)
+It is similar to **dspmqrte** - [here](https://www.ibm.com/docs/en/ibm-mq/latest?topic=reference-dspmqrte-display-route-information)
 is that program's documentation - but without all of the options. I wanted to just get to the basics of displaying the
 route. At its simplest, you can
 run `dspmqrtj -m QM1 -q LOOP.ALIAS` where the designated queue happens to be the start of a chain.
