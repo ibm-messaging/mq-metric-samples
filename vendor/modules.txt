@@ -1,3 +1,6 @@
+# github.com/apapsch/go-jsonmerge/v2 v2.0.0
+## explicit; go 1.12
+github.com/apapsch/go-jsonmerge/v2
 # github.com/aws/aws-sdk-go v1.47.5
 ## explicit; go 1.19
 github.com/aws/aws-sdk-go/aws
@@ -50,18 +53,21 @@ github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.2.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
-# github.com/deepmap/oapi-codegen v1.8.2
-## explicit; go 1.14
+# github.com/deepmap/oapi-codegen v1.12.4
+## explicit; go 1.18
 github.com/deepmap/oapi-codegen/pkg/runtime
 github.com/deepmap/oapi-codegen/pkg/types
 # github.com/golang/protobuf v1.5.3
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid
 # github.com/ibm-messaging/mq-golang/v5 v5.5.2
 ## explicit; go 1.16
 github.com/ibm-messaging/mq-golang/v5/ibmmq
 github.com/ibm-messaging/mq-golang/v5/mqmetric
-# github.com/influxdata/influxdb-client-go/v2 v2.12.3
+# github.com/influxdata/influxdb-client-go/v2 v2.12.4
 ## explicit; go 1.17
 github.com/influxdata/influxdb-client-go/v2
 github.com/influxdata/influxdb-client-go/v2/api
@@ -80,12 +86,11 @@ github.com/influxdata/line-protocol
 # github.com/jmespath/go-jmespath v0.4.0
 ## explicit; go 1.14
 github.com/jmespath/go-jmespath
+# github.com/kr/text v0.2.0
+## explicit
 # github.com/matttproud/golang_protobuf_extensions v1.0.4
 ## explicit; go 1.9
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/pkg/errors v0.9.1
-## explicit
-github.com/pkg/errors
 # github.com/prometheus/client_golang v1.17.0
 ## explicit; go 1.19
 github.com/prometheus/client_golang/prometheus
