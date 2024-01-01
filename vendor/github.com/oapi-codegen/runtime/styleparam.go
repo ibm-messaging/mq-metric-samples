@@ -26,7 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/oapi-codegen/runtime/types"
+	"github.com/google/uuid"
 )
 
 // Parameter escaping works differently based on where a header is found
@@ -428,6 +429,10 @@ func primitiveToString(value interface{}) (string, error) {
 	case reflect.Struct:
 		// If input has Marshaler, such as object has Additional Property or AnyOf,
 		// We use this Marshaler and convert into interface{} before styling.
+		if v, ok := value.(uuid.UUID); ok {
+			output = v.String()
+			break
+		}
 		if m, ok := value.(json.Marshaler); ok {
 			buf, err := m.MarshalJSON()
 			if err != nil {
@@ -458,7 +463,7 @@ func primitiveToString(value interface{}) (string, error) {
 	return output, nil
 }
 
-// This function escapes a parameter value bas on the location of that parameter.
+// escapeParameterString escapes a parameter value bas on the location of that parameter.
 // Query params and path params need different kinds of escaping, while header
 // and cookie params seem not to need escaping.
 func escapeParameterString(value string, paramLocation ParamLocation) string {
