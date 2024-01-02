@@ -100,8 +100,8 @@ COPY --chmod=777 ./cmd/${EXPORTER} .
 COPY --chmod=777 vendor ./vendor
 COPY --chmod=777 pkg ./pkg
 # This file holds something like the current commit level if it exists in your tree. It might not be there, so
-# we use wildcards to avoid errors on non-existent files/dirs.
-COPY --chmod=777 ./.git*/refs/heads/master* .
+# we use wildcards and a known file to avoid errors on non-existent files/dirs.
+COPY --chmod=777 README.md ./.git*/refs/heads/master* .
 RUN buildStamp=`date +%Y%m%d-%H%M%S`; \
     hw=`uname -m`; \
     os=`uname -s`; \
