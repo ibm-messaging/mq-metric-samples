@@ -255,6 +255,7 @@ func Collect(c client.Client) error {
 								tags["usage"] = usage
 								tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
 								tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+								addMetaLabels(tags)
 
 							}
 							fields := map[string]interface{}{elem.MetricName: f}
@@ -264,276 +265,288 @@ func Collect(c client.Client) error {
 						}
 					}
 				}
+			}
+			series = "channel"
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
 
-				series = "channel"
-				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes {
-					for key, value := range attr.Values {
-						if value.IsInt64 {
-
-							chlType := int(mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
-							chlTypeString := strings.Replace(ibmmq.MQItoString("CHT", chlType), "MQCHT_", "", -1)
-							// Not every channel status report has the RQMNAME attribute (eg SVRCONNs)
-							rqmName := ""
-							if rqmNameAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
-								rqmName = rqmNameAttr.ValueString
-							}
-
-							chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
-							connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
-							jobName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
-
-							tags := map[string]string{
-								"qmgr": config.cf.QMgrName,
-							}
-							tags["channel"] = chlName
-							tags["platform"] = platformString
-							tags[mqmetric.ATTR_CHL_TYPE] = strings.TrimSpace(chlTypeString)
-							tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
-							tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
-							tags[mqmetric.ATTR_CHL_JOBNAME] = strings.TrimSpace(jobName)
-
-							f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
-							fields := map[string]interface{}{attr.MetricName: f}
-
-							pt := client.NewPoint(series, tags, fields, t)
-
-							bp.WritePoint(pt)
-							log.Debugf("Adding channel point %v", pt)
+						chlType := int(mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_TYPE].Values[key].ValueInt64)
+						chlTypeString := strings.Replace(ibmmq.MQItoString("CHT", chlType), "MQCHT_", "", -1)
+						// Not every channel status report has the RQMNAME attribute (eg SVRCONNs)
+						rqmName := ""
+						if rqmNameAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_RQMNAME].Values[key]; ok {
+							rqmName = rqmNameAttr.ValueString
 						}
+
+						chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+						connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+						jobName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
+
+						tags := map[string]string{
+							"qmgr": config.cf.QMgrName,
+						}
+						tags["channel"] = chlName
+						tags["platform"] = platformString
+						tags[mqmetric.ATTR_CHL_TYPE] = strings.TrimSpace(chlTypeString)
+						tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
+						tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
+						tags[mqmetric.ATTR_CHL_JOBNAME] = strings.TrimSpace(jobName)
+						addMetaLabels(tags)
+
+						f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
+						fields := map[string]interface{}{attr.MetricName: f}
+
+						pt := client.NewPoint(series, tags, fields, t)
+
+						bp.WritePoint(pt)
+						log.Debugf("Adding channel point %v", pt)
 					}
 				}
+			}
 
-				series = "queue"
-				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes {
-					for key, value := range attr.Values {
-						if value.IsInt64 {
+			series = "queue"
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
 
-							qName := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+						qName := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
 
-							tags := map[string]string{
-								"qmgr": config.cf.QMgrName,
-							}
-							tags["queue"] = qName
-							tags["platform"] = platformString
-							usage := ""
-							if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
-								if usageAttr.ValueInt64 == 1 {
-									usage = "XMITQ"
-								} else {
-									usage = "NORMAL"
-								}
-							}
-
-							tags["usage"] = usage
-							tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
-							tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
-
-							f := mqmetric.QueueNormalise(attr, value.ValueInt64)
-							fields := map[string]interface{}{attr.MetricName: f}
-
-							pt := client.NewPoint(series, tags, fields, t)
-
-							bp.WritePoint(pt)
-							log.Debugf("Adding queue point %v", pt)
+						tags := map[string]string{
+							"qmgr": config.cf.QMgrName,
 						}
+						tags["queue"] = qName
+						tags["platform"] = platformString
+						usage := ""
+						if usageAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+							if usageAttr.ValueInt64 == 1 {
+								usage = "XMITQ"
+							} else {
+								usage = "NORMAL"
+							}
+						}
+
+						tags["usage"] = usage
+						tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
+						tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+						addMetaLabels(tags)
+
+						f := mqmetric.QueueNormalise(attr, value.ValueInt64)
+						fields := map[string]interface{}{attr.MetricName: f}
+
+						pt := client.NewPoint(series, tags, fields, t)
+
+						bp.WritePoint(pt)
+						log.Debugf("Adding queue point %v", pt)
 					}
 				}
+			}
 
-				series = "topic"
-				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes {
-					for key, value := range attr.Values {
-						if value.IsInt64 {
+			series = "topic"
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
 
-							topicString := mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
-							topicStatusType := mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
+						topicString := mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes[mqmetric.ATTR_TOPIC_STRING].Values[key].ValueString
+						topicStatusType := mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes[mqmetric.ATTR_TOPIC_STATUS_TYPE].Values[key].ValueString
 
-							tags := map[string]string{
-								"qmgr": config.cf.QMgrName,
-							}
-							tags["topic"] = topicString
-							tags["platform"] = platformString
-							tags["type"] = topicStatusType
-
-							f := mqmetric.TopicNormalise(attr, value.ValueInt64)
-							fields := map[string]interface{}{attr.MetricName: f}
-
-							pt := client.NewPoint(series, tags, fields, t)
-
-							bp.WritePoint(pt)
-							log.Debugf("Adding topic point %v", pt)
+						tags := map[string]string{
+							"qmgr": config.cf.QMgrName,
 						}
+						tags["topic"] = topicString
+						tags["platform"] = platformString
+						tags["type"] = topicStatusType
+						addMetaLabels(tags)
+
+						f := mqmetric.TopicNormalise(attr, value.ValueInt64)
+						fields := map[string]interface{}{attr.MetricName: f}
+
+						pt := client.NewPoint(series, tags, fields, t)
+
+						bp.WritePoint(pt)
+						log.Debugf("Adding topic point %v", pt)
 					}
 				}
+			}
 
-				series = "subscription"
-				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes {
-					for key, value := range attr.Values {
-						if value.IsInt64 {
-							subId := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_ID].Values[key].ValueString
-							subName := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_NAME].Values[key].ValueString
-							subType := int(mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_TYPE].Values[key].ValueInt64)
-							subTypeString := strings.Replace(ibmmq.MQItoString("SUBTYPE", subType), "MQSUBTYPE_", "", -1)
-							topicString := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
+			series = "subscription"
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
+						subId := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_ID].Values[key].ValueString
+						subName := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_NAME].Values[key].ValueString
+						subType := int(mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_TYPE].Values[key].ValueInt64)
+						subTypeString := strings.Replace(ibmmq.MQItoString("SUBTYPE", subType), "MQSUBTYPE_", "", -1)
+						topicString := mqmetric.GetObjectStatus("", mqmetric.OT_SUB).Attributes[mqmetric.ATTR_SUB_TOPIC_STRING].Values[key].ValueString
 
-							tags := map[string]string{
-								"qmgr": config.cf.QMgrName,
-							}
-
-							tags["platform"] = platformString
-							tags["type"] = subTypeString
-							tags["subid"] = subId
-							tags["subscription"] = subName
-							tags["topic"] = topicString
-							f := mqmetric.SubNormalise(attr, value.ValueInt64)
-							fields := map[string]interface{}{attr.MetricName: f}
-
-							pt := client.NewPoint(series, tags, fields, t)
-
-							bp.WritePoint(pt)
-							log.Debugf("Adding subscription point %v", pt)
+						tags := map[string]string{
+							"qmgr": config.cf.QMgrName,
 						}
+
+						tags["platform"] = platformString
+						tags["type"] = subTypeString
+						tags["subid"] = subId
+						tags["subscription"] = subName
+						tags["topic"] = topicString
+						addMetaLabels(tags)
+
+						f := mqmetric.SubNormalise(attr, value.ValueInt64)
+						fields := map[string]interface{}{attr.MetricName: f}
+
+						pt := client.NewPoint(series, tags, fields, t)
+
+						bp.WritePoint(pt)
+						log.Debugf("Adding subscription point %v", pt)
 					}
 				}
+			}
 
-				series = "cluster"
-				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes {
-					for key, value := range attr.Values {
-						if value.IsInt64 {
-							clusterName := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key].ValueString
-							qmType := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key].ValueInt64
+			series = "cluster"
+			for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
+						clusterName := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_NAME].Values[key].ValueString
+						qmType := mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER).Attributes[mqmetric.ATTR_CLUSTER_QMTYPE].Values[key].ValueInt64
 
-							qmTypeString := "PARTIAL"
-							if qmType == int64(ibmmq.MQQMT_REPOSITORY) {
-								qmTypeString = "FULL"
-							}
-
-							tags := map[string]string{
-								"qmgr":     config.cf.QMgrName,
-								"cluster":  clusterName,
-								"qmtype":   qmTypeString,
-								"platform": platformString,
-							}
-
-							f := mqmetric.ClusterNormalise(attr, value.ValueInt64)
-							fields := map[string]interface{}{attr.MetricName: f}
-							pt := client.NewPoint(series, tags, fields, t)
-
-							bp.WritePoint(pt)
-							log.Debugf("Adding cluster point %v", pt)
+						qmTypeString := "PARTIAL"
+						if qmType == int64(ibmmq.MQQMT_REPOSITORY) {
+							qmTypeString = "FULL"
 						}
+
+						tags := map[string]string{
+							"qmgr":     config.cf.QMgrName,
+							"cluster":  clusterName,
+							"qmtype":   qmTypeString,
+							"platform": platformString,
+						}
+						addMetaLabels(tags)
+
+						f := mqmetric.ClusterNormalise(attr, value.ValueInt64)
+						fields := map[string]interface{}{attr.MetricName: f}
+						pt := client.NewPoint(series, tags, fields, t)
+
+						bp.WritePoint(pt)
+						log.Debugf("Adding cluster point %v", pt)
 					}
 				}
+			}
 
-				series = "qmgr"
-				for _, attr := range mqmetric.QueueManagerStatus.Attributes {
-					for _, value := range attr.Values {
-						if value.IsInt64 {
+			series = "qmgr"
+			for _, attr := range mqmetric.QueueManagerStatus.Attributes {
+				for _, value := range attr.Values {
+					if value.IsInt64 {
 
-							qMgrName := strings.TrimSpace(config.cf.QMgrName)
-
-							tags := map[string]string{
-								"qmgr":        qMgrName,
-								"platform":    platformString,
-								"description": mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR),
-							}
-							hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
-							if hostname != mqmetric.DUMMY_STRING {
-								tags["hostname"] = hostname
-							}
-
-							f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
-							fields := map[string]interface{}{attr.MetricName: f}
-
-							pt := client.NewPoint(series, tags, fields, t)
-
-							bp.WritePoint(pt)
-							log.Debugf("Adding qmgr point %v", pt)
-						}
-					}
-				}
-
-				if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
-					series = "bufferpool"
-					for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes {
-						for key, value := range attr.Values {
-							bpId := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_ID].Values[key].ValueString
-							bpLocation := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_LOCATION].Values[key].ValueString
-							bpClass := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_CLASS].Values[key].ValueString
-							if value.IsInt64 && !attr.Pseudo {
-								qMgrName := strings.TrimSpace(config.cf.QMgrName)
-
-								tags := map[string]string{
-									"qmgr":     qMgrName,
-									"platform": platformString,
-								}
-								tags["bufferpool"] = bpId
-								tags["location"] = bpLocation
-								tags["pageclass"] = bpClass
-
-								f := mqmetric.UsageNormalise(attr, value.ValueInt64)
-								fields := map[string]interface{}{attr.MetricName: f}
-
-								pt := client.NewPoint(series, tags, fields, t)
-								bp.WritePoint(pt)
-								log.Debugf("Adding bufferpool point %v", pt)
-
-							}
-						}
-					}
-
-					series = "pageset"
-					for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes {
-						for key, value := range attr.Values {
-							qMgrName := strings.TrimSpace(config.cf.QMgrName)
-							psId := mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes[mqmetric.ATTR_PS_ID].Values[key].ValueString
-							bpId := mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes[mqmetric.ATTR_PS_BPID].Values[key].ValueString
-							if value.IsInt64 && !attr.Pseudo {
-								tags := map[string]string{
-									"qmgr":     qMgrName,
-									"platform": platformString,
-								}
-								tags["pageset"] = psId
-								tags["bufferpool"] = bpId
-								f := mqmetric.UsageNormalise(attr, value.ValueInt64)
-								fields := map[string]interface{}{attr.MetricName: f}
-
-								pt := client.NewPoint(series, tags, fields, t)
-								bp.WritePoint(pt)
-								log.Debugf("Adding pageset point %v", pt)
-
-							}
-						}
-					}
-				} else {
-					series = "amqp"
-					for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes {
 						qMgrName := strings.TrimSpace(config.cf.QMgrName)
 
-						for key, value := range attr.Values {
-							chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
-							clientId := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_AMQP_CLIENT_ID].Values[key].ValueString
-							connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
-							if value.IsInt64 && !attr.Pseudo {
-								tags := map[string]string{
-									"qmgr":     qMgrName,
-									"platform": platformString,
-								}
-								tags["channel"] = chlName
-								tags["description"] = mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_AMQP)
-								tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
-								tags[mqmetric.ATTR_CHL_AMQP_CLIENT_ID] = clientId
-								f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
+						tags := map[string]string{
+							"qmgr":        qMgrName,
+							"platform":    platformString,
+							"description": mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR),
+						}
+						hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+						if hostname != mqmetric.DUMMY_STRING {
+							tags["hostname"] = hostname
+						}
+						addMetaLabels(tags)
 
-								fields := map[string]interface{}{attr.MetricName: f}
+						f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+						fields := map[string]interface{}{attr.MetricName: f}
 
-								pt := client.NewPoint(series, tags, fields, t)
-								bp.WritePoint(pt)
-								log.Debugf("Adding pageset point %v", pt)
+						pt := client.NewPoint(series, tags, fields, t)
+
+						bp.WritePoint(pt)
+						log.Debugf("Adding qmgr point %v", pt)
+					}
+				}
+			}
+
+			if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+				series = "bufferpool"
+				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes {
+					for key, value := range attr.Values {
+						bpId := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_ID].Values[key].ValueString
+						bpLocation := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_LOCATION].Values[key].ValueString
+						bpClass := mqmetric.GetObjectStatus("", mqmetric.OT_BP).Attributes[mqmetric.ATTR_BP_CLASS].Values[key].ValueString
+						if value.IsInt64 && !attr.Pseudo {
+							qMgrName := strings.TrimSpace(config.cf.QMgrName)
+
+							tags := map[string]string{
+								"qmgr":     qMgrName,
+								"platform": platformString,
 							}
+							tags["bufferpool"] = bpId
+							tags["location"] = bpLocation
+							tags["pageclass"] = bpClass
+							addMetaLabels(tags)
+
+							f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+							fields := map[string]interface{}{attr.MetricName: f}
+
+							pt := client.NewPoint(series, tags, fields, t)
+							bp.WritePoint(pt)
+							log.Debugf("Adding bufferpool point %v", pt)
+
+						}
+					}
+				}
+
+				series = "pageset"
+				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes {
+					for key, value := range attr.Values {
+						qMgrName := strings.TrimSpace(config.cf.QMgrName)
+						psId := mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes[mqmetric.ATTR_PS_ID].Values[key].ValueString
+						bpId := mqmetric.GetObjectStatus("", mqmetric.OT_PS).Attributes[mqmetric.ATTR_PS_BPID].Values[key].ValueString
+						if value.IsInt64 && !attr.Pseudo {
+							tags := map[string]string{
+								"qmgr":     qMgrName,
+								"platform": platformString,
+							}
+							tags["pageset"] = psId
+							tags["bufferpool"] = bpId
+							addMetaLabels(tags)
+
+							f := mqmetric.UsageNormalise(attr, value.ValueInt64)
+							fields := map[string]interface{}{attr.MetricName: f}
+
+							pt := client.NewPoint(series, tags, fields, t)
+							bp.WritePoint(pt)
+							log.Debugf("Adding pageset point %v", pt)
+
+						}
+					}
+				}
+			} else {
+				series = "amqp"
+				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes {
+					qMgrName := strings.TrimSpace(config.cf.QMgrName)
+
+					for key, value := range attr.Values {
+						chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+						clientId := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_AMQP_CLIENT_ID].Values[key].ValueString
+						connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+						if value.IsInt64 && !attr.Pseudo {
+							tags := map[string]string{
+								"qmgr":     qMgrName,
+								"platform": platformString,
+							}
+							tags["channel"] = chlName
+							tags["description"] = mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_AMQP)
+							tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
+							tags[mqmetric.ATTR_CHL_AMQP_CLIENT_ID] = clientId
+							addMetaLabels(tags)
+
+							f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
+
+							fields := map[string]interface{}{attr.MetricName: f}
+
+							pt := client.NewPoint(series, tags, fields, t)
+							bp.WritePoint(pt)
+							log.Debugf("Adding pageset point %v", pt)
 						}
 					}
 				}
 			}
+
 		}
 		// This is where real errors might occur, including the inability to
 		// contact the database server. We will ignore (but log)  these errors
@@ -552,4 +565,12 @@ func Collect(c client.Client) error {
 
 	return err
 
+}
+
+func addMetaLabels(tags map[string]string) {
+	if len(config.cf.MetadataTagsArray) > 0 {
+		for i := 0; i < len(config.cf.MetadataTagsArray); i++ {
+			tags[config.cf.MetadataTagsArray[i]] = config.cf.MetadataValuesArray[i]
+		}
+	}
 }

@@ -15,13 +15,13 @@ ARG EXPORTER=mq_prometheus
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ## ### ### ### ### ### ### BUILD ### ### ### ### ### ### ##
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-FROM golang:1.19 AS builder
+FROM golang:1.20 AS builder
 
 ARG EXPORTER
 ENV EXPORTER=${EXPORTER} \
     ORG="github.com/ibm-messaging" \
     REPO="mq-metric-samples" \
-    VRMF=9.3.4.0 \
+    VRMF=9.3.5.0 \
     CGO_CFLAGS="-I/opt/mqm/inc/" \
     CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
     genmqpkg_incnls=1 \
@@ -113,7 +113,7 @@ RUN buildStamp=`date +%Y%m%d-%H%M%S`; \
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ### ### ### ### ### ### ### RUN ### ### ### ### ### ### ###
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-FROM golang:1.19 AS runtime
+FROM golang:1.20 AS runtime
 
 ARG EXPORTER
 

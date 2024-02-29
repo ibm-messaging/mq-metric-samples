@@ -225,6 +225,8 @@ func Collect() error {
 								tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
 								tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
 							}
+							addMetaLabels(tags)
+
 							printPoint(series, elem.MetricName, float32(f), tags)
 						}
 					}
@@ -257,6 +259,7 @@ func Collect() error {
 					tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
 					tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
 					tags[mqmetric.ATTR_CHL_JOBNAME] = strings.TrimSpace(jobName)
+					addMetaLabels(tags)
 
 					f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
 					printPoint(series, attr.MetricName, float32(f), tags)
@@ -288,6 +291,7 @@ func Collect() error {
 					tags["usage"] = usage
 					tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
 					tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+					addMetaLabels(tags)
 
 					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
 					printPoint(series, attr.MetricName, float32(f), tags)
@@ -309,6 +313,7 @@ func Collect() error {
 					tags["topic"] = topicString
 					tags["platform"] = platformString
 					tags["type"] = topicStatusType
+					addMetaLabels(tags)
 
 					f := mqmetric.TopicNormalise(attr, value.ValueInt64)
 					printPoint(series, attr.MetricName, float32(f), tags)
@@ -335,6 +340,8 @@ func Collect() error {
 					tags["subid"] = subId
 					tags["subscription"] = subName
 					tags["topic"] = topicString
+					addMetaLabels(tags)
+
 					f := mqmetric.SubNormalise(attr, value.ValueInt64)
 					printPoint(series, attr.MetricName, float32(f), tags)
 				}
@@ -359,6 +366,7 @@ func Collect() error {
 						"qmtype":   qmTypeString,
 						"platform": platformString,
 					}
+					addMetaLabels(tags)
 
 					f := mqmetric.ClusterNormalise(attr, value.ValueInt64)
 					printPoint(series, attr.MetricName, float32(f), tags)
@@ -382,6 +390,7 @@ func Collect() error {
 					if hostname != mqmetric.DUMMY_STRING {
 						tags["hostname"] = hostname
 					}
+					addMetaLabels(tags)
 
 					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
 					printPoint(series, attr.MetricName, float32(f), tags)
@@ -406,6 +415,7 @@ func Collect() error {
 						tags["bufferpool"] = bpId
 						tags["location"] = bpLocation
 						tags["pageclass"] = bpClass
+						addMetaLabels(tags)
 
 						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
 						printPoint(series, attr.MetricName, float32(f), tags)
@@ -426,6 +436,8 @@ func Collect() error {
 						}
 						tags["pageset"] = psId
 						tags["bufferpool"] = bpId
+						addMetaLabels(tags)
+
 						f := mqmetric.UsageNormalise(attr, value.ValueInt64)
 						printPoint(series, attr.MetricName, float32(f), tags)
 					}
@@ -449,6 +461,7 @@ func Collect() error {
 						tags["description"] = mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_AMQP)
 						tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
 						tags[mqmetric.ATTR_CHL_AMQP_CLIENT_ID] = clientId
+						addMetaLabels(tags)
 
 						f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
 						printPoint(series, attr.MetricName, float32(f), tags)
@@ -514,4 +527,12 @@ func sanitiseString(s string) string {
 		s2 = "-"
 	}
 	return s2
+}
+
+func addMetaLabels(tags map[string]string) {
+	if len(config.cf.MetadataTagsArray) > 0 {
+		for i := 0; i < len(config.cf.MetadataTagsArray); i++ {
+			tags[config.cf.MetadataTagsArray[i]] = config.cf.MetadataValuesArray[i]
+		}
+	}
 }

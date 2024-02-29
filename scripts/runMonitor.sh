@@ -17,7 +17,7 @@ TAG=mq-metric-$monbase
 
 # This line grabs a currently active IP address for this machine. It's probably
 # not what you want to use for a real system but it's useful for testing.
-addr=`ip addr | grep -v altname | grep -v docker | grep "state UP" -A2 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'`
+addr=`ip addr | grep -v altname | grep -v docker | grep "state UP" -A2 | grep inet | grep -v inet6 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'`
 echo "Local address is $addr"
 port="1414"
 

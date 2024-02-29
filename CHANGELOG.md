@@ -1,6 +1,13 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Feb 29 2024 (v5.5.4)
+* Update to MQ 9.3.5
+* Update all vendored dependencies
+* Add metadata label configuration options
+* Update to Go 1.20 as baseline
+* Add EXPERIMENTAL OpenTelemetry emitter
+
 ### Nov 08 2023 (v5.5.2)
 * Pick up latest mq-golang fixes
 

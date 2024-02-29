@@ -59,6 +59,11 @@ type Config struct {
 	MonitoredSubscriptionsFile string
 	QueueSubscriptionSelector  string
 
+	metadataTags        string
+	metadataValues      string
+	MetadataTagsArray   []string
+	MetadataValuesArray []string
+
 	LogLevel string
 
 	// This is used for DISPLAY xxSTATUS commands, but not the collection of published resource stats
@@ -209,6 +214,9 @@ func InitConfig(cm *Config) {
 
 	AddParm(&cfMoved.QueueSubscriptionSelector, "", CP_STR, "removed.queueSubscriptionSelector", "objects", "queueSubscriptionSelector", "Moved to FILTERS section")
 	AddParm(&cfMoved.ShowInactiveChannels, "", CP_STR, "removed.showInactiveChannels", "objects", "showInactiveChannels", "Moved to FILTERS section")
+
+	AddParm(&cm.metadataTags, "", CP_STR, "ibmmq.metadataTags", "connection", "metadataTags", "Additional Tags")
+	AddParm(&cm.metadataValues, "", CP_STR, "ibmmq.metadataValues", "connection", "metadataValues", "Additional Values (one per tag)")
 
 }
 
@@ -429,6 +437,16 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 	if err == nil {
 		if cfMoved.ShowInactiveChannels != "" {
 			err = fmt.Errorf("ShowInactiveChannels has moved to filters section of configuration")
+		}
+	}
+
+	if err == nil {
+		if cm.metadataTags != "" {
+			cm.MetadataTagsArray = strings.Split(cm.metadataTags, ",")
+			cm.MetadataValuesArray = strings.Split(cm.metadataValues, ",")
+			if len(cm.MetadataTagsArray) != len(cm.MetadataValuesArray) {
+				err = fmt.Errorf("Mismatch in metadata Tags/Values lengths")
+			}
 		}
 	}
 

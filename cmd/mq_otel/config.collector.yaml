@@ -1,0 +1,12 @@
+
+otel:
+  # Destination endpoint for exporting metrics via GRPC.
+  # Set to empty to use stdout
+  endpoint: localhost:4317
+  # Use unprotected protocol to GRPC server
+  insecure: true
+  # Logging within the OTEL libraries
+  logLevel: INFO
+  interval: 10s
+  maxErrors: 10
+

@@ -47,6 +47,12 @@ connection:
 
 # Maximum time (seconds) to wait for a status response from qmgr. 
     waitInterval: 3
+# Metadata Tags and Values which allow setting of additional descriptive information about the queue
+# manager such as the environment (eg DEV/TEST/PROD). 
+#    metadataTags:
+#    - ENV
+#    metadataValues:
+#    - PROD
 
 # "channels" is for all the traditional MQ channels including SVRCONNs. "amqpChannels" shows
 # status for the AMQP objects

@@ -137,6 +137,7 @@ func main() {
 				if err == nil {
 					var compCode int32
 					compCode, err = mqmetric.VerifyConfig()
+
 					// We could choose to fail after a warning, but instead will continue for now
 					if compCode == ibmmq.MQCC_WARNING {
 						log.Println(err)

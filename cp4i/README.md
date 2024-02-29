@@ -9,7 +9,7 @@ post
 which provides a worked tutorial illustrating how to implement monitoring scenarios in a Cloud Pak for Integration
 deployment.
 
-The MQ Certified Container that comes in the Cloud Pak for Integration emits a range of
+The MQ container that comes in the Cloud Pak for Integration emits a range of
 [queue manager (server) scope metrics](https://www.ibm.com/docs/en/ibm-mq/latest?topic=operator-metrics-published-when-using-mq)
 but does not currently offer an option to publish information about queues or topics, so use of an additional Prometheus
 monitor pod as shown below allows queue (and topic) metrics to be published to Prometheus for consumption by OpenShift

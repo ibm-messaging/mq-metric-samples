@@ -1,0 +1,18 @@
+* Cleanup any existing service
+STOP SERVICE(MQOTEL)
+DELETE SERVICE(MQOTEL)
+
+* Reset the definition
+DEFINE SERVICE(MQOTEL)         +
+       CONTROL(QMGR)               +
+       SERVTYPE(SERVER)            +
+       STARTCMD('/usr/local/bin/mqgo/mq_otel.sh') +
+       STARTARG(+QMNAME+)          +
+       STOPCMD('/usr/bin/kill ' )  +
+       STOPARG(+MQ_SERVER_PID+)    +
+       STDOUT('/var/mqm/errors/mq_otel.out')  +
+       STDERR('/var/mqm/errors/mq_otel.out')  +
+       DESCR('MQ exporter for OpenTelemetry')
+
+* Start it manually now; will be automatically started on future qmgr startup
+START SERVICE(MQOTEL)

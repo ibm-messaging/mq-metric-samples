@@ -45,13 +45,15 @@ type ConfigYConnection struct {
 	User             string
 	Client           string `yaml:"clientConnection" default:"false"`
 	Password         string
-	ReplyQueue       string `yaml:"replyQueue" `
-	ReplyQueue2      string `yaml:"replyQueue2"`
-	DurableSubPrefix string `yaml:"durableSubPrefix"`
-	CcdtUrl          string `yaml:"ccdtUrl"`
-	ConnName         string `yaml:"connName"`
-	Channel          string `yaml:"channel"`
-	WaitInterval     string `yaml:"waitInterval"`
+	ReplyQueue       string   `yaml:"replyQueue" `
+	ReplyQueue2      string   `yaml:"replyQueue2"`
+	DurableSubPrefix string   `yaml:"durableSubPrefix"`
+	CcdtUrl          string   `yaml:"ccdtUrl"`
+	ConnName         string   `yaml:"connName"`
+	Channel          string   `yaml:"channel"`
+	WaitInterval     string   `yaml:"waitInterval"`
+	MetadataTags     []string `yaml:"metadataTags"`
+	MetadataValues   []string `yaml:"metadataValues"`
 }
 type ConfigYObjects struct {
 	Queues        []string
@@ -94,11 +96,13 @@ func ReadConfigFile(f string, cmy interface{}) error {
 // apparently unable to set a default of "true" for missing fields. So we read it
 // as a string and parse that. The caller also sends in the default value if the string
 // cannot be decoded.
-func asBool(s string, def bool) bool {
+func AsBool(s string, def bool) bool {
 	b, err := strconv.ParseBool(s)
 	if err == nil {
+		//fmt.Printf("Value: %s Default: %v Returning: %v\n", s, def, b)
 		return b
 	} else {
+		//fmt.Printf("Value: %s Default: %v Returning def: %v\n", s, def, def)
 		return def
 	}
 }
@@ -120,13 +124,13 @@ func asInt(s string, def int) int {
 // collectors call similar code for their own specific attributes
 func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo ConfigYObjects, cyf ConfigYFilters) {
 
-	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", asBool(cyg.UseObjectStatus, true))
-	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", asBool(cyg.UseResetQStats, false))
-	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", asBool(cyg.UsePublications, true))
+	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", AsBool(cyg.UseObjectStatus, true))
+	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", AsBool(cyg.UseResetQStats, false))
+	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", AsBool(cyg.UsePublications, true))
 
-	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("filters", "showInactiveChannels", asBool(cyf.ShowInactiveChannels, false))
-	cm.CC.HideSvrConnJobname = CopyParmIfNotSetBool("filters", "hideSvrConnJobname", asBool(cyf.HideSvrConnJobname, false))
-	cm.CC.HideAMQPClientId = CopyParmIfNotSetBool("filters", "hideAMQPClientId", asBool(cyf.HideAMQPClientId, false))
+	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("filters", "showInactiveChannels", AsBool(cyf.ShowInactiveChannels, false))
+	cm.CC.HideSvrConnJobname = CopyParmIfNotSetBool("filters", "hideSvrConnJobname", AsBool(cyf.HideSvrConnJobname, false))
+	cm.CC.HideAMQPClientId = CopyParmIfNotSetBool("filters", "hideAMQPClientId", AsBool(cyf.HideAMQPClientId, false))
 
 	cm.QueueSubscriptionSelector = CopyParmIfNotSetStrArray("filters", "queueSubscriptionSelector", cyf.QueueSubscriptionSelector)
 
@@ -141,7 +145,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.CcdtUrl = CopyParmIfNotSetStr("connection", "ccdtUrl", cyc.CcdtUrl)
 	cm.CC.ConnName = CopyParmIfNotSetStr("connection", "connName", cyc.ConnName)
 	cm.CC.Channel = CopyParmIfNotSetStr("connection", "channel", cyc.Channel)
-	cm.CC.ClientMode = CopyParmIfNotSetBool("connection", "clientConnection", asBool(cyc.Client, false))
+	cm.CC.ClientMode = CopyParmIfNotSetBool("connection", "clientConnection", AsBool(cyc.Client, false))
 	cm.CC.UserId = CopyParmIfNotSetStr("connection", "user", cyc.User)
 	cm.CC.Password = CopyParmIfNotSetStr("connection", "password", cyc.Password)
 
@@ -166,10 +170,13 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cfMoved.QueueSubscriptionSelector = CopyDeprecatedParmIfNotSetStrArray("objects", "queueSubscriptionSelector", cyo.QueueSubscriptionSelector)
 	cfMoved.ShowInactiveChannels = CopyDeprecatedParmIfNotSetStr("objects", "showInactiveChannels", cyo.ShowInactiveChannels)
 
+	cm.metadataTags = CopyParmIfNotSetStrArray("connection", "metadataTags", cyc.MetadataTags)
+	cm.metadataValues = CopyParmIfNotSetStrArray("connection", "metadataValues", cyc.MetadataValues)
+
 	return
 }
 
-// If the parameter has already been set by env var or cli, then the value in the main config structure returned. Otherwise
+// If the parameter has already been set by env var or cli, then the value in the main config structure is returned. Otherwise
 // the value passed as the "val" parameter - from the YAML version of the configuration elements - is returned
 func CopyParmIfNotSetBool(section string, name string, val bool) bool {
 	v, s := copyParmIfNotSet(section, name, false)

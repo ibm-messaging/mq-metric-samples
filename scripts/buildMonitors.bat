@@ -40,4 +40,10 @@ go build -mod=vendor -o bin/%%M.exe %D%\%%M\config.go %D%\%%M\main.go %D%\%%M\ex
 type %R%\config.common.yaml %D%\%%M\config.collector.yaml > bin\%%M.yaml 2>NUL:
 )
 
+for %%M in (mq_otel) do (
+echo Building %%M
+go build -mod=vendor -o bin/%%M.exe %D%\%%M\config.go %D%\%%M\main.go %D%\%%M\reader.go 
+type %R%\config.common.yaml %D%\%%M\config.collector.yaml > bin\%%M.yaml 2>NUL:
+)
+
 endlocal

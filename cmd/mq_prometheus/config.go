@@ -20,8 +20,9 @@ package main
 
 import (
 	"fmt"
-	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	"time"
+
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 )
 
 type mqExporterConfig struct {
@@ -36,6 +37,8 @@ type mqExporterConfig struct {
 	keepRunning               bool
 	reconnectIntervalDuration time.Duration
 	reconnectInterval         string
+	overrideCType             string
+	overrideCTypeBool         bool
 }
 
 type ConfigYProm struct {
@@ -47,7 +50,9 @@ type ConfigYProm struct {
 	HttpsKeyFile      string `yaml:"httpsKeyFile"`
 	KeepRunning       bool   `yaml:"keepRunning"`
 	ReconnectInterval string `yaml:"reconnectInterval"`
+	OverrideCType     string `yaml:"overrideCType"`
 }
+
 type mqExporterConfigYaml struct {
 	Global     cf.ConfigYGlobal
 	Connection cf.ConfigYConnection
@@ -88,6 +93,7 @@ func initConfig() error {
 	cf.AddParm(&config.httpsKeyFile, "", cf.CP_STR, "ibmmq.httpsKeyFile", "prometheus", "httpsKeyFile", "TLS private key file")
 
 	cf.AddParm(&config.namespace, defaultNamespace, cf.CP_STR, "namespace", "prometheus", "namespace", "Namespace for metrics")
+	cf.AddParm(&config.overrideCType, "", cf.CP_STR, "ibmmq.otelOverrideCType", "prometheus", "overrideCType", "Override data types for GRPC processing")
 
 	err = cf.ParseParms()
 
@@ -110,6 +116,7 @@ func initConfig() error {
 					cfy.Prometheus.ReconnectInterval = defaultReconnectInterval
 				}
 				config.reconnectInterval = cf.CopyParmIfNotSetStr("prometheus", "reconnectInterval", cfy.Prometheus.ReconnectInterval)
+				config.overrideCType = cf.CopyParmIfNotSetStr("prometheus", "overrideCType", cfy.Prometheus.OverrideCType)
 
 			}
 		}
@@ -126,6 +133,11 @@ func initConfig() error {
 
 	if err == nil {
 		cf.InitLog(config.cf)
+	}
+
+	if err == nil {
+		// This preserves a degree of compatibility with the mq_prometheus collector in this repo and any dashboards.
+		config.overrideCTypeBool = cf.AsBool(config.overrideCType, false)
 	}
 
 	if err == nil {
