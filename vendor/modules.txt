@@ -71,11 +71,11 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/uuid v1.3.1
+# github.com/google/uuid v1.4.0
 ## explicit
 github.com/google/uuid
-# github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
-## explicit; go 1.17
+# github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0
+## explicit; go 1.19
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
@@ -143,7 +143,7 @@ go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
 go.opentelemetry.io/otel/semconv/v1.21.0
 go.opentelemetry.io/otel/semconv/v1.24.0
-# go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.45.0
+# go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.24.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc
 go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc/internal
@@ -159,23 +159,24 @@ go.opentelemetry.io/otel/exporters/stdout/stdoutmetric
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
 go.opentelemetry.io/otel/metric/noop
-# go.opentelemetry.io/otel/sdk v1.22.0
+# go.opentelemetry.io/otel/sdk v1.24.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
 go.opentelemetry.io/otel/sdk/resource
-# go.opentelemetry.io/otel/sdk/metric v1.22.0
+# go.opentelemetry.io/otel/sdk/metric v1.24.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/sdk/metric
 go.opentelemetry.io/otel/sdk/metric/internal
 go.opentelemetry.io/otel/sdk/metric/internal/aggregate
+go.opentelemetry.io/otel/sdk/metric/internal/exemplar
 go.opentelemetry.io/otel/sdk/metric/internal/x
 go.opentelemetry.io/otel/sdk/metric/metricdata
 # go.opentelemetry.io/otel/trace v1.24.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
-# go.opentelemetry.io/proto/otlp v1.0.0
+# go.opentelemetry.io/proto/otlp v1.1.0
 ## explicit; go 1.17
 go.opentelemetry.io/proto/otlp/collector/metrics/v1
 go.opentelemetry.io/proto/otlp/common/v1
@@ -184,8 +185,8 @@ go.opentelemetry.io/proto/otlp/resource/v1
 # golang.org/x/crypto v0.18.0
 ## explicit; go 1.18
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.17.0
-## explicit; go 1.17
+# golang.org/x/net v0.19.0
+## explicit; go 1.18
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -193,7 +194,7 @@ golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/publicsuffix
 golang.org/x/net/trace
-# golang.org/x/sys v0.16.0
+# golang.org/x/sys v0.17.0
 ## explicit; go 1.18
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
@@ -208,14 +209,14 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97
+# google.golang.org/genproto/googleapis/api v0.0.0-20240102182953-50ed04b92917
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/api/httpbody
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/errdetails
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.60.1
+# google.golang.org/grpc v1.61.1
 ## explicit; go 1.19
 google.golang.org/grpc
 google.golang.org/grpc/attributes
