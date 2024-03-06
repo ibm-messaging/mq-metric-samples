@@ -235,6 +235,9 @@ func main() {
 				log.Fatal("Too many errors communicating with server")
 			}
 			log.Debugf("Error counts: global %d", totalErrorCount)
+			if ctx.Err() != nil {
+				log.Fatalf("Exiting: %v", ctx.Err())
+			}
 
 			loopCount++
 			if maxLoops > 0 && loopCount > maxLoops {

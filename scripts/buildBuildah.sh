@@ -126,7 +126,7 @@ if [ -z "$gitCommit" ]
 then
   gitCommit="Unknown"
 fi
-hw=`uname -i`
+hw=`uname -m`
 os=`uname -s`
 bp="$os/$hw"
 
