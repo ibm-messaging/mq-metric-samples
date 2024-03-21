@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# This Dockerfile shows how you can both build and run a container with 
+# This Dockerfile shows how you can both build and run a container with
 # a specific exporter/collector program. It uses two stages, copying the relevant
 # material from the build step into the runtime container.
 #
@@ -15,7 +15,13 @@ ARG EXPORTER=mq_prometheus
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ## ### ### ### ### ### ### BUILD ### ### ### ### ### ### ##
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-FROM golang:1.20 AS builder
+# We start with a slightly older ubuntu rather than, say, a prebuilt
+# golang image because the newer go images have a glibc that is newer
+# than that in the current MQ container image. And that causes the collector
+# to fail if layered into the MQ container.
+#
+# At least there is a golang 1.20 available for this level of ubuntu.
+FROM ubuntu:20.04 AS builder
 
 ARG EXPORTER
 ENV EXPORTER=${EXPORTER} \
@@ -28,11 +34,22 @@ ENV EXPORTER=${EXPORTER} \
     genmqpkg_incsdk=1 \
     genmqpkg_inctls=1
 
+ENV GOVERSION=1.20
+
 # Install packages
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
+    tar \
+    golang-$GOVERSION \
     build-essential
+
+# The compiler is in a non-default location
+ENV GO=/usr/lib/go-${GOVERSION}/bin/go
+RUN $GO version
+
+USER 0
 
 # Create directory structure
 RUN mkdir -p /go/src /go/bin /go/pkg \
@@ -45,17 +62,17 @@ RUN mkdir -p /go/src /go/bin /go/pkg \
 # Install MQ client and SDK
 # For platforms with a Redistributable client, we can use curl to pull it in and unpack it.
 # For most other platforms, we assume that you have deb files available under the current directory
-# and we then copy them into the container image. Use dpkg to install from them; these have to be 
-# done in the right order. 
+# and we then copy them into the container image. Use dpkg to install from them; these have to be
+# done in the right order.
 #
-# The Linux ARM64 image is a full-function server package that is directly unpacked. 
+# The Linux ARM64 image is a full-function server package that is directly unpacked.
 # We only need a subset of the files so strip the unneeded filesets. The download of the image could
 # be automated via curl in the same way as the Linux/amd64 download, but it's a much bigger image and
 # has a different license. So I'm not going to do that for now.
-# 
+#
 # If additional Redistributable Client platforms appear, then this block can be altered, including the MQARCH setting.
-# 
-# The copy of the README is so that at least one file always gets copied, even if you don't have the deb files locally. 
+#
+# The copy of the README is so that at least one file always gets copied, even if you don't have the deb files locally.
 # Using a wildcard in the directory name also helps to ensure that this part of the build always succeeds.
 COPY README.md MQINST*/*deb MQINST*/*tar.gz /MQINST
 
@@ -108,7 +125,7 @@ RUN buildStamp=`date +%Y%m%d-%H%M%S`; \
     bp="$os/$hw"; \
     if [ -r master ]; then gitCommit=`cat master`;else gitCommit="Unknown";fi; \
     BUILD_EXTRA_INJECT="-X \"main.BuildStamp=$buildStamp\" -X \"main.BuildPlatform=$bp\" -X \"main.GitCommit=$gitCommit\""; \
-    go build -mod=vendor -ldflags "$BUILD_EXTRA_INJECT" -o /go/bin/${EXPORTER} ./*.go
+    $GO build -mod=vendor -ldflags "$BUILD_EXTRA_INJECT" -o /go/bin/${EXPORTER} ./*.go
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ### ### ### ### ### ### ### RUN ### ### ### ### ### ### ###

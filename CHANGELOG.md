@@ -1,6 +1,10 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Mar 21 2024 (v5.5.4.1)
+* Update main Dockerfile to use different base build image 
+  because of glibc issues when copying into regular MQ container
+
 ### Feb 29 2024 (v5.5.4)
 * Update to MQ 9.3.5
 * Update all vendored dependencies
