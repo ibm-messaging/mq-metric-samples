@@ -3,7 +3,7 @@ module github.com/ibm-messaging/mq-metric-samples/v5
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.51.11
+	github.com/aws/aws-sdk-go v1.51.32
 	github.com/go-logr/stdr v1.2.2
 	github.com/ibm-messaging/mq-golang/v5 v5.5.4
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
