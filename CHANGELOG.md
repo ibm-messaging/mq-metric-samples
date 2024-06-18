@@ -1,6 +1,15 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jun 18 2024 (v5.6.0)
+* Update to MQ 9.4.0
+* Update all vendored dependencies
+* Add OTLP/http option to OTel emitter
+  * Remove "EXPERIMENTAL" flag
+* Convert OTEL and Prometheus sample dashboards to newer Grafana panels
+* Update to Go 1.21 as baseline (OTEL requirement)
+* Permit connection to unnamed (default) queue manager 
+
 ### Mar 21 2024 (v5.5.4.1)
 * Update main Dockerfile to use different base build image 
   because of glibc issues when copying into regular MQ container

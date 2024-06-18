@@ -82,7 +82,7 @@ func addMetricA(Meter metric.Meter, series string, attr *mqmetric.StatusAttribut
 
 // This is where we add the metric's value to the set that will be reported on this pass.
 // Two different sorts of metric report are used:
-// - the Counter is for those that can be accumulated over time (the delta flag is enabled)
+// - a Counter is for those that can be accumulated over time (the delta flag is enabled)
 // - a Gauge is used for "absolute" numbers eg number of current connections
 func addMetric(meter metric.Meter, series string, metricName string, desc string, cumul bool, value interface{}, tags map[string]string, readTime time.Time) {
 	var err error
@@ -98,7 +98,7 @@ func addMetric(meter metric.Meter, series string, metricName string, desc string
 		metricName = metricName[len("queue_"):]
 	}
 
-	// Force all metrics to be reported as Gauges for compatibility with the mq_prometheus collector in this repo
+	// Optionally force all metrics to be reported as Gauges for compatibility with the mq_prometheus collector in this repo
 	if config.overrideCType {
 		cumul = false
 	}
@@ -178,7 +178,6 @@ func observe(_ context.Context, o metric.Float64Observer, counterKey string) err
 		}
 	}
 	return nil
-
 }
 
 /*

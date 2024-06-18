@@ -134,7 +134,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "((ibmmq_queue_mqget_count{queue=~\"APP.*\"} or vector(0))- (ibmmq_queue_mqget_count{queue=~\"APP.*\"} offset $__interval or vector(0)) >=0) or vector(0)",
+          "expr": "rate(ibmmq_otel_ibmmq_queue_mqget_count{queue=~\"APP.*\"}[90s])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -152,7 +152,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "((ibmmq_queue_mqput_mqput1_count{queue=~\"APP.*\"} or vector(0))- (ibmmq_queue_mqput_mqput1_count{queue=~\"APP.*\"} offset $__interval or vector(0)) >=0) or vector(0)",
+          "expr": "rate(ibmmq_otel_ibmmq_queue_mqput_mqput1_count{queue=~\"APP.*\"}[90s])",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -168,7 +168,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_queue_depth{queue=~\"APP.*\"}",
+          "expr": "ibmmq_otel_ibmmq_queue_depth{queue=~\"APP.*\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
@@ -183,7 +183,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_queue_oldest_message_age{queue=~\"APP.*\"}",
+          "expr": "ibmmq_otel_ibmmq_queue_oldest_message_age{queue=~\"APP.*\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -289,7 +289,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_published_to_subscribers_message_count - (ibmmq_qmgr_published_to_subscribers_message_count offset $__interval)",
+          "expr": "rate(ibmmq_otel_ibmmq_qmgr_published_to_subscribers_message_count[ $__range])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Publications: {{qmgr}}",
@@ -302,7 +302,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_interval_mqput_mqput1_total_count - (ibmmq_qmgr_interval_mqput_mqput1_total_count offset $__interval)",
+          "expr": "rate(ibmmq_otel_ibmmq_qmgr_interval_mqput_mqput1_total_count[ $__range])",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -316,7 +316,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_interval_destructive_get_total_count - (ibmmq_qmgr_interval_destructive_get_total_count offset $__interval)",
+          "expr": "rate(ibmmq_otel_ibmmq_qmgr_interval_destructive_get_total_count[ $__range])",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -330,71 +330,98 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "(ibmmq_qmgr_persistent_message_browse_count - (ibmmq_qmgr_persistent_message_browse_count offset $__interval)) + (ibmmq_qmgr_non_persistent_message_browse_count - (ibmmq_qmgr_non_persistent_message_browse_count offset $__interval))",
+          "expr": "(ibmmq_otel_ibmmq_qmgr_persistent_message_browse_count - (ibmmq_otel_ibmmq_qmgr_persistent_message_browse_count offset $__interval)) + (ibmmq_otel_ibmmq_qmgr_non_persistent_message_browse_count - (ibmmq_otel_ibmmq_qmgr_non_persistent_message_browse_count offset $__interval))",
           "format": "time_series",
+          "hide": true,
           "intervalFactor": 1,
           "legendFormat": "Browse {{ qmgr}}",
           "range": true,
           "refId": "C"
         }
       ],
-      "title": "Messages",
+      "title": "Message Rates",
       "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": {
         "type": "prometheus",
         "uid": "000000001"
       },
-      "editable": true,
-      "error": false,
       "fieldConfig": {
         "defaults": {
-          "links": []
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
-      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 8,
         "x": 0,
         "y": 7
       },
-      "hiddenSeries": false,
       "id": 18,
-      "isNew": true,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 2,
       "links": [],
-      "nullPointMode": "connected",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
       "pluginVersion": "9.1.4",
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
       "targets": [
         {
           "datasource": {
@@ -402,7 +429,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_log_write_latency_seconds",
+          "expr": "ibmmq_otel_ibmmq_qmgr_log_write_latency_seconds",
           "intervalFactor": 2,
           "legendFormat": "Latency",
           "metric": "ibmmq_qmgr_log_write_latency_us",
@@ -411,46 +438,277 @@
           "step": 2
         }
       ],
-      "thresholds": [],
-      "timeRegions": [],
       "title": "Log write latency",
-      "tooltip": {
-        "msResolution": true,
-        "shared": true,
-        "sort": 0,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:207",
-          "format": "s",
-          "logBase": 1,
-          "show": true
-        },
-        {
-          "$$hashKey": "object:208",
-          "format": "short",
-          "logBase": 1,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
+      "type": "timeseries"
     },
     {
-      "columns": [],
       "datasource": {
         "type": "prometheus",
         "uid": "000000001"
       },
-      "fontSize": "100%",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "decimals": 0,
+          "displayName": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "channel"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Channel Name"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "qmgr"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Local QMgr"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Type"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "connname"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "ConnName"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rqmname"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Remote QMgr"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "instance"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "exported_job"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "job.*"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "platform"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "dark-red",
+                        "index": 0,
+                        "text": "Stopped"
+                      },
+                      "1": {
+                        "color": "dark-orange",
+                        "index": 1,
+                        "text": "Transition"
+                      },
+                      "2": {
+                        "color": "dark-green",
+                        "index": 2,
+                        "text": "Running"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background-solid"
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 7,
         "w": 15,
@@ -460,220 +718,23 @@
       "hideTimeOverride": true,
       "id": 20,
       "links": [],
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 1,
-        "desc": false
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "jobname"
+          }
+        ]
       },
-      "styles": [
-        {
-          "$$hashKey": "object:98",
-          "alias": "State",
-          "align": "auto",
-          "colorMode": "cell",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Value #A",
-          "rangeMaps": [
-            {
-              "from": "0",
-              "text": "Low",
-              "to": "150"
-            },
-            {
-              "from": "151",
-              "text": "Medium",
-              "to": "300"
-            },
-            {
-              "from": "301",
-              "text": "High",
-              "to": "999999999"
-            }
-          ],
-          "thresholds": [
-            "1",
-            "2"
-          ],
-          "type": "string",
-          "unit": "short",
-          "valueMaps": [
-            {
-              "$$hashKey": "object:156",
-              "text": "Stopped",
-              "value": "0"
-            },
-            {
-              "$$hashKey": "object:157",
-              "text": "Transition",
-              "value": "1"
-            },
-            {
-              "$$hashKey": "object:158",
-              "text": "Running",
-              "value": "2"
-            }
-          ]
-        },
-        {
-          "$$hashKey": "object:99",
-          "alias": "Channel Name",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "channel",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:100",
-          "alias": "Local QMgr",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "qmgr",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:101",
-          "alias": "Status",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #B",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:102",
-          "alias": "Type",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #C",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short",
-          "valueMaps": [
-            {
-              "$$hashKey": "object:221",
-              "text": "Sender",
-              "value": "1"
-            },
-            {
-              "$$hashKey": "object:222",
-              "text": "Receiver",
-              "value": "3"
-            },
-            {
-              "$$hashKey": "object:223",
-              "text": "Svrconn",
-              "value": "7"
-            }
-          ]
-        },
-        {
-          "$$hashKey": "object:103",
-          "alias": "Type",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "type",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:104",
-          "alias": "Connection Name",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "connname",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:105",
-          "alias": "Remote QMgr",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "rqmname",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:106",
-          "alias": "",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "hidden",
-          "unit": "short"
-        }
-      ],
+      "pluginVersion": "9.1.4",
       "targets": [
         {
           "datasource": {
@@ -681,7 +742,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_channel_status_squash{qmgr!=\"QML3\", type != \"SVRCONN\"}+0",
+          "expr": "ibmmq_otel_ibmmq_channel_status_squash{qmgr!=\"QML3\"}+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -694,7 +755,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_channel_status{qmgr!=\"QML3\", type != \"SVRCONN\"}+0",
+          "expr": "ibmmq_otel_ibmmq_channel_status{qmgr!=\"QML3\"}+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -703,8 +764,15 @@
       ],
       "timeFrom": "15m",
       "title": "Channel Status",
-      "transform": "table",
-      "type": "table-old"
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "reducers": []
+          }
+        }
+      ],
+      "type": "table"
     },
     {
       "datasource": {
@@ -763,7 +831,32 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "Msg Rate: TO.QM1 [RECEIVER] "
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -793,9 +886,10 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "exemplar": false,
-          "expr": "rate(ibmmq_channel_messages{type!=\"SVRCONN\"}[$__rate_interval])",
+          "exemplar": true,
+          "expr": "rate(ibmmq_otel_ibmmq_channel_messages{type!=\"SVRCONN\"}[2m])",
           "format": "time_series",
+          "hide": false,
           "instant": false,
           "intervalFactor": 1,
           "legendFormat": "Msg Rate: {{channel}} [{{type}}] ",
@@ -808,7 +902,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "rate(ibmmq_channel_buffers_sent{type!=\"SVRCONN\"}[$__rate_interval])",
+          "expr": "rate(ibmmq_otel_ibmmq_channel_buffers_sent{type!=\"SVRCONN\"}[2m])",
           "hide": false,
           "legendFormat": "Buf Sent Rate: {{channel}}[{{type}}]",
           "range": true,
@@ -820,7 +914,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "rate(ibmmq_channel_buffers_rcvd{type!=\"SVRCONN\"}[$__rate_interval])",
+          "expr": "rate(ibmmq_otel_ibmmq_channel_buffers_rcvd{type!=\"SVRCONN\"}[2m])",
           "hide": false,
           "legendFormat": "Buf Rcvd Rate: {{channel}}[{{type}}]",
           "range": true,
@@ -831,12 +925,394 @@
       "type": "timeseries"
     },
     {
-      "columns": [],
       "datasource": {
         "type": "prometheus",
         "uid": "000000001"
       },
-      "fontSize": "100%",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Time"
+              },
+              {
+                "id": "unit",
+                "value": "time: YYYY-MM-DD HH:mm:ss"
+              },
+              {
+                "id": "custom.align"
+              },
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "qmgr"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "QMgr"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "platform"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cmd Svr"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.align"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "index": 0,
+                        "text": "Stopped"
+                      },
+                      "1": {
+                        "index": 1,
+                        "text": "Transition"
+                      },
+                      "2": {
+                        "index": 2,
+                        "text": "Running"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "__name__"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #D"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Up Time"
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #E"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Max Channels"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #G"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "custom.align"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": null
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 1
+                    },
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)",
+                      "value": 2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "index": 0,
+                        "text": "Stopped"
+                      },
+                      "1": {
+                        "index": 1,
+                        "text": "Transition"
+                      },
+                      "2": {
+                        "index": 2,
+                        "text": "Running"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #H"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lsr Count"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "job"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "__name__"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Chinit"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "index": 0,
+                        "text": "Stopped"
+                      },
+                      "1": {
+                        "index": 1,
+                        "text": "Transition"
+                      },
+                      "2": {
+                        "index": 2,
+                        "text": "Running"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "exported_job"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Connections"
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 4,
         "w": 15,
@@ -846,337 +1322,17 @@
       "hideTimeOverride": false,
       "id": 26,
       "links": [],
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
       },
-      "styles": [
-        {
-          "$$hashKey": "object:12",
-          "alias": "Time",
-          "align": "auto",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "$$hashKey": "object:13",
-          "alias": "",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 2,
-          "pattern": "/job.*/",
-          "thresholds": [],
-          "type": "hidden",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:14",
-          "alias": "Conn Count",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #A",
-          "thresholds": [
-            ""
-          ],
-          "type": "number",
-          "unit": "short",
-          "valueMaps": [
-            {
-              "text": "STOPPED",
-              "value": "0"
-            },
-            {
-              "text": "STARTING",
-              "value": "1"
-            },
-            {
-              "text": "RUNNING",
-              "value": "2"
-            },
-            {
-              "text": "QUIESCING",
-              "value": "3"
-            },
-            {
-              "text": "STANDBY",
-              "value": "4"
-            }
-          ]
-        },
-        {
-          "$$hashKey": "object:15",
-          "alias": "CHINIT ",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #B",
-          "thresholds": [
-            ""
-          ],
-          "type": "string",
-          "unit": "short",
-          "valueMaps": [
-            {
-              "$$hashKey": "object:96",
-              "text": "STOPPED",
-              "value": "0"
-            },
-            {
-              "$$hashKey": "object:97",
-              "text": "STARTING",
-              "value": "1"
-            },
-            {
-              "$$hashKey": "object:98",
-              "text": "RUNNING",
-              "value": "2"
-            },
-            {
-              "$$hashKey": "object:99",
-              "text": "STOPPING",
-              "value": "3"
-            },
-            {
-              "$$hashKey": "object:100",
-              "text": "RETRYING",
-              "value": "4"
-            }
-          ]
-        },
-        {
-          "$$hashKey": "object:16",
-          "alias": "QMgr",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "qmgr",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:17",
-          "alias": "",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "platform",
-          "thresholds": [],
-          "type": "hidden",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:18",
-          "alias": "Cmd Svr",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Value #C",
-          "thresholds": [
-            ""
-          ],
-          "type": "string",
-          "unit": "short",
-          "valueMaps": [
-            {
-              "$$hashKey": "object:130",
-              "text": "STOPPED",
-              "value": "0"
-            },
-            {
-              "$$hashKey": "object:131",
-              "text": "STARTING",
-              "value": "1"
-            },
-            {
-              "$$hashKey": "object:132",
-              "text": "RUNNING",
-              "value": "2"
-            },
-            {
-              "$$hashKey": "object:133",
-              "text": "STOPPING",
-              "value": "3"
-            },
-            {
-              "$$hashKey": "object:134",
-              "text": "RETRYING",
-              "value": "4"
-            }
-          ]
-        },
-        {
-          "$$hashKey": "object:19",
-          "alias": "",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "__name__",
-          "thresholds": [],
-          "type": "hidden",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:20",
-          "alias": "Up Time",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Value #D",
-          "thresholds": [],
-          "type": "number",
-          "unit": "s"
-        },
-        {
-          "$$hashKey": "object:21",
-          "alias": "Max Channels",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #E",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:22",
-          "alias": "Max Active Channels",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #F",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "$$hashKey": "object:373",
-          "alias": "Status",
-          "align": "auto",
-          "colorMode": "cell",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Value #G",
-          "thresholds": [
-            "1",
-            "2"
-          ],
-          "type": "string",
-          "unit": "short",
-          "valueMaps": [
-            {
-              "$$hashKey": "object:642",
-              "text": "STOPPED",
-              "value": "0"
-            },
-            {
-              "$$hashKey": "object:675",
-              "text": "RUNNING",
-              "value": "2"
-            },
-            {
-              "$$hashKey": "object:956",
-              "text": "STARTING",
-              "value": "1"
-            },
-            {
-              "$$hashKey": "object:958",
-              "text": "QUIESCING",
-              "value": "3"
-            },
-            {
-              "$$hashKey": "object:1053",
-              "text": "STANDBY",
-              "value": "4"
-            }
-          ]
-        },
-        {
-          "$$hashKey": "object:680",
-          "alias": "Lsr Count",
-          "align": "auto",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #H",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        }
-      ],
+      "pluginVersion": "9.1.4",
       "targets": [
         {
           "datasource": {
@@ -1185,7 +1341,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "ibmmq_qmgr_status+0",
+          "expr": "ibmmq_otel_ibmmq_qmgr_status+0",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1200,7 +1356,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_channel_initiator_status+0",
+          "expr": "ibmmq_otel_ibmmq_qmgr_channel_initiator_status+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1212,7 +1368,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_command_server_status+0",
+          "expr": "ibmmq_otel_ibmmq_qmgr_command_server_status+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1224,7 +1380,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_uptime",
+          "expr": "ibmmq_otel_ibmmq_qmgr_uptime",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1236,7 +1392,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_connection_count+0",
+          "expr": "ibmmq_otel_ibmmq_qmgr_connection_count+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1248,7 +1404,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_max_channels+0",
+          "expr": "ibmmq_otel_ibmmq_qmgr_max_channels+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1260,7 +1416,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_max_active_channels+0",
+          "expr": "ibmmq_otel_ibmmq_qmgr_max_active_channels+0",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1272,7 +1428,7 @@
             "uid": "000000001"
           },
           "editorMode": "code",
-          "expr": "ibmmq_qmgr_active_listeners+0",
+          "expr": "ibmmq_otel_ibmmq_qmgr_active_listeners+0",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1281,8 +1437,39 @@
         }
       ],
       "title": "QMgr Status",
-      "transform": "table",
-      "type": "table-old"
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "reducers": []
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value #A": 13,
+              "Value #B": 9,
+              "Value #C": 10,
+              "Value #D": 12,
+              "Value #G": 8,
+              "Value #H": 14,
+              "__name__": 11,
+              "description": 2,
+              "exported_job": 3,
+              "hostname": 4,
+              "instance": 5,
+              "job": 6,
+              "platform": 7,
+              "qmgr": 1
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
   "refresh": "10s",
@@ -1293,7 +1480,7 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -1325,6 +1512,6 @@
   "timezone": "",
   "title": "OTEL - Queue Manager Status",
   "uid": "LjzgzM2Sz",
-  "version": 21,
+  "version": 31,
   "weekStart": ""
 }

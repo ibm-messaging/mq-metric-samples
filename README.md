@@ -28,7 +28,7 @@ repository. They are referenced in the `go.mod` file if you wish to reload all o
 
 You will require the following programs:
 
-* Go compiler - version 1.20 is the minimum defined here
+* Go compiler - version 1.21 is the minimum defined here
 * C compiler
 
 ### MQ Client SDK

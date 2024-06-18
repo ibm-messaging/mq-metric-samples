@@ -25,6 +25,14 @@
 # variables. You might prefer to keep the config file outside of the running container
 # and just mount it into the system.
 
+function check() {
+    rc=$1
+    if [ $rc -ne 0 ]
+    then
+      exit 1
+    fi
+}
+
 # Single parameter that can either be "CLEAN" or the name of one of the collectors.
 # The default is to build the Prometheus module.
 COLL="mq_prometheus"
@@ -48,13 +56,15 @@ esac
 # Set some variables.
 ORG="github.com/ibm-messaging"
 REPO="mq-metric-samples"
-VRMF=9.3.5.0
-GOVER=1.20
+VRMF=9.4.0.0
+GOVER=1.21
+UBI=ubi9
 db=`echo $COLL | sed "s/mq_//g"`
 #
 imgName="mq-metric-$db"
 imgNameRuntime=$imgName-runtime
 imgNameBuild=$imgName-build
+u="--user root"
 
 # This is a convenient way to tidy up old images, espcially after experimenting
 if $clean
@@ -71,27 +81,12 @@ fi
 ###########################################################################
 # For normal operation, we start with a current UBI container. Unlike a
 # Dockerfile build, the scripted builds rerun every step each time. They do not
-# cache previous steps automatically.
+# cache previous steps automatically. This base image has the Go compiler
+# and other tools we might need for the build.
 ###########################################################################
-buildCtr=$(buildah from registry.access.redhat.com/ubi8/ubi)
-
-# Install the Go package and a couple of other things. Failures here are going to be fatal
-# so we check that we were at least able to get started
-buildah run $buildCtr yum --disableplugin=subscription-manager -y install wget curl tar  gcc
-if [ $? -ne 0 ]
-then
- exit 1
-fi
- 
-# The version of Go is not the default in the yum repositories so we get it directly from google download
-# and make the links point at it
-buildah config --env GOVER="go$GOVER" $buildCtr
-buildah run $buildCtr /bin/bash -c 'cd /tmp && curl -LO "https://dl.google.com/go/$GOVER.linux-amd64.tar.gz" \
-           && mkdir -p /usr/local \
-           && tar -C /usr/local -xzf ./*.tar.gz \
-           && rm -f /bin/go && ln -s /usr/local/go/bin/go /bin/go  \
-           && rm -f ./*.tar.gz'
+buildCtr=$(buildah from registry.access.redhat.com/$UBI/go-toolset)
 buildah run $buildCtr go version
+check $?
 
 # Set up the environment that's going to be needed to download the correct
 # MQ client libraries and to strip out unneeded components from that package.
@@ -104,19 +99,22 @@ buildah config --env genmqpkg_incnls=1 \
                --env ORG="$ORG" \
                --env REPO="$REPO" \
                 $buildCtr
+check $?
 
 # Get the MQ redistributable client downloaded and installed. Use the genmqpkg command
 # to delete parts we don't need.
-buildah run $buildCtr mkdir -p /opt/go/src/$ORG/$REPO /opt/bin /opt/config /opt/mqm
-buildah run $buildCtr /bin/bash -c 'cd /opt/mqm \
+buildah run $u $buildCtr mkdir -p /opt/go/src/$ORG/$REPO /opt/bin /opt/config /opt/mqm
+buildah run $u $buildCtr /bin/bash -c 'cd /opt/mqm \
                  && curl -LO "$RDURL/$VRMF-$RDTAR" \
                  && tar -zxf ./*.tar.gz \
                  && rm -f ./*.tar.gz \
                  && bin/genmqpkg.sh -b /opt/mqm'
+check $?
 
 # Copy over the source tree
 buildah config --workingdir /opt/go/src/$ORG/$REPO $buildCtr
 buildah copy  -q $buildCtr `pwd`/..
+check $?
 
 # The build process for the collector allows setting of some
 # external variables, useful for debug and logging. Set them here...
@@ -148,17 +146,19 @@ echo "Copying source"
 buildah copy -q $buildCtr $tmpfile build.sh
 rm -f $tmpfile
 echo "Compiling program $COLL"
-buildah run  $buildCtr /bin/bash ./build.sh
+buildah run $u  $buildCtr /bin/bash ./build.sh
+check $?
 echo "Compilation finished"
 
 # We now have a container image with the compiled code. Complete its generation with a 'commit'
 echo "Committing builder image"
 buildah commit -q --squash --rm $buildCtr $imgNameBuild
+check $?
 
 ###########################################################################
 # Restart the image creation from a smaller base image
 ###########################################################################
-runtimeCtr=$(buildah from registry.access.redhat.com/ubi8/ubi-minimal)
+runtimeCtr=$(buildah from registry.access.redhat.com/$UBI/ubi-minimal)
 
 # Copy over the binaries that are going to be needed. Go doesn't have any
 # separate runtime; it builds standalone programs. All we need to add is the
@@ -174,6 +174,7 @@ buildah config --env IBMMQ_GLOBAL_CONFIGURATIONFILE=/opt/config/$COLL.yaml $runt
 buildah config --entrypoint /opt/bin/$COLL $runtimeCtr
 echo "Committing runtime image"
 buildah commit -q --squash --rm $runtimeCtr $imgNameRuntime
+check $?
 
 # Now run the image. The assumption is that you have a queue manager running on this machine on port 1414.
 # But you can see how this run step can be modified. Using the environment variables overrides values in the
@@ -190,7 +191,7 @@ then
   addr=`hostname`
 fi
 
-podman run \
+podman run -it \
     -e IBMMQ_GLOBAL_LOGLEVEL=DEBUG \
     -e IBMMQ_CONNECTION_CONNNAME=$addr \
     -e IBMMQ_CONNECTION_CHANNEL=SYSTEM.DEF.SVRCONN \

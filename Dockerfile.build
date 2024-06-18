@@ -16,13 +16,12 @@ ARG BASE_IMAGE=ubuntu:20.04
 FROM $BASE_IMAGE
 
 ARG GOPATH_ARG="/go"
-ARG GOVERSION=1.20        
+ARG GOVERSION=1.21
 ARG GOARCH=amd64
 ARG MQARCH=X64
 
 ENV GOVERSION=${GOVERSION}   \
     GOPATH=$GOPATH_ARG \
-    GOTAR=go${GOVERSION}.linux-${GOARCH}.tar.gz \
     ORG="github.com/ibm-messaging"
 
 
@@ -43,25 +42,25 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     tar \
     bash \
     build-essential \
+    golang-$GOVERSION \
   && rm -rf /var/lib/apt/lists/*
 
+ENV GO=/usr/lib/go-${GOVERSION}/bin/go
+RUN $GO version
 
 # Create location for the git clone and MQ installation
 RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg \
   && chmod -R 777 $GOPATH \
   && mkdir -p $GOPATH/src/$ORG \
   && cd /tmp       \
-  && wget -nv https://dl.google.com/go/${GOTAR} \
-  && tar -xf ${GOTAR} \
-  && mv go /usr/lib/go-${GOVERSION} \
-  && rm -f ${GOTAR} \
   && mkdir -p /opt/mqm \
   && chmod a+rx /opt/mqm
+
 
 # Location of the downloadable MQ client package \
 ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
     RDTAR="IBM-MQC-Redist-Linux${MQARCH}.tar.gz" \
-    VRMF=9.3.5.0
+    VRMF=9.4.0.0
 
 # Install the MQ client from the Redistributable package. This also contains the
 # header files we need to compile against. Setup the subset of the package

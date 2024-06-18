@@ -81,6 +81,11 @@ func main() {
 	}
 
 	if err == nil {
+		if config.cf.QMgrName == "" || strings.HasPrefix(config.cf.QMgrName, "*") {
+			qmName := mqmetric.GetResolvedQMgrName()
+			log.Infoln("Resolving blank/default qmgr name to ", qmName)
+			config.cf.QMgrName = qmName
+		}
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 	} else {
 		if mqe, ok := err.(mqmetric.MQMetricError); ok {

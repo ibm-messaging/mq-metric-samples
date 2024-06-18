@@ -20,21 +20,21 @@ ARG EXPORTER=mq_prometheus
 # than that in the current MQ container image. And that causes the collector
 # to fail if layered into the MQ container.
 #
-# At least there is a golang 1.20 available for this level of ubuntu.
+# At least there is a golang 1.21 available for this level of ubuntu.
 FROM ubuntu:20.04 AS builder
 
 ARG EXPORTER
 ENV EXPORTER=${EXPORTER} \
     ORG="github.com/ibm-messaging" \
     REPO="mq-metric-samples" \
-    VRMF=9.3.5.0 \
+    VRMF=9.4.0.0 \
     CGO_CFLAGS="-I/opt/mqm/inc/" \
     CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
     genmqpkg_incnls=1 \
     genmqpkg_incsdk=1 \
     genmqpkg_inctls=1
 
-ENV GOVERSION=1.20
+ENV GOVERSION=1.21
 
 # Install packages
 RUN apt-get update \
@@ -130,7 +130,7 @@ RUN buildStamp=`date +%Y%m%d-%H%M%S`; \
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ### ### ### ### ### ### ### RUN ### ### ### ### ### ### ###
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-FROM golang:1.20 AS runtime
+FROM golang:1.21 AS runtime
 
 ARG EXPORTER
 

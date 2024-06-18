@@ -33,13 +33,17 @@ import (
 	otel "go.opentelemetry.io/otel"
 
 	exportGrpc "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	exportHttp "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	exportStdout "go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 
 	metricotel "go.opentelemetry.io/otel/metric"
+
 	metricsdk "go.opentelemetry.io/otel/sdk/metric"
 	metricdata "go.opentelemetry.io/otel/sdk/metric/metricdata"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	metricres "go.opentelemetry.io/otel/sdk/resource"
+
+	// Doesn't keep the version on the same schedule as the main vendored packages so we explicitly name it here
+	semconv "go.opentelemetry.io/otel/semconv/v1.25.0"
 
 	"github.com/go-logr/stdr"
 	log "github.com/sirupsen/logrus"
@@ -56,11 +60,7 @@ var (
 
 	totalErrorCount = 0
 
-	res = resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceName("ibmmq"),
-		semconv.ServiceVersion("0.0.1" /*cf.MqGolangVersion()*/), // A dummy version for now to indicate experimental
-	)
+	res *metricres.Resource
 
 	meterProvider *metricsdk.MeterProvider
 	exporter      metricsdk.Exporter
@@ -77,10 +77,19 @@ func main() {
 
 	err = initConfig()
 
-	if err == nil && config.cf.QMgrName == "" {
-		log.Errorln("Must provide a queue manager name to connect to.")
-		os.Exit(72)
-	}
+	res = metricres.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName("ibmmq"),
+		semconv.ServiceVersion(cf.MqGolangVersion()),
+	)
+
+	// The qmgr name is permitted to be blank or asterisk to connect to a default qmgr
+	/*
+		if err == nil && config.cf.QMgrName == "" {
+			log.Errorln("Must provide a queue manager name to connect to.")
+			os.Exit(72)
+		}
+	*/
 
 	// OTel libraries use the stdr logger. Let's try to make it match the loglevel
 	// of this MQ package.
@@ -112,6 +121,17 @@ func main() {
 		// Connect and open standard queues
 		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, config.cf.ReplyQ2, &config.cf.CC)
 	}
+
+	// If we tried to connect to a default qmgr, or a wildcarded name via CCDT, then set the real name
+	// so it can be used in attribute tags
+	if err == nil {
+		if config.cf.QMgrName == "" || strings.HasPrefix(config.cf.QMgrName, "*") {
+			qmName := mqmetric.GetResolvedQMgrName()
+			log.Infoln("Resolving blank/default qmgr name to ", qmName)
+			config.cf.QMgrName = qmName
+		}
+	}
+
 	if err == nil {
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 	} else {
@@ -257,19 +277,34 @@ func main() {
 }
 
 func newExporter() (metricsdk.Exporter, error) {
+	endpoint := config.ci.Endpoint
+	insecure := cf.AsBool(config.ci.Insecure, false)
 	// Returns an exporter for a couple of known exporter types.
 	// - Stdout is the default (endpoint is not defined)
-	// - OTLP/GRPC is the alternative when you define an endpoint
-	// Additional config options will need to be provided for the GRPC protocol, but
-	// this is sufficient to demonstrate something. Though they can also come via OTEL-defined env vars
-	if config.ci.Endpoint == "" {
+	// - OTLP/GRPC is an alternative when you define an endpoint
+	//   endpoint is a simple hostname:port string
+	// - OTEL/HTTP can be used if you set the endpoint to start with the protocol
+	//   endpoint is http[s]://hostname:port
+	// Additional config options for TLS could be provided for the GRPC protocol, but
+	// they can also come via OTEL-defined env vars
+	if endpoint == "" {
 		return exportStdout.New()
-	} else {
-		opts := []exportGrpc.Option{
-			exportGrpc.WithEndpoint(config.ci.Endpoint),
+	} else if strings.HasPrefix(endpoint, "http://") || strings.HasPrefix(endpoint, "https://") {
+		opts := []exportHttp.Option{
+			exportHttp.WithEndpointURL(endpoint),
 		}
 
-		insecure := cf.AsBool(config.ci.Insecure, false)
+		if insecure {
+			log.Debugf("Enabling insecure mode for HTTP")
+			opts = append(opts, exportHttp.WithInsecure())
+		}
+
+		return exportHttp.New(ctx, opts...)
+	} else {
+		opts := []exportGrpc.Option{
+			exportGrpc.WithEndpoint(endpoint),
+		}
+
 		if insecure {
 			log.Debugf("Enabling insecure mode for GRPC")
 			opts = append(opts, exportGrpc.WithInsecure())

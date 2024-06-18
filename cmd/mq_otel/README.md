@@ -4,11 +4,8 @@ This README should be read in conjunction with the repository-wide
 [README](https://github.com/ibm-messaging/mq-metric-samples/blob/master/README.md) that covers features common to all of
 the collectors in this repository.
 
-This directory contains an **Experimental** implementation of a tool to send MQ metrics to an OpenTelemetry system. The
+This directory contains an implementation of a tool to send MQ metrics to an OpenTelemetry system. The
 reported metrics are the same as for the other collectors in this package.
-
-This package is even more subject to potential changes than the other collectors. For that reason, its "version" is
-reported as 0.0.1. Feedback on it is very welcome.
 
 ## Collectors
 OpenTelemetry supports a range of protocols and implementations, with a common format for the metrics. (We are not
@@ -16,16 +13,16 @@ concerned here with the other aspects - tracing, logging - that OpenTelemetry al
 together to process metrics in some way (eg filtering, aggregation) before passing them onwards for storage and
 visualisation. We do no extra processing here; the metrics emitted are the complete set of raw data.
 
-Two collector types are enabled: `stdout` (the default) and `otlp/grpc`. To use the latter, set the `endpoint`
+Three collector types are enabled: `stdout` (the default), `otlp/grpc` and `otlp/http`. To use OTLP, set the `endpoint`
 configuration attribute. For example,
 ```
 otel:
   endpoint: localhost:4317
 ```
-in the YAML file. The GRPC component currently has few additional configuration options enabled; I would expect that to
-need to change to add things like TLS options. But this was good enough to connect to a locally-running instance of the
-OpenTelemetry Collector program that in turn might pass the data to a database. The `newExporter` function is where we
-would add new options - or where you might play if you wanted something different.
+in the YAML file. The GRPC component has few additional configuration options enabled; other options can be 
+applied via environment variables - in particular, for TLS.
+
+To use OTLP over HTTP, then the endpoint needs to be a fuller URL. For example, `http://localhost:4318`.
 
 The OpenTelemetry Collector is often going to be the initial destination for metrics; it will then forward them to any
 of a large range of available backends.
@@ -36,8 +33,9 @@ One full path to visualisation of metrics that I have tested goes
   queue manager -> mq_otel reader -> OpenTelemetry Collector -> Prometheus -> Grafana
 ```
 
-### Additional GRPC Collector Configuration
-There are a number of environment variables that can be used to configure the GRPC exporter, without needing explicit
+### Additional OTLP Configuration options 
+   
+There are a number of environment variables that can be used to configure the OTLP exporters, without needing explicit
 configuration in this package. See *otlp/otlpmetric/otlpmetricgrpc/config.go* for more details in the OpenTelemetry
 package source code. But they include:
 

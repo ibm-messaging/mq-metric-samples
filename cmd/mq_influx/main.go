@@ -45,11 +45,13 @@ func main() {
 	cf.PrintInfo("IBM MQ metrics exporter for InfluxDB monitoring", BuildStamp, GitCommit, BuildPlatform)
 
 	err = initConfig()
-
-	if err == nil && config.cf.QMgrName == "" {
-		log.Errorln("Must provide a queue manager name to connect to.")
-		os.Exit(72)
-	}
+	// The qmgr name is permitted to be blank or asterisk to connect to a default qmgr
+	/*
+		if err == nil && config.cf.QMgrName == "" {
+			log.Errorln("Must provide a queue manager name to connect to.")
+			os.Exit(72)
+		}
+	*/
 	if err == nil {
 		d, err = time.ParseDuration(config.ci.Interval)
 		if err != nil || d.Seconds() <= 1 {
@@ -61,6 +63,11 @@ func main() {
 		err = mqmetric.InitConnection(config.cf.QMgrName, config.cf.ReplyQ, config.cf.ReplyQ2, &config.cf.CC)
 	}
 	if err == nil {
+		if config.cf.QMgrName == "" || strings.HasPrefix(config.cf.QMgrName, "*") {
+			qmName := mqmetric.GetResolvedQMgrName()
+			log.Infoln("Resolving blank/default qmgr name to ", qmName)
+			config.cf.QMgrName = qmName
+		}
 		log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 	} else {
 		if mqe, ok := err.(mqmetric.MQMetricError); ok {
