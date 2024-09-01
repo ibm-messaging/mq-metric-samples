@@ -9,13 +9,13 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/sirupsen/logrus v1.9.3
-	go.opentelemetry.io/otel v1.28.0
+	go.opentelemetry.io/otel v1.29.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.28.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.27.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.28.0
-	go.opentelemetry.io/otel/metric v1.28.0
-	go.opentelemetry.io/otel/sdk v1.28.0
-	go.opentelemetry.io/otel/sdk/metric v1.28.0
+	go.opentelemetry.io/otel/metric v1.29.0
+	go.opentelemetry.io/otel/sdk v1.29.0
+	go.opentelemetry.io/otel/sdk/metric v1.29.0
 	golang.org/x/crypto v0.25.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -34,10 +34,10 @@ require (
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	go.opentelemetry.io/otel/trace v1.28.0 // indirect
+	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 // indirect
