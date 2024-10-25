@@ -27,7 +27,7 @@ and update the various data points.
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -75,7 +75,7 @@ func Collect() error {
 	collectStartTime := time.Now()
 
 	if c == nil {
-		c, err = newClient()
+		c, _ = newClient()
 	}
 
 	// Clear out everything we know so far. In particular, replace
@@ -187,10 +187,10 @@ func Collect() error {
 		if config.cf.RediscoverDuration > 0 {
 			if elapsed >= config.cf.RediscoverDuration {
 				log.Debugf("Doing queue rediscovery")
-				err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+				_ = mqmetric.RediscoverAndSubscribe(discoverConfig)
 				lastQueueDiscovery = thisDiscovery
 				//if err == nil {
-				err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+				_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 				err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 				//}
@@ -646,16 +646,13 @@ func (c *client) Put(bp *BatchPoints, params string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	log.Debugln("Response body: ", string(body))
 	return body, nil
-}
-
-func initObjectAttributes() {
 }
 
 func addMetaLabels(tags map[string]string) {

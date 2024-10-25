@@ -74,6 +74,9 @@ type Config struct {
 	rediscoverInterval string
 	RediscoverDuration time.Duration
 
+	// Might be mounted into a container
+	PasswordFile string
+
 	CC mqmetric.ConnectionConfig
 }
 
@@ -146,7 +149,7 @@ func InitConfig(cm *Config) {
 			}
 			fmt.Fprintf(o, "%-32s ", k)
 			i++
-			if i%5 == 0 {
+			if i%4 == 0 {
 				fmt.Fprintf(o, "\n")
 			}
 		}
@@ -199,6 +202,8 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.CC.UserId, "", CP_STR, "ibmmq.userid", "connection", "user", "UserId for MQ connection")
 	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin
 	AddParm(&cm.CC.Password, "", CP_STR, "ibmmq.password", "connection", "password", "Password for MQ connection")
+	AddParm(&cm.PasswordFile, "", CP_STR, "ibmmq.passwordFile", "connection", "passwordFile", "File containing password for MQ connection")
+
 	AddParm(&cm.CC.ClientMode, false, CP_BOOL, "ibmmq.client", "connection", "clientConnection", "Connect as MQ client")
 
 	AddParm(&cm.TZOffsetString, defaultTZOffset, CP_STR, "ibmmq.tzOffset", "global", "tzOffset", "Time difference between collector and queue manager")
@@ -400,8 +405,8 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 		if cm.TZOffsetString == "" {
 			cm.TZOffsetString = defaultTZOffset
 		}
-		offset, err := time.ParseDuration(cm.TZOffsetString)
-		if err != nil {
+		offset, err1 := time.ParseDuration(cm.TZOffsetString)
+		if err1 != nil {
 			err = fmt.Errorf("Invalid value for time offset parameter: %v", err)
 		} else {
 			cm.CC.TZOffsetSecs = offset.Seconds()

@@ -23,7 +23,7 @@ package config
 // Settings in that file can be overridden on the command line or via environment variable
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"gopkg.in/yaml.v2"
@@ -45,6 +45,7 @@ type ConfigYConnection struct {
 	User             string
 	Client           string `yaml:"clientConnection" default:"false"`
 	Password         string
+	PasswordFile     string   `yaml:"passwordFile"`
 	ReplyQueue       string   `yaml:"replyQueue" `
 	ReplyQueue2      string   `yaml:"replyQueue2"`
 	DurableSubPrefix string   `yaml:"durableSubPrefix"`
@@ -83,7 +84,7 @@ var cfMoved ConfigMoved
 
 func ReadConfigFile(f string, cmy interface{}) error {
 
-	data, e2 := ioutil.ReadFile(f)
+	data, e2 := os.ReadFile(f)
 	if e2 == nil {
 		// fmt.Printf("Unparsed Data is\n %s\n", string(data))
 		e2 = yaml.Unmarshal(data, cmy)
@@ -148,6 +149,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.ClientMode = CopyParmIfNotSetBool("connection", "clientConnection", AsBool(cyc.Client, false))
 	cm.CC.UserId = CopyParmIfNotSetStr("connection", "user", cyc.User)
 	cm.CC.Password = CopyParmIfNotSetStr("connection", "password", cyc.Password)
+	cm.PasswordFile = CopyParmIfNotSetStr("connection", "passwordFile", cyc.PasswordFile)
 
 	tmpInt := CopyParmIfNotSetStr("connection", "waitInterval", cyc.WaitInterval)
 	cm.CC.WaitInterval = asInt(tmpInt, defaultWaitInterval)

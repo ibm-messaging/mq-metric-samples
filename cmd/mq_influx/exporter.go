@@ -41,10 +41,10 @@ import (
 )
 
 var (
-	first              = true
-	totalErrorCount    = int64(0)
-	loopErrorCount     = int64(0)
-	errorSync          = make(chan bool)
+	first           = true
+	totalErrorCount = int64(0)
+	loopErrorCount  = int64(0)
+	// errorSync          = make(chan bool)
 	platformString     = ""
 	lastPoll           = time.Now()
 	lastQueueDiscovery time.Time
@@ -177,9 +177,9 @@ func Collect(c client.Client) error {
 		if config.cf.RediscoverDuration > 0 {
 			if elapsed >= config.cf.RediscoverDuration {
 				log.Debugf("Doing queue rediscovery")
-				err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+				_ = mqmetric.RediscoverAndSubscribe(discoverConfig)
 				lastQueueDiscovery = thisDiscovery
-				err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+				_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 				err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 			}

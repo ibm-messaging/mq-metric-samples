@@ -93,7 +93,7 @@ func initConfig() error {
 	cf.AddParm(&config.httpsKeyFile, "", cf.CP_STR, "ibmmq.httpsKeyFile", "prometheus", "httpsKeyFile", "TLS private key file")
 
 	cf.AddParm(&config.namespace, defaultNamespace, cf.CP_STR, "namespace", "prometheus", "namespace", "Namespace for metrics")
-	cf.AddParm(&config.overrideCType, "", cf.CP_STR, "ibmmq.otelOverrideCType", "prometheus", "overrideCType", "Override data types for GRPC processing")
+	cf.AddParm(&config.overrideCType, "", cf.CP_STR, "ibmmq.otelOverrideCType", "prometheus", "overrideCType", "Override default data types to give mixture of Counters and Gauges")
 
 	err = cf.ParseParms()
 
@@ -153,7 +153,11 @@ func initConfig() error {
 
 	if err == nil {
 		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
-			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
+			if config.cf.PasswordFile == "" {
+				config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
+			} else {
+				config.cf.CC.Password, err = cf.GetPasswordFromFile(config.cf.PasswordFile, false)
+			}
 		}
 	}
 

@@ -69,6 +69,7 @@ const (
 
 // Container for metrics of either kind
 type MQVec struct {
+	n string
 	c *prometheus.CounterVec
 	g *prometheus.GaugeVec
 }
@@ -85,10 +86,10 @@ var (
 	clusterStatusVecMap = make(map[string]*MQVec)
 	amqpStatusVecMap    = make(map[string]*MQVec)
 
-	lastPoll              = time.Now()
-	lastQueueDiscovery    time.Time
-	platformString        string
-	counter               = 0
+	lastPoll           = time.Now()
+	lastQueueDiscovery time.Time
+	platformString     string
+	// counter               = 0
 	scrapeWarningIssued   = false
 	scrapeWarningPossible = false
 	pubCountDesc          *prometheus.Desc
@@ -194,8 +195,10 @@ func (v *MQVec) Reset() {
 
 func (v *MQVec) addMetric(labels prometheus.Labels, f float64) {
 	if v.g != nil {
+		//log.Debugf("SET: %s %v %f", v.n, labels, f)
 		v.g.With(labels).Set(f)
 	} else {
+		//log.Debugf("ADD: %s %v %f", v.n, labels, f)
 		v.c.With(labels).Add(f)
 	}
 }
@@ -253,7 +256,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// Deal with all the publications that have arrived
 	pubProcessTime := time.Now()
 	err := mqmetric.ProcessPublications()
-	pubProcessSecs := int64(time.Now().Sub(pubProcessTime).Seconds())
+	pubProcessSecs := int64(time.Since(pubProcessTime).Seconds())
 	if err != nil {
 		log.Errorf("Error processing publications: %v", err)
 	} else {
@@ -438,12 +441,12 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	if config.cf.RediscoverDuration > 0 {
 		if elapsed >= config.cf.RediscoverDuration {
 			log.Debugf("Doing queue rediscovery")
-			err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+			_ = mqmetric.RediscoverAndSubscribe(discoverConfig)
 			lastQueueDiscovery = thisDiscovery
 			//if err == nil {
-			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+			_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 			//}
-			err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
+			_ = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 		}
 	}
@@ -1052,6 +1055,8 @@ func newMqVec(elem *mqmetric.MonElement) *MQVec {
 			labels,
 		)
 		mqVec.c = counterVec
+		mqVec.n = prefix + name
+
 	} else {
 		vecType = "Gauge  "
 		gaugeVec := prometheus.NewGaugeVec(
@@ -1063,6 +1068,8 @@ func newMqVec(elem *mqmetric.MonElement) *MQVec {
 			labels,
 		)
 		mqVec.g = gaugeVec
+		mqVec.n = prefix + name
+
 	}
 	log.Debugf("Created %s for '%s%s' from '%s'", vecType, prefix, name, elem.Description)
 
@@ -1155,6 +1162,8 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 			labels,
 		)
 		m.c = counterVec
+		m.n = prefix + name
+
 	} else {
 		vecType = "Gauge  "
 		gaugeVec := prometheus.NewGaugeVec(
@@ -1166,6 +1175,7 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 			labels,
 		)
 		m.g = gaugeVec
+		m.n = prefix + name
 	}
 	log.Debugf("Created %s for '%s%s' from '%s'", vecType, prefix, name, description)
 

@@ -95,7 +95,11 @@ func initConfig() error {
 	// Process password for MQ connection
 	if err == nil {
 		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
-			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
+			if config.cf.PasswordFile == "" {
+				config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
+			} else {
+				config.cf.CC.Password, err = cf.GetPasswordFromFile(config.cf.PasswordFile, false)
+			}
 		}
 	}
 

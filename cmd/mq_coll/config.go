@@ -19,8 +19,9 @@ package main
 */
 
 import (
-	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 	"os"
+
+	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 )
 
 type mqTTYConfig struct {
@@ -80,7 +81,11 @@ func initConfig() error {
 
 	if err == nil {
 		if config.cf.CC.UserId != "" && config.cf.CC.Password == "" {
-			config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
+			if config.cf.PasswordFile == "" {
+				config.cf.CC.Password = cf.GetPasswordFromStdin("Enter password for MQ: ")
+			} else {
+				config.cf.CC.Password, err = cf.GetPasswordFromFile(config.cf.PasswordFile, false)
+			}
 		}
 	}
 

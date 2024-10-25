@@ -107,7 +107,6 @@ func shutdown() {
 }
 
 // Create and fill in the structures that will be written as JSON.
-//
 func printSummary() {
 	var firstEpoch int64
 	var lastEpoch int64

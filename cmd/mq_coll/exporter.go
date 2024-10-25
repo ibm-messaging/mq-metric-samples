@@ -41,7 +41,6 @@ import (
 
 var (
 	first              = true
-	errorCount         = 0
 	lastPoll           = time.Now()
 	lastQueueDiscovery time.Time
 	platformString     = ""
@@ -92,7 +91,7 @@ func Collect() error {
 	pollError := err
 	if pollStatus {
 		if config.cf.CC.UseStatus {
-			err := mqmetric.CollectQueueManagerStatus()
+			err = mqmetric.CollectQueueManagerStatus()
 			if err != nil {
 				log.Errorf("Error collecting queue manager status: %v", err)
 				pollError = err
@@ -164,9 +163,9 @@ func Collect() error {
 		elapsed = thisDiscovery.Sub(lastQueueDiscovery)
 		if config.cf.RediscoverDuration > 0 {
 			if elapsed >= config.cf.RediscoverDuration {
-				err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+				_ = mqmetric.RediscoverAndSubscribe(discoverConfig)
 				lastQueueDiscovery = thisDiscovery
-				err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+				_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 				err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 			}
@@ -499,11 +498,6 @@ func printPoint(series string, metric string, val float32, tags map[string]strin
 	fmt.Printf("PUTVAL %s/%s-%s/%s interval=%s N:%f\n",
 		config.hostlabel, "qmgr", sanitiseString(qmgr), metric, config.interval, val)
 	return
-}
-
-func fixup(s1 string) string {
-	s2 := strings.Replace(s1, ".", "_", -1)
-	return s2
 }
 
 // Only the following characters are allowed in names: a to z, A to Z, 0 to 9, -, _, .,

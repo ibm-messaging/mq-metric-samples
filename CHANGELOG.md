@@ -1,6 +1,13 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Oct 24 2024 (v5.6.1)
+* Update to MQ 9.4.1
+* Some linter-suggested code changes
+* Add PasswordFile configuration option for MQ authentication
+* Add note about TZ configuration (#314)
+* Add an example dashboard for the OTel exporter to show any Traces sent to Jaeger
+
 ### Jun 18 2024 (v5.6.0)
 * Update to MQ 9.4.0
 * Update all vendored dependencies
@@ -8,10 +15,10 @@ Newest updates are at the top of this file.
   * Remove "EXPERIMENTAL" flag
 * Convert OTEL and Prometheus sample dashboards to newer Grafana panels
 * Update to Go 1.21 as baseline (OTEL requirement)
-* Permit connection to unnamed (default) queue manager 
+* Permit connection to unnamed (default) queue manager
 
 ### Mar 21 2024 (v5.5.4.1)
-* Update main Dockerfile to use different base build image 
+* Update main Dockerfile to use different base build image
   because of glibc issues when copying into regular MQ container
 
 ### Feb 29 2024 (v5.5.4)
@@ -44,7 +51,7 @@ Newest updates are at the top of this file.
 
 ### Jan 10 2023 (v5.3.3)
 * Copy in metrics.txt summary of available metrics from mq-golang
-* JSON exporter - consistent objecttype for qmgr, merge published and 
+* JSON exporter - consistent objecttype for qmgr, merge published and
   polled metrics (#188)
 * JSON exporter - allow configuration (`recordmax`) for number of objects
   printed in a single JSON record (also #188)
@@ -58,10 +65,10 @@ Newest updates are at the top of this file.
 * Add sample script showing TLS configuration in container
 * Update Prometheus channel status sample dashboard to show channel instance counts
 * Add AMQP channel status reporting to all collectors
-* Add single CLUSTER tag to queues (ibm-messaging/mq-golang#191) 
+* Add single CLUSTER tag to queues (ibm-messaging/mq-golang#191)
 
 ### Jul 07 2022 (v5.3.1)
-* Update to use v5.3.1 of mq-golang repository 
+* Update to use v5.3.1 of mq-golang repository
 
 ### Jun 23 2022 (v5.3.0)
 * Update to MQ 9.3.0

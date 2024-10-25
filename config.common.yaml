@@ -29,9 +29,11 @@ connection:
     clientConnection: false
 
 # If a user is set, then a password must be passed somehow. It can
-# be done in this file, on a command line, or (better) passed via stdin
+# be done in this file, on a command line, as the content of a named file or 
+# passed via stdin
 #    user: mqadmin
 #    password: passw0rd                                             
+#    passwordFile: /mnt/pw.txt
 
 # Which queue should be used as the template for replies from the qmgr. This will 
 # usually be a QMODEL

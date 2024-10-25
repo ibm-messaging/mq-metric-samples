@@ -24,7 +24,7 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func GetPasswordFromStdin(prompt string) string {
@@ -33,7 +33,7 @@ func GetPasswordFromStdin(prompt string) string {
 	fmt.Print(prompt)
 
 	// Stdin is not necessarily 0 on Windows so call the os to try to find it
-	bytePassword, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		// Most likely cannot switch off echo (stdin not a tty)
 		// So read from stdin instead

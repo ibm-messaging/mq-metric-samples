@@ -312,9 +312,9 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 		if config.cf.RediscoverDuration > 0 {
 			if elapsed >= config.cf.RediscoverDuration {
 				log.Debugf("Doing queue rediscovery")
-				err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+				/*err =*/ mqmetric.RediscoverAndSubscribe(discoverConfig)
 				lastQueueDiscovery = thisDiscovery
-				err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+				/*err =*/ mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 				err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 			}

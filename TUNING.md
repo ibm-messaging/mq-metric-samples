@@ -5,7 +5,7 @@ monitoring those queues. Some default configuration options might need tuning to
 the frequency of generation and/or collection may be appropriate. There are several places where tuning might be
 done: in this collector, in the database configuration, and in the queue manager.
 
-The following sections describe different pieces that you might want to look at. 
+The following sections describe different pieces that you might want to look at.
 
 The document is mostly written from the viewpoint of using Prometheus as the database. That is mainly because
 Prometheus has the unique "pull" model, where the server calls the collector at configured intervals. Other databases and
@@ -20,13 +20,13 @@ If you cannot avoid running as a client (for example, you are trying to monitor 
 network latency between the queue manager and collector as low as possible. For z/OS, you might consider running the
 collector in a zLinux LPAR on the same machine. Or perhaps in a zCX container.
 
-If you are running as a client, then configure it to take advantage of readahead when getting publications. This is done by 
+If you are running as a client, then configure it to take advantage of readahead when getting publications. This is done by
 setting `DEFREADA(YES)` on the nominated ReplyQueue(s).
 
 ## Collection processing time
 The collector reports on how long it takes to collect and process the data on each interval. You can see this in a debug
 log. The Prometheus collector also has a `ibmmq_qmgr_exporter_collection_time` metric. Note that this time is the value
-as seen by the main collection thread; the real total time as seen by Prometheus is usually longer. This is because there 
+as seen by the main collection thread; the real total time as seen by Prometheus is usually longer. This is because there
 is likely still work going on in the background to send metrics to the database, and for it to be successfully ingested.
 
 The first time that the collection time exceeds the Prometheus default `scrape_timeout` value, a warning message is
@@ -119,3 +119,14 @@ time. The default wait of 3 seconds can be tuned using the `connection.waitInter
 For all collectors _except_ Prometheus, a small number of these timeout errors are permitted consecutively. The failure
 count is reset after a successful collection. See _pkg/errors/errors.go_ for details. The Prometheus collector has an
 automatic reconnect option after failures, so does not currently use this strategy.
+
+## Prometheus configuration
+There are some options that can be applied in the Prometheus configuration for reducing the number of metrics stored.
+These do not affect the collection from the queue manager, but Prometheus can apply filters during the collection phase
+so that only a subset is actually written to the database. This can be particularly relevant if you are then sending the
+data onwards to something like Grafana Cloud. The `metric_relabel_configs` section of Prometheus configuration seems to
+be the key area.
+
+See
+[here](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/reduce-costs/metrics-costs/client-side-filtering/)
+and [here](https://www.robustperception.io/dropping-metrics-at-scrape-time-with-prometheus/) for more details.

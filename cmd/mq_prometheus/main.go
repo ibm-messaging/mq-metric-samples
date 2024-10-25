@@ -182,7 +182,7 @@ func main() {
 						log.Errorf("Connection to %s has failed. %v", config.cf.QMgrName, err)
 						setCollectorEnd(true)
 					} else {
-						log.Debug("Sleeping a bit after a failure")
+						log.Debugf("Sleeping a bit after a failure: %d", retryCount)
 						retryCount++
 						time.Sleep(config.reconnectIntervalDuration)
 					}

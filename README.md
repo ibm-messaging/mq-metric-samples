@@ -49,7 +49,7 @@ required to point at non-default directories for the MQ C SDK.
 ### Building a component on your system directly
 
 * You need to have the MQ client libraries installed first.
-* Create a directory where you want to work with the programs. 
+* Create a directory where you want to work with the programs.
 * Change to that directory.
 * Use git to get a copy of this repository into a new directory in the workspace. For example:
 
@@ -82,7 +82,7 @@ You still need to provide the configuration file at runtime, perhaps as a mounte
 ```
   docker build -t mqprom:1.0 .
   docker run   -p 9157:9157 -v <directory>/mq_prometheus.yaml:/opt/config/mq_prometheus.yaml mqprom:1.0
-```  
+```
 
 ### Platform support
 This Dockerfile should work for a variety of platforms. For those with a Redistributable client, it uses `curl` to
@@ -260,7 +260,25 @@ The userid is configured using the `-ibmmq.userid` flag. The password can be set
 flag, or by passing it via stdin. That allows it to be piped from an external stash file or some other mechanism. Using
 the command line flags for controlling passwords is not recommended for security-sensitive environments.
 
+You can also use the `-ibmmq.passwordFile` where the file contains a plaintext password. This might be appropriate for
+container environments where secrets are mounted into the running container.
+
 Where authentication is needed for access to a database, passwords for those can also be passed via stdin.
+
+### Timezones
+For some configurations, especially when running the exporters as client-connected rather than directly alongside
+the queue manager, you may see warnings about timezone offsets. Perhaps the exporter is in a different timezone
+than the queue manager. One particular warning would be: "Status reports appear to be from the future".
+
+The `tzOffset` configuration attribute may help to deal with this - it indicates the difference between the queue manager
+timezone and the exporter's.
+
+When running components in a container, you may also wish to adjust the container's timezone for consistency. This may
+need you to set the `TZ` environment variable for the container. You may also need to set timezone data files for the
+container as many standard container base images do not do that. See
+[here](https://access.redhat.com/solutions/2567961) for some ways to do that. The `Workaround 3` has been
+[reported](https://github.com/ibm-messaging/mq-metric-samples/issues/314) as being effective.
+
 
 ## YAML configuration for all exporters
 Instead of providing all of the configuration for the exporters via command-line flags, you can also provide the

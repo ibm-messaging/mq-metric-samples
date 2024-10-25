@@ -38,16 +38,12 @@ import (
 )
 
 var (
-	first              = true
-	errorCount         = 0
+	first = true
+	// errorCount         = 0
 	lastPoll           = time.Now()
 	lastQueueDiscovery = time.Now()
 	platformString     = ""
 	fixupString        = make(map[string]string)
-)
-
-const (
-	blankString = "                                "
 )
 
 type collectionTimeStruct struct {
@@ -189,9 +185,9 @@ func Collect() error {
 	elapsed = thisDiscovery.Sub(lastQueueDiscovery)
 	if config.cf.RediscoverDuration > 0 {
 		if elapsed >= config.cf.RediscoverDuration {
-			err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+			_ = mqmetric.RediscoverAndSubscribe(discoverConfig)
 			lastQueueDiscovery = thisDiscovery
-			err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+			_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 			err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 		}
 	}

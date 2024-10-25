@@ -41,6 +41,7 @@ const (
 
 // Format a buffer into readable blocks with a character equivalent alongside.
 // For example:
+//
 //     0a000000 24000000 03000000 4b000000  |....$.......K...|
 func formatBuf(b []byte) string {
 	st := ""

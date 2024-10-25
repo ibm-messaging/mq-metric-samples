@@ -45,10 +45,7 @@ var (
 
 func isConnectedQMgr() bool {
 	b := atomic.LoadInt32(&st.connectedQMgr)
-	if b == 0 {
-		return false
-	}
-	return true
+	return b != 0
 }
 
 func setConnectedQMgr(b bool) {
@@ -61,10 +58,7 @@ func setConnectedQMgr(b bool) {
 
 func isCollectorEnd() bool {
 	b := atomic.LoadInt32(&st.collectorEnd)
-	if b == 0 {
-		return false
-	}
-	return true
+	return b != 0
 }
 
 func setCollectorEnd(b bool) {
@@ -77,10 +71,7 @@ func setCollectorEnd(b bool) {
 
 func isFirstCollection() bool {
 	b := atomic.LoadInt32(&st.firstCollection)
-	if b == 0 {
-		return false
-	}
-	return true
+	return b != 0
 }
 
 func setFirstCollection(b bool) {
@@ -93,10 +84,7 @@ func setFirstCollection(b bool) {
 
 func isCollectorSilent() bool {
 	b := atomic.LoadInt32(&st.collectorSilent)
-	if b == 0 {
-		return false
-	}
-	return true
+	return b != 0
 }
 
 func setCollectorSilent(b bool) {
@@ -117,8 +105,5 @@ func setConnectedOnce(b bool) {
 
 func isConnectedOnce() bool {
 	b := atomic.LoadInt32(&st.connectedOnce)
-	if b == 0 {
-		return false
-	}
-	return true
+	return b != 0
 }

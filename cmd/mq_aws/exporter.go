@@ -201,10 +201,10 @@ func Collect() error {
 		if config.cf.RediscoverDuration > 0 {
 			if elapsed >= config.cf.RediscoverDuration {
 				log.Debugf("Doing queue rediscovery")
-				err = mqmetric.RediscoverAndSubscribe(discoverConfig)
+				_ = mqmetric.RediscoverAndSubscribe(discoverConfig)
 				lastQueueDiscovery = thisDiscovery
 				//if err == nil {
-				err = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+				_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 				err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
 
 				//}
