@@ -60,10 +60,12 @@ then
   then
      monitorFlags="-e MONITORS=$MONITORS"
   fi
+  # Passing values with spaces gets really messy across the multiple layers. So we'll use underscore characters instead and
+  # convert them to spaces only at the last minute.
   docker run --rm \
           --user $uid:$gid \
-          -v $OUTDIR:$GOPATH/bin $monitorFlags \
-          -e BUILD_EXTRA_INJECT="-X \"main.BuildStamp=$buildStamp $extraInfo\" -X \"main.BuildPlatform=$bp\" -X \"main.GitCommit=$gitCommit\"" \
+          -v $OUTDIR:$GOPATH/out $monitorFlags \
+          -e BUILD_EXTRA_INJECT="-X_\"main.BuildStamp=$buildStamp $extraInfo\"_-X_\"main.BuildPlatform=$bp\"_-X_\"main.GitCommit=$gitCommit\"" \
           $TAG:$VER
   echo "Compiled programs should now be in $OUTDIR"
 fi

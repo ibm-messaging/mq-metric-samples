@@ -57,7 +57,7 @@ esac
 ORG="github.com/ibm-messaging"
 REPO="mq-metric-samples"
 VRMF=9.4.1.0
-GOVER=1.21
+GOVER=1.22
 UBI=ubi9
 db=`echo $COLL | sed "s/mq_//g"`
 #

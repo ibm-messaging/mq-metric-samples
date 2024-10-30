@@ -12,50 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=ubuntu:20.04
+ARG BASE_IMAGE=registry.access.redhat.com/ubi8/go-toolset:1.21
 FROM $BASE_IMAGE
 
 ARG GOPATH_ARG="/go"
-ARG GOVERSION=1.21
+
 ARG GOARCH=amd64
 ARG MQARCH=X64
 
-ENV GOVERSION=${GOVERSION}   \
-    GOPATH=$GOPATH_ARG \
+ENV GOPATH=$GOPATH_ARG \
     ORG="github.com/ibm-messaging"
 
+ENV GOVERSION=1.22.8
 
-# Install the Go compiler and Git
-RUN export DEBIAN_FRONTEND=noninteractive \
-  && bash -c 'source /etc/os-release; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME} main restricted" > /etc/apt/sources.list; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-backports main restricted universe" >> /etc/apt/sources.list; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME} universe" >> /etc/apt/sources.list; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-updates universe" >> /etc/apt/sources.list;' \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends \
-    git \
-    wget \
-    ca-certificates \
-    curl \
-    tar \
-    bash \
-    build-essential \
-    golang-$GOVERSION \
-  && rm -rf /var/lib/apt/lists/*
+USER 0
+RUN mkdir -p /go && chmod 777 /go
+RUN go install golang.org/dl/go${GOVERSION}@latest
 
-ENV GO=/usr/lib/go-${GOVERSION}/bin/go
-RUN $GO version
+# The compiler is in a non-default location. For the UBI8 image,
+# this is where it ends up.
+ENV GO=/go/bin/go${GOVERSION}
+RUN $GO download && $GO version
 
 # Create location for the git clone and MQ installation
-RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg \
+RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg $GOPATH/out \
   && chmod -R 777 $GOPATH \
   && mkdir -p $GOPATH/src/$ORG \
   && cd /tmp       \
   && mkdir -p /opt/mqm \
   && chmod a+rx /opt/mqm
-
 
 # Location of the downloadable MQ client package \
 ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
@@ -83,8 +68,6 @@ WORKDIR $GOPATH/src/$ORG/$REPO
 COPY --chmod=777 go.mod .
 COPY --chmod=777 go.sum .
 COPY --chmod=777 config.common.yaml .
-
-# RUN /usr/lib/go-${GOVERSION}/bin/go mod download
 
 # Copy the rest of the source tree from this directory into the container and
 # make sure it's readable by the user running the container

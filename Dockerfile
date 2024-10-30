@@ -15,13 +15,8 @@ ARG EXPORTER=mq_prometheus
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ## ### ### ### ### ### ### BUILD ### ### ### ### ### ### ##
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-# We start with a slightly older ubuntu rather than, say, a prebuilt
-# golang image because the newer go images have a glibc that is newer
-# than that in the current MQ container image. And that causes the collector
-# to fail if layered into the MQ container.
-#
-# At least there is a golang 1.21 available for this level of ubuntu.
-FROM ubuntu:20.04 AS builder
+ARG BASE_IMAGE=registry.access.redhat.com/ubi8/go-toolset:1.21
+FROM $BASE_IMAGE AS builder
 
 ARG EXPORTER
 ENV EXPORTER=${EXPORTER} \
@@ -34,22 +29,22 @@ ENV EXPORTER=${EXPORTER} \
     genmqpkg_incsdk=1 \
     genmqpkg_inctls=1
 
-ENV GOVERSION=1.21
-
-# Install packages
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    tar \
-    golang-$GOVERSION \
-    build-essential
-
-# The compiler is in a non-default location
-ENV GO=/usr/lib/go-${GOVERSION}/bin/go
-RUN $GO version
-
+ENV GOVERSION=1.22.8
 USER 0
+
+# The base UBI8 image does not (currently) contain the most
+# recent Go compiler. Which tends to be required for the OTel
+# packages. So we have to explicitly download and install it.
+# As long as we've got SOME level of compiler (which this base image)
+# does have, we can use it to pull down the more recent levels. It appears as if a
+# "go build ..." will now actually automatically pull in the newer level if needed
+# by the go.mod directives. But let's be explicit.
+RUN go install golang.org/dl/go${GOVERSION}@latest
+
+# The compiler is in a non-default location. For the UBI8 image,
+# this is where it ends up.
+ENV GO=/opt/app-root/src/go/bin/go${GOVERSION}
+RUN $GO download && $GO version
 
 # Create directory structure
 RUN mkdir -p /go/src /go/bin /go/pkg \
@@ -130,7 +125,8 @@ RUN buildStamp=`date +%Y%m%d-%H%M%S`; \
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ### ### ### ### ### ### ### RUN ### ### ### ### ### ### ###
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-FROM golang:1.21 AS runtime
+# Use a "minimal" runtime image
+FROM registry.access.redhat.com/ubi8-minimal:latest AS runtime
 
 ARG EXPORTER
 
@@ -141,12 +137,6 @@ RUN mkdir -p /opt/bin \
     && chmod 775 /opt/mqm \
     && mkdir -p /opt/config \
     && chmod a+rx /opt/config
-
-# Install packages
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
 
 # Create MQ client directories
 WORKDIR /opt/mqm

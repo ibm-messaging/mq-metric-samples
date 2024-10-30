@@ -16,7 +16,7 @@
 
 # Script to build the monitor agent programs from within a Docker container
 
-export PATH="${PATH}:/usr/lib/go-${GOVERSION}/bin:/go/bin"
+export PATH="${PATH}:/go/bin"
 export CGO_CFLAGS="-I/opt/mqm/inc/"
 export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
 export GOCACHE=/tmp/.cache
@@ -31,35 +31,38 @@ then
 fi
 
 echo "Using compiler:"
-go version
+$GO version
 
-# And do the builds into the bin directory
+# And do the builds into the output directory
 cd $GOPATH/src/$ORG/$REPO
 for m in $MONITORS
 do
   srcdir=cmd/$m
 
   echo "Building $m"
+
   if [ ! -z "$BUILD_EXTRA_INJECT" ]
   then
-    BUILD_EXTRA_LDFLAGS="-ldflags"
+    inject=`echo $BUILD_EXTRA_INJECT | sed "s/_/ /g"`
+    $GO build -mod=vendor -o $GOPATH/out/$m -ldflags "$inject"   $srcdir/*.go
+  else
+    $GO build -mod=vendor -o $GOPATH/out/$m   $srcdir/*.go
   fi
 
-  go build -mod=vendor -o $GOPATH/bin/$m $BUILD_EXTRA_LDFLAGS "$BUILD_EXTRA_INJECT"  $srcdir/*.go
 
   # Copy the supporting scripts into the output directory
   if [ -r $srcdir/$m.sh ]
   then
-    cp $srcdir/*.sh $GOPATH/bin
-    chmod a+rx $GOPATH/bin/*.sh
+    cp $srcdir/*.sh $GOPATH/out
+    chmod a+rx $GOPATH/out/*.sh
   fi
   if [ -r $srcdir/$m.mqsc ]
   then
-    cp $srcdir/*.mqsc $GOPATH/bin
+    cp $srcdir/*.mqsc $GOPATH/out
   fi
   if [ -r $srcdir/config.collector.yaml ]
   then
-    cat ./config.common.yaml $srcdir/config.collector.yaml > $GOPATH/bin/$m.yaml
+    cat ./config.common.yaml $srcdir/config.collector.yaml > $GOPATH/out/$m.yaml
   fi
 
 done
