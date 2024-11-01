@@ -75,7 +75,7 @@ github.com/grpc-ecosystem/grpc-gateway/v2/utilities
 ## explicit; go 1.18
 github.com/ibm-messaging/mq-golang/v5/ibmmq
 github.com/ibm-messaging/mq-golang/v5/mqmetric
-# github.com/influxdata/influxdb-client-go/v2 v2.13.0
+# github.com/influxdata/influxdb-client-go/v2 v2.14.0
 ## explicit; go 1.17
 github.com/influxdata/influxdb-client-go/v2
 github.com/influxdata/influxdb-client-go/v2/api
