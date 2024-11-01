@@ -1,6 +1,12 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Nov 01 2024 (no new version)
+* Move all sample container builds to use UBI base images
+  * And ensure appropriate level of Go compiler is available
+  * Main "Dockerfile" has RDURL_ARG build-arg option to pull Redist client 
+    from an alternative location
+
 ### Oct 24 2024 (v5.6.1)
 * Update to MQ 9.4.1
 * Some linter-suggested code changes

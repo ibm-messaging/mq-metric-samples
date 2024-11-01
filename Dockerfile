@@ -29,6 +29,7 @@ ENV EXPORTER=${EXPORTER} \
     genmqpkg_incsdk=1 \
     genmqpkg_inctls=1
 
+
 ENV GOVERSION=1.22.8
 USER 0
 
@@ -75,11 +76,12 @@ COPY README.md MQINST*/*deb MQINST*/*tar.gz /MQINST
 ARG TARGETARCH TARGETOS
 RUN echo "Target arch is $TARGETARCH; os is $TARGETOS"
 # Might need to refer to TARGET* vars a few times in this block, so define something shorter.
+ARG RDURL_ARG="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist"
 RUN T="$TARGETOS/$TARGETARCH"; \
       if [ "$T" = "linux/amd64" ]; \
       then \
         MQARCH=X64;\
-        RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist";\
+        RDURL=${RDURL_ARG};\
         RDTAR="IBM-MQC-Redist-Linux${MQARCH}.tar.gz"; \
         cd /opt/mqm \
         && curl -LO "$RDURL/$VRMF-$RDTAR" \
