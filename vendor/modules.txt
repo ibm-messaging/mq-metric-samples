@@ -161,8 +161,8 @@ go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp/internal/envco
 go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp/internal/oconf
 go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp/internal/retry
 go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp/internal/transform
-# go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.28.0
-## explicit; go 1.21
+# go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.32.0
+## explicit; go 1.22
 go.opentelemetry.io/otel/exporters/stdout/stdoutmetric
 # go.opentelemetry.io/otel/metric v1.32.0
 ## explicit; go 1.22
