@@ -1,0 +1,7 @@
+# Exclude the binary
+amqsevtg
+
+# Exclude VSCode
+*code-workspace
+
+go.work.sum
