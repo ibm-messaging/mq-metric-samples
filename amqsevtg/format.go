@@ -7,7 +7,7 @@
  */
 
 /*
-	Copyright (c) IBM Corporation 2024
+	Copyright (c) IBM Corporation 2025
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ func printElem(elem *mq.PCFParameter, body map[string]interface{}) {
 					p := (1 << uint(i))
 					bf := int(val) & p
 					if bf != 0 {
-						arr = append(arr, prettyVal(mq.MQItoString(set, bf)))
+						arr = append(arr, prettyVal(mq.MQItoString(set, bf), val))
 					}
 				}
 			}
@@ -87,7 +87,7 @@ func printElem(elem *mq.PCFParameter, body map[string]interface{}) {
 			case mq.MQIACF_REASON_CODE, mq.MQIACF_COMP_CODE:
 				// These options are so common that we want to show both text and number
 				nv := new(NV)
-				nv.Name = prettyVal(mq.PCFValueToString(elem.Parameter, val))
+				nv.Name = prettyVal(mq.PCFValueToString(elem.Parameter, val), val)
 				nv.Value = int32(val)
 				valS = nv
 
@@ -96,7 +96,7 @@ func printElem(elem *mq.PCFParameter, body map[string]interface{}) {
 				if _, err := strconv.Atoi(valS.(string)); err == nil {
 					valS = val
 				} else {
-					valS = prettyVal(valS.(string))
+					valS = prettyVal(valS.(string), val)
 				}
 			}
 		}
@@ -130,14 +130,14 @@ func printElem(elem *mq.PCFParameter, body map[string]interface{}) {
 					}
 				}
 			} else {
-				s = prettyVal(mq.MQItoString(set, v))
+				s = prettyVal(mq.MQItoString(set, v), int64(v))
 			}
 
 			if s != "" {
 				if _, err := strconv.Atoi(s); err == nil {
 					arr = append(arr, v)
 				} else {
-					arr = append(arr, prettyVal(s))
+					arr = append(arr, prettyVal(s, int64(v)))
 				}
 			} else {
 				arr = append(arr, v)
@@ -192,7 +192,7 @@ func printElem(elem *mq.PCFParameter, body map[string]interface{}) {
 // Convert MQI constants corresponding to attribute names into something more readable.
 // For example, "MQIA_RESOLVED_TYPE" becomes "resolvedType"
 func prettyName(s string) string {
-	if cf.Raw {
+	if cf.rawString {
 		return s
 	}
 	ss := []rune(s)
@@ -255,10 +255,22 @@ var forceUpper = []string{
 
 // Convert MQI constants corresponding to values into something more readable
 // For example, "MQPER_NOT_PERSISTENT" becomes "Not Persistent"
-func prettyVal(s string) string {
-	if cf.Raw {
+func prettyVal(s string, v int64) string {
+	return prettyValString(s, v, true)
+}
+
+// This underlying function lets us force the formatting to always return an MQI string regardless
+// of a Decode=rawNumber command options. Useful for some of the header/control information where we're
+// going to be printing both the number and string anyway.
+func prettyValString(s string, v int64, rawNum bool) string {
+
+	if cf.rawString {
 		return s
 	}
+	if cf.rawNumber && rawNum {
+		return strconv.FormatInt(v, 10)
+	}
+
 	if s == "MQOT_Q" {
 		s = "Queue"
 	}

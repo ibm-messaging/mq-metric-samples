@@ -6,7 +6,7 @@
  */
 
 /*
-Copyright (c) IBM Corporation 2024
+Copyright (c) IBM Corporation 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,9 @@ type Config struct {
 	WaitIntervalString string
 	waitInterval       int32
 	Browse             bool
-	Raw                bool
+	Decode             string
+	rawString          bool
+	rawNumber          bool
 	ClientMode         bool
 	UserId             string
 	password           string
@@ -74,15 +76,16 @@ func initParms() {
 
 	flag.StringVar(&cf.Output, "o", "", "Additional format options: 'compact','array' (comma-separated)")
 	flag.StringVar(&cf.Reconnect, "r", "", "Reconnection Option: d (disabled), m (qmgr), r (any)")
+	flag.StringVar(&cf.Decode, "d", "r", "Decoded value format: r ('readable'), n (numbers), s (full MQI strings)")
+
 	flag.StringVar(&cf.UserId, "u", "", "User ID")
 	flag.BoolVar(&cf.Browse, "b", false, "Browse events")
 	flag.BoolVar(&cf.ClientMode, "c", false, "Connect as client")
-	flag.BoolVar(&cf.Raw, "d", false, "Print definitions without formatting")
 	flag.StringVar(&cf.WaitIntervalString, "w", "", "Wait time (seconds)")
 
 	// New options to handle sending events direct to an OpenTelemetry endpoint
 	flag.StringVar(&cf.OTelEndpoint, "e", "", "OTel Endpoint: 'stdout', 'http(s)://example.com:4318', 'example.com:4317'")
-	flag.BoolVar(&cf.OTelInsecure, "i", false, "OTel Insecure connections allowed")
+	flag.BoolVar(&cf.OTelInsecure, "i", false, "OTel Insecure connections allowed - certificate validation not required")
 
 }
 
@@ -123,6 +126,21 @@ func parseParms() error {
 			cf.reconnectDisabled = true
 		default:
 			err = fmt.Errorf("Incorrect value for Reconnect (-r) option")
+			flag.Usage()
+		}
+	}
+
+	if err == nil && cf.Decode != "" {
+		switch cf.Decode {
+		case "n":
+			cf.rawNumber = true
+		case "s":
+			cf.rawString = true
+		case "r": // Default - "readable"
+			cf.rawString = false
+			cf.rawNumber = false
+		default:
+			err = fmt.Errorf("Incorrect value for Decode (-d) option")
 			flag.Usage()
 		}
 	}

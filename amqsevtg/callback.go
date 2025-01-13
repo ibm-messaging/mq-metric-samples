@@ -8,7 +8,7 @@
 package main
 
 /*
-   Copyright (c) IBM Corporation 2024
+   Copyright (c) IBM Corporation 2025
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -171,13 +171,13 @@ func formatEvent(objectName string, objectType int32, callbackReason int32, md *
 	}
 
 	event.EventSource.ObjectName = objectName
-	event.EventSource.ObjectType = prettyVal(mq.MQItoString("MQOT", int(objectType)))
+	event.EventSource.ObjectType = prettyValString(mq.MQItoString("MQOT", int(objectType)), int64(objectType), false)
 	event.EventSource.QueueManager = cf.QMgrName
 
-	event.EventType.Name = prettyVal(mq.MQItoString("MQCMD", int(cfh.Command)))
+	event.EventType.Name = prettyValString(mq.MQItoString("MQCMD", int(cfh.Command)), int64(cfh.Command), false)
 	event.EventType.Value = cfh.Command
 
-	event.EventReason.Name = prettyVal(mq.MQItoString("MQRC", int(cfh.Reason)))
+	event.EventReason.Name = prettyValString(mq.MQItoString("MQRC", int(cfh.Reason)), int64(cfh.Reason), false)
 	event.EventReason.Value = cfh.Reason
 
 	// Extract the PutDate/PutTime from the MQMD and format it in 2 ways
@@ -189,13 +189,13 @@ func formatEvent(objectName string, objectType int32, callbackReason int32, md *
 
 	if cfh.Type != mq.MQCFT_EVENT {
 		event.MsgType = new(NV)
-		event.MsgType.Name = prettyVal(mq.MQItoString("MQCFT", int(cfh.Type)))
+		event.MsgType.Name = prettyValString(mq.MQItoString("MQCFT", int(cfh.Type)), int64(cfh.Type), false)
 		event.MsgType.Value = cfh.Type
 	}
 
 	if callbackReason != 0 {
 		event.CallbackReason = new(NV)
-		event.CallbackReason.Name = prettyVal(mq.MQItoString("MQRC", int(callbackReason)))
+		event.CallbackReason.Name = prettyValString(mq.MQItoString("MQRC", int(callbackReason)), int64(callbackReason), false)
 		event.CallbackReason.Value = callbackReason
 	}
 

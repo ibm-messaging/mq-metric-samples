@@ -14,7 +14,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2024
+  Copyright (c) IBM Corporation 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -209,7 +209,9 @@ func mainWithRc() int {
 			objectList := strings.Split(cf.QName, ",")
 			for i := 0; i < len(objectList); i++ {
 				// We know that this queue will never exist on z/OS
-				if platform != mq.MQPL_ZOS && objectList[i] != "SYSTEM.ADMIN.LOGGER.EVENT" {
+				if platform == mq.MQPL_ZOS && objectList[i] == "SYSTEM.ADMIN.LOGGER.EVENT" {
+					continue
+				} else {
 					newOpenObject(objectList[i], mq.MQOT_Q)
 				}
 			}
