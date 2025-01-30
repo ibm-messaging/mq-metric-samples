@@ -14,26 +14,37 @@ then
   . /opt/mqm/bin/setmqenv -s -k
 fi
 
-# A list of queues to be monitored is given here.
-# It is a set of names or patterns ('*' only at the end, to match how MQ works),
-# separated by commas. When no queues match a pattern, it is reported but
-# is not fatal.
-queues="APP.*,MYQ.*"
+if false
+then
+  # One way of providing configuration information is directly via the command-line flags
+  # This shows how it can be done. but the preferred mechanism is through a separate
+  # YAML configuration file.
 
-# An alternative is to have a file containing the patterns, and named
-# via the ibmmq.monitoredQueuesFile option.
+  # A list of queues to be monitored is given here.
+  # It is a set of names or patterns ('*' only at the end, to match how MQ works),
+  # separated by commas. When no queues match a pattern, it is reported but
+  # is not fatal.
+  queues="APP.*,MYQ.*"
 
-# And other parameters that may be needed
-# See config.go for all recognised flags
+  # An alternative is to have a file containing the patterns, and named
+  # via the ibmmq.monitoredQueuesFile option.
 
-interval="10s"
+  # And other parameters that may be needed
+  # See config.go for all recognised flags
 
-ARGS="-ibmmq.queueManager=$qMgr"
-ARGS="$ARGS -ibmmq.interval=$interval"
-ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
-ARGS="$ARGS -ibmmq.monitoredChannels=*"
-ARGS="$ARGS -ibmmq.useStatus=true"
-ARGS="$ARGS -log.level=error"
+  interval="10s"
+
+  ARGS="-ibmmq.queueManager=$qMgr"
+  ARGS="$ARGS -ibmmq.interval=$interval"
+  ARGS="$ARGS -ibmmq.monitoredQueues=$queues"
+  ARGS="$ARGS -ibmmq.monitoredChannels=*"
+  ARGS="$ARGS -ibmmq.useStatus=true"
+  ARGS="$ARGS -log.level=error"
+else
+  # This is the preferred mechanism for configuration outside of
+  # containers where the equivalent environment variables are more common
+  ARGS="-f=/usr/local/bin/mqgo/mq_otel.yaml"
+fi
 
 # Start via "exec" so the pid remains the same. The queue manager can
 # then check the existence of the service and use the MQ_SERVER_PID value
