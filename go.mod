@@ -4,7 +4,7 @@ go 1.21
 toolchain go1.22.10
 
 require (
-	github.com/aws/aws-sdk-go v1.55.5
+	github.com/aws/aws-sdk-go v1.55.6
 	github.com/go-logr/stdr v1.2.2
 	github.com/ibm-messaging/mq-golang/v5 v5.6.1
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
