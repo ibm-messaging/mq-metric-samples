@@ -1220,7 +1220,7 @@
           },
           "editorMode": "builder",
           "expr": "ibmmq_nha_backlog_average_bytes",
-          "legendFormat": "Backlog average {{qmgr}}/{{nhainstance}}",
+          "legendFormat": "Backlog average {{qmgr}}/{{nha}}",
           "range": true,
           "refId": "A"
         },
@@ -1232,7 +1232,7 @@
           "editorMode": "builder",
           "expr": "ibmmq_nha_synchronous_log_sent_bytes",
           "hide": false,
-          "legendFormat": "Sync bytes sent {{qmgr}}/{{nhainstance}}",
+          "legendFormat": "Sync bytes sent {{qmgr}}/{{nha}}",
           "range": true,
           "refId": "B"
         }

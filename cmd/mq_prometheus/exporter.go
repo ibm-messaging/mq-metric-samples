@@ -479,13 +479,12 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 							}
 							addMetaLabels(labels)
 							m.addMetric(labels, f)
-
 						} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
 							instanceName := strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
 							//log.Debugf("Adding NativeHA metric %s for %s", elem.MetricName, instanceName)
 							labels := prometheus.Labels{"qmgr": config.cf.QMgrName,
-								"nhainstance": instanceName,
-								"platform":    platformString}
+								"nha":      instanceName,
+								"platform": platformString}
 							addMetaLabels(labels)
 							m.addMetric(labels, f)
 						} else { // It must be a queue
@@ -993,7 +992,7 @@ when the metrics are collected by Prometheus.
 */
 func newMqVec(elem *mqmetric.MonElement) *MQVec {
 	queueLabelNames := []string{"queue", "qmgr", "platform", "usage", "description", "cluster"}
-	nhaLabelNames := []string{"qmgr", "platform", "nhainstance"}
+	nhaLabelNames := []string{"qmgr", "platform", "nha"}
 	// If the qmgr tags change, then check the special metric indicating qmgr unavailable as that's
 	// not part of the regular collection blocks.
 	// "Hostname" was added to DIS QMSTATUS on Distributed platforms at version 9.3.2

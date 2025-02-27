@@ -21,5 +21,3 @@ But it probably can't be used unchanged.
 * It mostly assumes a local queue manager called `EVENTS`
 * It uses a sudo-like program `asid` that sets a specific userid/group
 * Generation of activity trace via topics uses another queue manager that I know, on my system, is doing work.
-* The `go.mod` file points at the locally cloned repository for the `ibmmq` package instead of using the published
-  package. That was because I was changing the package and needed to pick up those changes.

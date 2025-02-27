@@ -310,8 +310,17 @@ func cliSet(n string) bool {
 func VerifyConfig(cm *Config, fullCf interface{}) error {
 	var err error
 
-	// These are the resource metric classes that we currently know about for queue statistics, with "NONE" being a special case
-	validQueueSubscriptionSelectors := map[string]bool{"PUT": true, "GET": true, "GENERAL": true, "OPENCLOSE": true, "INQSET": true, "NONE": true}
+	// These are the resource metric classes that we currently know about for queue statistics, with "NONE" being a special case.
+	// "Extended" was added in 9.4.2 and is not likely to be often used - it's intended more for L2/L3 diagnostics.
+	validQueueSubscriptionSelectors := map[string]bool{
+		"PUT":       true,
+		"GET":       true,
+		"GENERAL":   true,
+		"OPENCLOSE": true,
+		"INQSET":    true,
+		"EXTENDED":  true,
+		"NONE":      true,
+	}
 
 	// If someone has explicitly said not to use publications, then they
 	// must require use of the xxSTATUS commands. So override that flag even if they

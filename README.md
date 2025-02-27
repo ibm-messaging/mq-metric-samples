@@ -100,9 +100,15 @@ collector program alongside a queue manager (perhaps as an MQ SERVICE) and you n
 system.
 
 ## Building to run on Windows
-There is a `buildMonitors.bat` file to help with building on Windows. It assumes you have the
-[tdm-gcc-64](https://jmeubank.github.io/tdm-gcc/download/) 64-bit compiler suite installed. It builds all the collectors
-and corresponding YAML configuration files into %GOPATH%/bin
+There is a `buildMonitors.bat` file to help with building on Windows. It assumes 
+* You have the
+[msys2](https://www.msys2.org/) 64-bit GCC compiler suite installed into the `C:\msys64` directory. The specific
+compiler version from this package can be installed with `pacman -S mingw-w64-ucrt-x86_64-gcc`. That should end up with
+the `gcc` command being available.
+* You have set the GOPATH environment variable to the root of your source trees. For example, `C:\Gowork`.
+
+The script builds all the collectors and corresponding YAML configuration files into %GOPATH%/bin. An alternative
+compiler could be [tdm-gcc-64](https://jmeubank.github.io/tdm-gcc/download/)
 
 ## Queue manager configuration
 When metrics are being collected from the publish/subscribe interface (all platforms except z/OS), there are some
@@ -141,7 +147,7 @@ To set it up, you must provide suitable configuration options. In the YAML confi
 
 If you use durable subscriptions, then the named reply queues may continue to receive publications even when the
 collector is not running, so that may induce queue-full reports in the error log or events. The subscriptions can be
-manually removed using the "DELETE SUB()" MQSC command for all subscriptions where the subscription ids begin with the
+manually removed using the `DELETE SUB()` MQSC command for all subscriptions where the subscription ids begin with the
 `durableSubPrefix` value. The `scripts/cleanDur.sh` program can be used for this deletion. You should also clean the
 subscriptions when the configuration of which data to collect has changed, particularly the `queueSubscriptionSelector`
 option.
@@ -221,8 +227,17 @@ configuration attribute to true.
 ### NativeHA
 When NativeHA is used, the queue manager publishes some metrics on its status. These are automatically collected
 whenever available, and can be seen in the metric lists. The metrics are given a prefix or series of "nha". For example,
-`ibmmq_nha_synchronous_log_sent_bytes` is one metric shown in Prometheus. The NativeHA "instance" - the names given to
-the replicas - is added as the `nhainstance` tag to the metrics.
+`ibmmq_nha_synchronous_log_sent_bytes` is one metric shown in Prometheus. The NativeHA "instance" or "group"
+name - given to the replicas - is added as the `nha` tag to the metrics. Each NativeHA metric 
+is associated with either an instance or group, never both. 
+
+Note: The `nha` tag was previously called `nhainstance` but
+that was confusing when the cross-region replication feature was introduced. Existing dashboards might need updating
+to show the newer tag.
+
+One type of metric related to NativeHA show a Log Sequence Number (LSN). In the queue manager, these will be shown
+in a style such as `GRPLSN(<0:0:326:39203>)`. Grafana does not have an inbuilt formatter to convert the integer into
+this style; you can display the raw value, but it's difficult to see the meaning. Other tools might permit additional processing.
 
 Depending on configuration, the collector may be able to automatically reconnect to the new instance after a failover.
 If that is not possible, you will need to have a process to restart the collector once the new replica has taken over.

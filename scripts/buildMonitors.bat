@@ -4,7 +4,9 @@ rem Don't affect parent environment
 setlocal
 
 rem Set a PATH to include a suitable gcc build
-set PATH=c:\tdm-gcc-64\bin;%PATH%
+rem The msys64 version seems to be more recent so is now preferred here
+rem set PATH=c:\tdm-gcc-64\bin;%PATH%
+set PATH=c:\msys64\ucrt64\bin;%PATH%
 
 rem Go to the root of my Go tree
 rem Usually something like c:\Gowork

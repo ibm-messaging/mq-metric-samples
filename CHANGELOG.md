@@ -1,6 +1,13 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Feb 28 2025 (v5.6.2)
+* Update to MQ 9.4.2
+* The "nhainstance" tag is renamed to "nha" to handle both instances and CRR groups
+  * Any dashboards related to NativeHA metrics may need to be updated  
+  * Prometheus Logging.json example dashboard includes Cross-region replication metrics
+* Add amqsevtg sample
+
 ### Nov 01 2024 (no new version)
 * Move all sample container builds to use UBI base images
   * And ensure appropriate level of Go compiler is available

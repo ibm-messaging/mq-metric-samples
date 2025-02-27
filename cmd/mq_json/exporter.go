@@ -234,7 +234,7 @@ func Collect() error {
 									pt.Tags["hostname"] = hostname
 								}
 							} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
-								pt.Tags["nhainstance"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
+								pt.Tags["nha"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
 								pt.ObjectType = "nha"
 
 							} else {

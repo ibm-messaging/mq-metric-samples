@@ -1,12 +1,13 @@
 module github.com/ibm-messaging/mq-metric-samples/v5
 
-go 1.21
-toolchain go1.22.10
+go 1.22.7
+
+toolchain go1.22.11
 
 require (
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/go-logr/stdr v1.2.2
-	github.com/ibm-messaging/mq-golang/v5 v5.6.1
+	github.com/ibm-messaging/mq-golang/v5 v5.6.2
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/sirupsen/logrus v1.9.3

@@ -207,7 +207,7 @@ func Collect() error {
 								}
 							} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
 								series = "nha"
-								tags["nhainstance"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
+								tags["nha"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
 							} else {
 								series = "queue"
 								tags[series] = key

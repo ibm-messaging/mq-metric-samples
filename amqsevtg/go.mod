@@ -5,7 +5,7 @@ go 1.22.7
 toolchain go1.22.10
 
 require (
-	github.com/ibm-messaging/mq-golang/v5 v5.6.1
+	github.com/ibm-messaging/mq-golang/v5 v5.6.2
 	go.opentelemetry.io/contrib/bridges/otelslog v0.8.0
 	go.opentelemetry.io/otel v1.33.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.9.0
@@ -36,4 +36,4 @@ require (
 	google.golang.org/protobuf v1.35.2 // indirect
 )
 
-replace github.com/ibm-messaging/mq-golang/v5 => ../../mq-golang
+// replace github.com/ibm-messaging/mq-golang/v5 => ../../mq-golang
