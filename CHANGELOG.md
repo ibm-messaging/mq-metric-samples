@@ -2,7 +2,7 @@
 Newest updates are at the top of this file.
 
 ### Unreleased
-* Fix boolean logic for `isFirstCollection` in `mq_prometheus`
+* Fix boolean logic for `isFirstCollection` in `mq_prometheus (#385)`
   * Ensure proper collection on the first poll and at regular intervals thereafter
 
 ### Feb 28 2025 (v5.6.2)
