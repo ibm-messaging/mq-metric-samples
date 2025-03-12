@@ -268,7 +268,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		pollStatus = false
 		thisPoll := time.Now()
 		elapsed = thisPoll.Sub(lastPoll)
-		if elapsed >= config.cf.PollIntervalDuration || !isFirstCollection() {
+		if elapsed >= config.cf.PollIntervalDuration || isFirstCollection() {
 			log.Debugf("Polling for object status")
 			lastPoll = thisPoll
 			pollStatus = true
