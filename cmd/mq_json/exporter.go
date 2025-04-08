@@ -233,6 +233,9 @@ func Collect() error {
 								if hostname != mqmetric.DUMMY_STRING {
 									pt.Tags["hostname"] = hostname
 								}
+								if showAndSupportsCustomLabel() {
+									pt.Tags["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+								}
 							} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
 								pt.Tags["nha"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
 								pt.ObjectType = "nha"
@@ -244,7 +247,9 @@ func Collect() error {
 								pt.ObjectType = "queue"
 								pt.Tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
 								pt.Tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
-
+								if showAndSupportsCustomLabel() {
+									pt.Tags["custom"] = mqmetric.GetObjectCustom(key, ibmmq.MQOT_Q)
+								}
 							}
 							addMetaLabels(pt.Tags)
 						}
@@ -327,6 +332,9 @@ func Collect() error {
 									pt.Tags["queue"] = qName
 									pt.Tags["usage"] = usageString
 									pt.Tags["description"] = mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q)
+									if showAndSupportsCustomLabel() {
+										pt.Tags["custom"] = mqmetric.GetObjectCustom(qName, ibmmq.MQOT_Q)
+									}
 									pt.Tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
 									pt.Tags["platform"] = platformString
 									addMetaLabels(pt.Tags)
@@ -382,6 +390,9 @@ func Collect() error {
 									pt.Tags["qmgr"] = strings.TrimSpace(qMgrName)
 									pt.Tags["platform"] = platformString
 									pt.Tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+									if showAndSupportsCustomLabel() {
+										pt.Tags["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+									}
 									hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
 									if hostname != mqmetric.DUMMY_STRING {
 										pt.Tags["hostname"] = hostname
@@ -649,4 +660,8 @@ func addMetaLabels(tags map[string]string) {
 			tags[config.cf.MetadataTagsArray[i]] = config.cf.MetadataValuesArray[i]
 		}
 	}
+}
+
+func showAndSupportsCustomLabel() bool {
+	return config.cf.CC.ShowCustomAttribute
 }

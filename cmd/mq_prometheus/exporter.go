@@ -234,6 +234,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			if supportsHostnameLabel() {
 				labels["hostname"] = mqmetric.DUMMY_STRING
 			}
+			if showAndSupportsCustomLabel() {
+				labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+			}
 			addMetaLabels(labels)
 			m.addMetric(labels, 0.0)
 			m.Collect(ch)
@@ -477,6 +480,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 							if supportsHostnameLabel() {
 								labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
 							}
+							if showAndSupportsCustomLabel() {
+								labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+							}
 							addMetaLabels(labels)
 							m.addMetric(labels, f)
 						} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
@@ -506,6 +512,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 									"description": mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q),
 									"cluster":     mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME),
 									"platform":    platformString}
+								if showAndSupportsCustomLabel() {
+									labels["custom"] = mqmetric.GetObjectCustom(key, ibmmq.MQOT_Q)
+								}
 								addMetaLabels(labels)
 								m.addMetric(labels, f)
 							}
@@ -603,6 +612,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 							"description": mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q),
 							"cluster":     mqmetric.GetQueueAttribute(qName, ibmmq.MQCA_CLUSTER_NAME),
 							"queue":       qName}
+						if showAndSupportsCustomLabel() {
+							labels["custom"] = mqmetric.GetObjectCustom(qName, ibmmq.MQOT_Q)
+						}
 						addMetaLabels(labels)
 						m.addMetric(labels, f)
 					}
@@ -665,6 +677,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						"platform":    platformString}
 					if supportsHostnameLabel() {
 						labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+					}
+					if showAndSupportsCustomLabel() {
+						labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
 					}
 					addMetaLabels(labels)
 					m.addMetric(labels, f)
@@ -992,6 +1007,9 @@ when the metrics are collected by Prometheus.
 */
 func newMqVec(elem *mqmetric.MonElement) *MQVec {
 	queueLabelNames := []string{"queue", "qmgr", "platform", "usage", "description", "cluster"}
+	if showAndSupportsCustomLabel() {
+		queueLabelNames = append(queueLabelNames, "custom")
+	}
 	nhaLabelNames := []string{"qmgr", "platform", "nha"}
 	// If the qmgr tags change, then check the special metric indicating qmgr unavailable as that's
 	// not part of the regular collection blocks.
@@ -999,6 +1017,9 @@ func newMqVec(elem *mqmetric.MonElement) *MQVec {
 	qmgrLabelNames := []string{"qmgr", "platform", "description"}
 	if supportsHostnameLabel() {
 		qmgrLabelNames = append(qmgrLabelNames, "hostname")
+	}
+	if showAndSupportsCustomLabel() {
+		qmgrLabelNames = append(qmgrLabelNames, "custom")
 	}
 	labels := qmgrLabelNames
 	prefix := "qmgr_"
@@ -1101,6 +1122,9 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 	if supportsHostnameLabel() {
 		qmgrLabels = append(qmgrLabels, "hostname")
 	}
+	if showAndSupportsCustomLabel() {
+		qmgrLabels = append(qmgrLabels, "custom")
+	}
 	// With topic status, need to know if type is "pub" or "sub"
 	topicLabels := []string{"qmgr", "platform", objectType, "type"}
 	subLabels := []string{"qmgr", "platform", objectType, "subid", "topic", "type"}
@@ -1115,6 +1139,9 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
 	queueLabels := []string{"qmgr", "platform", objectType, "usage", "description", "cluster"}
+	if showAndSupportsCustomLabel() {
+		queueLabels = append(queueLabels, "custom")
+	}
 
 	switch objectType {
 	case "channel":
@@ -1198,6 +1225,10 @@ func supportsHostnameLabel() bool {
 	}
 	//log.Debugf("supportsHostnameLabel: %v", rc)
 	return rc
+}
+
+func showAndSupportsCustomLabel() bool {
+	return config.cf.CC.ShowCustomAttribute
 }
 
 func addMetaLabels(labels prometheus.Labels) {

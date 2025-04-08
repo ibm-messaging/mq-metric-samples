@@ -92,6 +92,9 @@ filters:
     - PUT
     - GET
     - GENERAL
+    # Setting this to "true" will include the CUSTOM attribute of a queue manager and queue as
+    # tag/label.
+    showCustomAttribute: false
 
 # Collector-specific configuration will also need to be added here. Some of the sample build
 # scripts will concatenate default definitions from the cmd/mq_* directories.
