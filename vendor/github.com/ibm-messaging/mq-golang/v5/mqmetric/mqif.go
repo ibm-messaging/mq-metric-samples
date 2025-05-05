@@ -52,6 +52,7 @@ type ConnectionConfig struct {
 	UseStatus            bool
 	UseResetQStats       bool
 	ShowInactiveChannels bool
+	ShowCustomAttribute  bool
 	HideSvrConnJobname   bool
 	HideAMQPClientId     bool
 	WaitInterval         int
@@ -131,6 +132,7 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 
 	ci.tzOffsetSecs = cc.TZOffsetSecs
 	ci.showInactiveChannels = cc.ShowInactiveChannels
+	ci.showCustomAttribute = cc.ShowCustomAttribute
 	ci.hideSvrConnJobname = cc.HideSvrConnJobname
 	ci.hideAMQPClientId = cc.HideAMQPClientId
 
