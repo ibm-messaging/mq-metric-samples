@@ -211,7 +211,8 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ibmmq.MQIA_COMMAND_LEVEL,
 				ibmmq.MQIA_PERFORMANCE_EVENT,
 				ibmmq.MQIA_MAX_HANDLES,
-				ibmmq.MQIA_PLATFORM}
+				ibmmq.MQIA_PLATFORM,
+				ibmmq.MQCA_VERSION}
 
 			v, err = ci.si.qMgrObject.Inq(selectors)
 			if err == nil {
@@ -219,6 +220,7 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ci.si.platform = v[ibmmq.MQIA_PLATFORM].(int32)
 				ci.si.commandLevel = v[ibmmq.MQIA_COMMAND_LEVEL].(int32)
 				ci.si.maxHandles = v[ibmmq.MQIA_MAX_HANDLES].(int32)
+				ci.si.version = v[ibmmq.MQCA_VERSION].(string)
 
 				if ci.si.platform == ibmmq.MQPL_ZOS {
 					ci.usePublications = false
@@ -241,9 +243,6 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 						ci.usePublications = false
 					}
 				}
-			} else {
-				errorString = "Cannot inquire on queue manager object"
-				mqreturn = err.(*ibmmq.MQReturn)
 			}
 		} else {
 			errorString = "Cannot open queue manager object"
@@ -316,10 +315,7 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 
 	if err != nil {
 		if mqreturn == nil {
-			mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_FAILED, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
-		}
-		if errorString == "" {
-			errorString = err.Error()
+			mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_WARNING, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
 		}
 		traceExitErr("initConnectionKey", 1, mqreturn)
 		return MQMetricError{Err: errorString, MQReturn: mqreturn}
