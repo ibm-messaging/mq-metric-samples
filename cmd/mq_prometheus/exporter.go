@@ -46,6 +46,7 @@ type exporter struct {
 	usagePsStatus *mqmetric.StatusSet
 	clusterStatus *mqmetric.StatusSet
 	amqpStatus    *mqmetric.StatusSet
+	mqttStatus    *mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
@@ -60,6 +61,7 @@ func newExporter() *exporter {
 		usagePsStatus: mqmetric.GetObjectStatus("", mqmetric.OT_PS),
 		clusterStatus: mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER),
 		amqpStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP),
+		mqttStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT),
 	}
 }
 
@@ -85,6 +87,7 @@ var (
 	usagePsStatusVecMap = make(map[string]*MQVec)
 	clusterStatusVecMap = make(map[string]*MQVec)
 	amqpStatusVecMap    = make(map[string]*MQVec)
+	mqttStatusVecMap    = make(map[string]*MQVec)
 
 	lastPoll           = time.Now()
 	lastQueueDiscovery time.Time
@@ -154,9 +157,12 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 			usagePsStatusVecMap[attr.MetricName].Describe(ch)
 		}
 	} else {
-		// While AMQP is Distributed only
+		// While AMQP and MQTT are Distributed only
 		for _, attr := range e.amqpStatus.Attributes {
 			amqpStatusVecMap[attr.MetricName].Describe(ch)
+		}
+		for _, attr := range e.mqttStatus.Attributes {
+			mqttStatusVecMap[attr.MetricName].Describe(ch)
 		}
 	}
 }
@@ -317,6 +323,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				for _, attr := range e.amqpStatus.Attributes {
 					amqpStatusVecMap[attr.MetricName].Reset()
 				}
+				for _, attr := range e.mqttStatus.Attributes {
+					mqttStatusVecMap[attr.MetricName].Reset()
+				}
 			}
 
 			if config.cf.CC.UseStatus {
@@ -391,15 +400,28 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				}
 			}
 
-			if err == nil && mqmetric.GetPlatform() != ibmmq.MQPL_ZOS && config.cf.MonitoredAMQPChannels != "" {
-				err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
-				if err != nil {
-					log.Errorf("Error collecting AMQP channel status: %v", err)
-					pollError = err
-				} else {
-					log.Debugf("Collected all AMQP channel status")
+			if err == nil && mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+				if config.cf.MonitoredAMQPChannels != "" {
+					err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
+					if err != nil {
+						log.Errorf("Error collecting AMQP channel status: %v", err)
+						pollError = err
+					} else {
+						log.Debugf("Collected all AMQP channel status")
+					}
+				}
+
+				if config.cf.MonitoredMQTTChannels != "" {
+					err = mqmetric.CollectMQTTChannelStatus(config.cf.MonitoredMQTTChannels)
+					if err != nil {
+						log.Errorf("Error collecting MQTT channel status: %v", err)
+						pollError = err
+					} else {
+						log.Debugf("Collected all MQTT channel status")
+					}
 				}
 			}
+
 		}
 		if err == nil {
 			err = pollError
@@ -446,8 +468,10 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			//if err == nil {
 			_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
 			//}
-			_ = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
-
+			if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+				_ = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
+				_ = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_MQTT, config.cf.MonitoredMQTTChannels)
+			}
 		}
 	}
 
@@ -558,7 +582,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					chlName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
 					connName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
 					jobName := e.chlStatus.Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
-
+					cipherSpec := mqmetric.DUMMY_STRING
+					if cipherSpecAttr, ok := e.chlStatus.Attributes[mqmetric.ATTR_CHL_SSLCIPH].Values[key]; ok {
+						cipherSpec = cipherSpecAttr.ValueString
+					}
+					log.Debugf("channel status - channelName: %s cipherSpec: \"%s\"", chlName, cipherSpec)
 					// log.Debugf("channel status - key: %s channelName: %s metric: %s val: %v", key, chlName, attr.MetricName, f)
 					labels := prometheus.Labels{
 						"qmgr":                     strings.TrimSpace(config.cf.QMgrName),
@@ -568,7 +596,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						mqmetric.ATTR_CHL_TYPE:     strings.TrimSpace(chlTypeString),
 						mqmetric.ATTR_CHL_RQMNAME:  strings.TrimSpace(rqmname),
 						mqmetric.ATTR_CHL_CONNNAME: strings.TrimSpace(connName),
-						mqmetric.ATTR_CHL_JOBNAME:  strings.TrimSpace(jobName)}
+						mqmetric.ATTR_CHL_JOBNAME:  strings.TrimSpace(jobName),
+						mqmetric.ATTR_CHL_SSLCIPH:  strings.TrimSpace(cipherSpec)}
+
 					addMetaLabels(labels)
 					m.addMetric(labels, f)
 				}
@@ -761,6 +791,28 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					}
 				}
 			}
+
+			for _, attr := range e.mqttStatus.Attributes {
+				for key, value := range attr.Values {
+					chlName := e.mqttStatus.Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+					clientId := e.mqttStatus.Attributes[mqmetric.ATTR_CHL_MQTT_CLIENT_ID].Values[key].ValueString
+					connName := e.mqttStatus.Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+					if value.IsInt64 && !attr.Pseudo {
+						m := mqttStatusVecMap[attr.MetricName]
+						f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
+						labels := prometheus.Labels{
+							"qmgr":                           strings.TrimSpace(config.cf.QMgrName),
+							"channel":                        chlName,
+							"description":                    mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_MQTT),
+							"platform":                       platformString,
+							mqmetric.ATTR_CHL_MQTT_CLIENT_ID: clientId,
+							mqmetric.ATTR_CHL_CONNNAME:       strings.TrimSpace(connName)}
+						addMetaLabels(labels)
+						m.addMetric(labels, f)
+
+					}
+				}
+			}
 		}
 	}
 
@@ -834,6 +886,14 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				m.CollectWrap(ch)
 			}
 		}
+
+		for _, attr := range e.mqttStatus.Attributes {
+			if !attr.Pseudo {
+				m := mqttStatusVecMap[attr.MetricName]
+				log.Debugf("Reporting MQTT metrics for %s", attr.MetricName)
+				m.CollectWrap(ch)
+			}
+		}
 	}
 
 	collectStopTime := time.Now()
@@ -883,6 +943,8 @@ func allocateAllGauges() {
 	} else {
 		allocateAMQPStatusGauges()
 		log.Debugf("AMQP  Gauges allocated")
+		allocateMQTTStatusGauges()
+		log.Debugf("MQTT  Gauges allocated")
 	}
 }
 
@@ -917,6 +979,13 @@ func allocateAMQPStatusGauges() {
 	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP).Attributes {
 		m := newMqVecObj(attr, "amqp")
 		amqpStatusVecMap[attr.MetricName] = m
+	}
+}
+func allocateMQTTStatusGauges() {
+	mqmetric.ChannelMQTTInitAttributes()
+	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT).Attributes {
+		m := newMqVecObj(attr, "mqtt")
+		mqttStatusVecMap[attr.MetricName] = m
 	}
 }
 func allocateQStatusGauges() {
@@ -1093,7 +1162,8 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 		mqmetric.ATTR_CHL_TYPE,
 		mqmetric.ATTR_CHL_RQMNAME,
 		mqmetric.ATTR_CHL_CONNNAME,
-		mqmetric.ATTR_CHL_JOBNAME}
+		mqmetric.ATTR_CHL_JOBNAME,
+		mqmetric.ATTR_CHL_SSLCIPH}
 
 	// These labels have to be the same set as those used by the published
 	// resources.
@@ -1110,7 +1180,9 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 	amqpLabels := []string{"qmgr", "platform", "description", "channel",
 		mqmetric.ATTR_CHL_AMQP_CLIENT_ID,
 		mqmetric.ATTR_CHL_CONNNAME}
-
+	mqttLabels := []string{"qmgr", "platform", "description", "channel",
+		mqmetric.ATTR_CHL_MQTT_CLIENT_ID,
+		mqmetric.ATTR_CHL_CONNNAME}
 	// Adding the polling queue status options means we can use this block for
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
@@ -1135,6 +1207,8 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 		labels = clusterLabels
 	case "amqp":
 		labels = amqpLabels
+	case "mqtt":
+		labels = mqttLabels
 	default:
 		log.Errorf("Tried to create metrics for unknown object type %s", objectType)
 	}

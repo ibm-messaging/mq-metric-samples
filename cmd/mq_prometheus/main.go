@@ -139,8 +139,10 @@ func main() {
 					discoverConfig.MonitoredQueues.UseWildcard = wildcardResource
 					discoverConfig.MetaPrefix = config.cf.MetaPrefix
 					err = mqmetric.DiscoverAndSubscribe(discoverConfig)
-					mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
-					log.Debugf("Returned from RediscoverAttributes with error %v", err)
+					e := mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+					e = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_MQTT, config.cf.MonitoredMQTTChannels)
+
+					log.Debugf("Returned from RediscoverAttributes with error %v  tempErr %v", err, e)
 				}
 
 				if err == nil {

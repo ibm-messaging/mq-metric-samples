@@ -45,21 +45,24 @@ type ConfigYConnection struct {
 	User             string
 	Client           string `yaml:"clientConnection" default:"false"`
 	Password         string
-	PasswordFile     string   `yaml:"passwordFile"`
-	ReplyQueue       string   `yaml:"replyQueue" `
-	ReplyQueue2      string   `yaml:"replyQueue2"`
-	DurableSubPrefix string   `yaml:"durableSubPrefix"`
-	CcdtUrl          string   `yaml:"ccdtUrl"`
-	ConnName         string   `yaml:"connName"`
-	Channel          string   `yaml:"channel"`
-	WaitInterval     string   `yaml:"waitInterval"`
-	MetadataTags     []string `yaml:"metadataTags"`
-	MetadataValues   []string `yaml:"metadataValues"`
+	PasswordFile     string            `yaml:"passwordFile"`
+	ReplyQueue       string            `yaml:"replyQueue" `
+	ReplyQueue2      string            `yaml:"replyQueue2"`
+	DurableSubPrefix string            `yaml:"durableSubPrefix"`
+	CcdtUrl          string            `yaml:"ccdtUrl"`
+	ConnName         string            `yaml:"connName"`
+	Channel          string            `yaml:"channel"`
+	WaitInterval     string            `yaml:"waitInterval"`
+	MetadataTags     []string          `yaml:"metadataTags"`
+	MetadataValues   []string          `yaml:"metadataValues"`
+	MetadataMap      map[string]string `yaml:"metadataMap"`
 }
 type ConfigYObjects struct {
-	Queues        []string
-	Channels      []string
-	AMQPChannels  []string `yaml:"amqpChannels"`
+	Queues       []string
+	Channels     []string
+	AMQPChannels []string `yaml:"amqpChannels"`
+	MQTTChannels []string `yaml:"mqttChannels"`
+
 	Topics        []string
 	Subscriptions []string
 	// These are left here for now so they can be recognised but will cause an error because the
@@ -71,6 +74,7 @@ type ConfigYObjects struct {
 type ConfigYFilters struct {
 	HideSvrConnJobname        string   `yaml:"hideSvrConnJobname" default:"false"`
 	HideAMQPClientId          string   `yaml:"hideAMQPClientId" default:"false"`
+	HideMQTTClientId          string   `yaml:"hideMQTTClientId" default:"false"`
 	ShowInactiveChannels      string   `yaml:"showInactiveChannels" default:"false"`
 	QueueSubscriptionSelector []string `yaml:"queueSubscriptionSelector"`
 }
@@ -132,6 +136,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("filters", "showInactiveChannels", AsBool(cyf.ShowInactiveChannels, false))
 	cm.CC.HideSvrConnJobname = CopyParmIfNotSetBool("filters", "hideSvrConnJobname", AsBool(cyf.HideSvrConnJobname, false))
 	cm.CC.HideAMQPClientId = CopyParmIfNotSetBool("filters", "hideAMQPClientId", AsBool(cyf.HideAMQPClientId, false))
+	cm.CC.HideMQTTClientId = CopyParmIfNotSetBool("filters", "hideMQTTClientId", AsBool(cyf.HideMQTTClientId, false))
 
 	cm.QueueSubscriptionSelector = CopyParmIfNotSetStrArray("filters", "queueSubscriptionSelector", cyf.QueueSubscriptionSelector)
 
@@ -165,6 +170,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.MonitoredQueues = CopyParmIfNotSetStrArray("objects", "queues", cyo.Queues)
 	cm.MonitoredChannels = CopyParmIfNotSetStrArray("objects", "channels", cyo.Channels)
 	cm.MonitoredAMQPChannels = CopyParmIfNotSetStrArray("objects", "amqpChannels", cyo.AMQPChannels)
+	cm.MonitoredMQTTChannels = CopyParmIfNotSetStrArray("objects", "mqttChannels", cyo.MQTTChannels)
 
 	cm.MonitoredTopics = CopyParmIfNotSetStrArray("objects", "topics", cyo.Topics)
 	cm.MonitoredSubscriptions = CopyParmIfNotSetStrArray("objects", "subscriptions", cyo.Subscriptions)
@@ -172,8 +178,20 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cfMoved.QueueSubscriptionSelector = CopyDeprecatedParmIfNotSetStrArray("objects", "queueSubscriptionSelector", cyo.QueueSubscriptionSelector)
 	cfMoved.ShowInactiveChannels = CopyDeprecatedParmIfNotSetStr("objects", "showInactiveChannels", cyo.ShowInactiveChannels)
 
-	cm.metadataTags = CopyParmIfNotSetStrArray("connection", "metadataTags", cyc.MetadataTags)
-	cm.metadataValues = CopyParmIfNotSetStrArray("connection", "metadataValues", cyc.MetadataValues)
+	// Prefer the YAML map construct instead of the array list. If the map is provided, then make sure
+	// that the tags/values arrays are built only from the map. Note that there is no command-line or env var
+	// equivalent of the map - those have to use the separate tags/values comma-separated strings.
+	if cyc.MetadataMap == nil || len(cyc.MetadataMap) == 0 {
+		cm.metadataTags = CopyParmIfNotSetStrArray("connection", "metadataTags", cyc.MetadataTags)
+		cm.metadataValues = CopyParmIfNotSetStrArray("connection", "metadataValues", cyc.MetadataValues)
+	} else {
+		cm.metadataTags = ""
+		cm.metadataValues = ""
+		for k, v := range cyc.MetadataMap {
+			cm.MetadataTagsArray = append(cm.MetadataTagsArray, k)
+			cm.MetadataValuesArray = append(cm.MetadataValuesArray, v)
+		}
+	}
 
 	return
 }

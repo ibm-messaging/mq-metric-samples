@@ -53,6 +53,8 @@ type Config struct {
 	MonitoredChannelsFile      string
 	MonitoredAMQPChannels      string
 	MonitoredAMQPChannelsFile  string
+	MonitoredMQTTChannels      string
+	MonitoredMQTTChannelsFile  string
 	MonitoredTopics            string
 	MonitoredTopicsFile        string
 	MonitoredSubscriptions     string
@@ -178,10 +180,12 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.MonitoredQueues, "", CP_STR, "ibmmq.monitoredQueues", "objects", "queues", "Patterns of queues to monitor")
 	AddParm(&cm.MonitoredChannels, "", CP_STR, "ibmmq.monitoredChannels", "objects", "channels", "Patterns of channels to monitor")
 	AddParm(&cm.MonitoredAMQPChannels, "", CP_STR, "ibmmq.monitoredAMQPChannels", "objects", "amqpChannels", "Patterns of AMQP channels to monitor")
+	AddParm(&cm.MonitoredMQTTChannels, "", CP_STR, "ibmmq.monitoredMQTTChannels", "objects", "mqttChannels", "Patterns of MQTT channels to monitor")
 
 	AddParm(&cm.MonitoredQueuesFile, "", CP_STR, "ibmmq.monitoredQueuesFile", "objects", "queuesFile", "File with patterns of queues to monitor")
 	AddParm(&cm.MonitoredChannelsFile, "", CP_STR, "ibmmq.monitoredChannelsFile", "objects", "channelsFile", "File with patterns of channels to monitor")
 	AddParm(&cm.MonitoredAMQPChannelsFile, "", CP_STR, "ibmmq.monitoredAMQPChannelsFile", "objects", "amqpChannelsFile", "File with patterns of AMQP channels to monitor")
+	AddParm(&cm.MonitoredMQTTChannelsFile, "", CP_STR, "ibmmq.monitoredMQTTChannelsFile", "objects", "mqttChannelsFile", "File with patterns of MQTT channels to monitor")
 
 	AddParm(&cm.MonitoredTopics, "#", CP_STR, "ibmmq.monitoredTopics", "objects", "topics", "Patterns of topics to monitor")
 	AddParm(&cm.MonitoredSubscriptions, "*", CP_STR, "ibmmq.monitoredSubscriptions", "objects", "subscriptions", "Patterns of subscriptions to monitor")
@@ -192,6 +196,7 @@ func InitConfig(cm *Config) {
 
 	AddParm(&cm.CC.HideSvrConnJobname, false, CP_BOOL, "ibmmq.hideSvrConnJobname", "filters", "hideSvrConnJobname", "Don't create multiple instances of SVRCONN information")
 	AddParm(&cm.CC.HideAMQPClientId, false, CP_BOOL, "ibmmq.hideAMQPClientId", "filters", "hideAMQPClientId", "Don't create multiple instances of ClientID information")
+	AddParm(&cm.CC.HideMQTTClientId, false, CP_BOOL, "ibmmq.hideMQTTClientId", "filters", "hideMQTTClientId", "Don't create multiple instances of ClientID information")
 
 	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
 	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.qStatus", "global", "useObjectStatus", "Add metrics from the QSTATUS fields")
@@ -362,6 +367,15 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 			cm.MonitoredAMQPChannels, err = mqmetric.ReadPatterns(cm.MonitoredAMQPChannelsFile)
 			if err != nil {
 				err = fmt.Errorf("Failed to parse monitored AMQP channels file - %v", err)
+			}
+		}
+	}
+
+	if err == nil {
+		if cm.MonitoredMQTTChannelsFile != "" {
+			cm.MonitoredMQTTChannels, err = mqmetric.ReadPatterns(cm.MonitoredMQTTChannelsFile)
+			if err != nil {
+				err = fmt.Errorf("Failed to parse monitored MQTT channels file - %v", err)
 			}
 		}
 	}

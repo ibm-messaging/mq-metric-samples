@@ -56,8 +56,8 @@ esac
 # Set some variables.
 ORG="github.com/ibm-messaging"
 REPO="mq-metric-samples"
-VRMF=9.4.2.0
-GOVER=1.22
+VRMF=9.4.3.0
+GOVER=1.23
 UBI=ubi9
 db=`echo $COLL | sed "s/mq_//g"`
 #
@@ -136,6 +136,9 @@ tmpfile=/tmp/build.sh.$$
 cat << EOF > $tmpfile
 cat config.common.yaml cmd/$COLL/config.collector.yaml > /opt/config/$COLL.yaml
 go version
+# Allow the Go compiler to update itself. This env var seems to be explicitly needed
+# in this environment.
+export GOTOOLCHAIN=auto
 go build -mod=vendor -o /opt/bin/$COLL \
   -ldflags "-X \"main.BuildStamp=$buildStamp\" -X \"main.BuildPlatform=$bp\" -X \"main.GitCommit=$gitCommit\"" \
    cmd/$COLL/*.go

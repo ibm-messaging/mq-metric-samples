@@ -1,7 +1,7 @@
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2023
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -54,7 +54,9 @@ type ConnectionConfig struct {
 	ShowInactiveChannels bool
 	HideSvrConnJobname   bool
 	HideAMQPClientId     bool
-	WaitInterval         int
+	HideMQTTClientId     bool
+
+	WaitInterval int
 
 	CcdtUrl  string
 	ConnName string
@@ -133,6 +135,7 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 	ci.showInactiveChannels = cc.ShowInactiveChannels
 	ci.hideSvrConnJobname = cc.HideSvrConnJobname
 	ci.hideAMQPClientId = cc.HideAMQPClientId
+	ci.hideMQTTClientId = cc.HideMQTTClientId
 
 	ci.durableSubPrefix = cc.DurableSubPrefix
 
@@ -211,8 +214,7 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ibmmq.MQIA_COMMAND_LEVEL,
 				ibmmq.MQIA_PERFORMANCE_EVENT,
 				ibmmq.MQIA_MAX_HANDLES,
-				ibmmq.MQIA_PLATFORM,
-				ibmmq.MQCA_VERSION}
+				ibmmq.MQIA_PLATFORM}
 
 			v, err = ci.si.qMgrObject.Inq(selectors)
 			if err == nil {
@@ -220,7 +222,6 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ci.si.platform = v[ibmmq.MQIA_PLATFORM].(int32)
 				ci.si.commandLevel = v[ibmmq.MQIA_COMMAND_LEVEL].(int32)
 				ci.si.maxHandles = v[ibmmq.MQIA_MAX_HANDLES].(int32)
-				ci.si.version = v[ibmmq.MQCA_VERSION].(string)
 
 				if ci.si.platform == ibmmq.MQPL_ZOS {
 					ci.usePublications = false
@@ -229,6 +230,7 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 					if ci.useResetQStats && evEnabled == 0 {
 						errorString = "Requested use of RESET QSTATS but queue manager has PERFMEV(DISABLED)"
 						err = errors.New(errorString)
+						mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_FAILED, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
 					}
 				} else {
 					if cc.UsePublications {
@@ -243,12 +245,17 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 						ci.usePublications = false
 					}
 				}
+			} else {
+				errorString = "Cannot inquire on queue manager object"
+				mqreturn = err.(*ibmmq.MQReturn)
 			}
 		} else {
 			errorString = "Cannot open queue manager object"
 			mqreturn = err.(*ibmmq.MQReturn)
 		}
 	}
+
+	// err = errors.New("TESTING") // for testing - force an error
 
 	// MQOPEN of the COMMAND QUEUE
 	if err == nil {
@@ -313,9 +320,15 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 		clearDurableSubscriptions(ci.durableSubPrefix, ci.si.cmdQObj, ci.si.statusReplyQObj)
 	}
 
+	// If anything has gone wrong in the initial connection and object access then return an error.
 	if err != nil {
+		// All the `err` objects should have been converted to `mqreturn` objects. But if not,
+		// then force it with a FAILED code.
 		if mqreturn == nil {
-			mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_WARNING, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
+			mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_FAILED, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
+		}
+		if errorString == "" {
+			errorString = err.Error()
 		}
 		traceExitErr("initConnectionKey", 1, mqreturn)
 		return MQMetricError{Err: errorString, MQReturn: mqreturn}
@@ -418,7 +431,9 @@ func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	// Backout the first attempt so we retry the same message
 	if err != nil && err.(*ibmmq.MQReturn).MQRC == ibmmq.MQRC_NOT_CONVERTED {
 		if transNeeded {
-			hObj.GetHConn().Back()
+			if ibmmq.IsUsableHObj(hObj) {
+				hObj.GetHConn().Back()
+			}
 		}
 		convertToAlternateCP = true
 		getmqmd.CodedCharSetId = ALTERNATE_CCSID
@@ -426,7 +441,9 @@ func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	}
 
 	if transNeeded {
-		hObj.GetHConn().Cmit()
+		if ibmmq.IsUsableHObj(hObj) {
+			hObj.GetHConn().Cmit()
+		}
 	}
 	// By the time we've been through here once successfully, we should know
 	// whether we need to continue with the transactional version
@@ -498,7 +515,7 @@ func subscribeWithOptions(topic string, pubQObj *ibmmq.MQObject, managed bool, d
 
 		e2 := fmt.Errorf("Error subscribing to topic '%s': %v %s", topic, err, extraInfo)
 		traceExitErr("subscribeWithOptions", 1, e2)
-		return mqtd, e2
+		return nil, e2
 	}
 
 	mqtd.hObj = hObj

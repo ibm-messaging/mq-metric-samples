@@ -1,6 +1,18 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jun 18 2025 (v5.6.4)
+* Update to MQ 9.4.3
+* Add MQTT channel metrics, similar to AMQP
+* Changes from underlying mq-golang mqmetric package:
+  * Add security_protocol metric for channels
+  * Add sslciph label/tag for channels
+  * Fail connection in preference to warning when unexpected error
+  * Some versions don't support MQINQ(MQCA_VERSION) (#395)
+  * Add startTime (epoch, milliseconds) for all channel types
+  * Add active_service metric for qmgr
+  * Increase recommended max qdepth on replyQ as there are now more potential queue subscriptions
+
 ### Unreleased
 * Fix boolean logic for `isFirstCollection` in `mq_prometheus (#385)`
   * Ensure proper collection on the first poll and at regular intervals thereafter
@@ -8,14 +20,14 @@ Newest updates are at the top of this file.
 ### Feb 28 2025 (v5.6.2)
 * Update to MQ 9.4.2
 * The "nhainstance" tag is renamed to "nha" to handle both instances and CRR groups
-  * Any dashboards related to NativeHA metrics may need to be updated  
+  * Any dashboards related to NativeHA metrics may need to be updated
   * Prometheus Logging.json example dashboard includes Cross-region replication metrics
 * Add amqsevtg sample
 
 ### Nov 01 2024 (no new version)
 * Move all sample container builds to use UBI base images
   * And ensure appropriate level of Go compiler is available
-  * Main "Dockerfile" has RDURL_ARG build-arg option to pull Redist client 
+  * Main "Dockerfile" has RDURL_ARG build-arg option to pull Redist client
     from an alternative location
 
 ### Oct 24 2024 (v5.6.1)

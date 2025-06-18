@@ -1,10 +1,11 @@
 module github.com/ibm-messaging/mq-golang/samples/amqsevtg
 
-go 1.22.7
+go 1.23.0
+
 toolchain go1.24.1
 
 require (
-	github.com/ibm-messaging/mq-golang/v5 v5.6.2
+	github.com/ibm-messaging/mq-golang/v5 v5.6.4
 	go.opentelemetry.io/contrib/bridges/otelslog v0.8.0
 	go.opentelemetry.io/otel v1.33.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.9.0

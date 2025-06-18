@@ -293,6 +293,16 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 						log.Debugf("Collected all AMQP status")
 					}
 				}
+
+				if config.cf.MonitoredMQTTChannels != "" {
+					err = mqmetric.CollectMQTTChannelStatus(config.cf.MonitoredMQTTChannels)
+					if err != nil {
+						log.Errorf("Error collecting MQTT status: %v", err)
+						pollError = err
+					} else {
+						log.Debugf("Collected all MQTT status")
+					}
+				}
 			}
 
 			err = mqmetric.CollectQueueManagerStatus()
@@ -315,7 +325,10 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 				/*err =*/ mqmetric.RediscoverAndSubscribe(discoverConfig)
 				lastQueueDiscovery = thisDiscovery
 				/*err =*/ mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
-				err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
+				if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+					err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
+					err = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_MQTT, config.cf.MonitoredMQTTChannels)
+				}
 
 			}
 		}
@@ -437,6 +450,10 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 						chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
 						connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
 						jobName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_JOBNAME].Values[key].ValueString
+						cipherSpec := mqmetric.DUMMY_STRING
+						if cipherSpecAttr, ok := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL).Attributes[mqmetric.ATTR_CHL_SSLCIPH].Values[key]; ok {
+							cipherSpec = cipherSpecAttr.ValueString
+						}
 
 						tags := map[string]string{
 							"qmgr": config.cf.QMgrName,
@@ -447,6 +464,7 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 						tags[mqmetric.ATTR_CHL_RQMNAME] = strings.TrimSpace(rqmName)
 						tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
 						tags[mqmetric.ATTR_CHL_JOBNAME] = strings.TrimSpace(jobName)
+						tags[mqmetric.ATTR_CHL_SSLCIPH] = strings.TrimSpace(cipherSpec)
 						addMetaLabels(tags)
 
 						f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
@@ -623,6 +641,31 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 							tags["description"] = mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_AMQP)
 							tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
 							tags[mqmetric.ATTR_CHL_AMQP_CLIENT_ID] = clientId
+							addMetaLabels(tags)
+
+							f := mqmetric.ChannelNormalise(attr, value.ValueInt64)
+							addMetricA(meter, series, attr, f, tags, t)
+						}
+					}
+				}
+
+				series = "mqtt"
+				for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT).Attributes {
+					qMgrName := strings.TrimSpace(config.cf.QMgrName)
+
+					for key, value := range attr.Values {
+						chlName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT).Attributes[mqmetric.ATTR_CHL_NAME].Values[key].ValueString
+						clientId := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT).Attributes[mqmetric.ATTR_CHL_MQTT_CLIENT_ID].Values[key].ValueString
+						connName := mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT).Attributes[mqmetric.ATTR_CHL_CONNNAME].Values[key].ValueString
+						if value.IsInt64 && !attr.Pseudo {
+							tags := map[string]string{
+								"qmgr":     qMgrName,
+								"platform": platformString,
+							}
+							tags["channel"] = chlName
+							tags["description"] = mqmetric.GetObjectDescription(chlName, mqmetric.OT_CHANNEL_MQTT)
+							tags[mqmetric.ATTR_CHL_CONNNAME] = strings.TrimSpace(connName)
+							tags[mqmetric.ATTR_CHL_MQTT_CLIENT_ID] = clientId
 							addMetaLabels(tags)
 
 							f := mqmetric.ChannelNormalise(attr, value.ValueInt64)

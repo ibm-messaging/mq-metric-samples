@@ -21,6 +21,7 @@ package config
 // This reports the version of the mq-golang dependency that is pulled in.
 import (
 	"runtime/debug"
+
 	//"fmt"
 	"strings"
 )
@@ -36,7 +37,7 @@ func MqGolangVersion() string {
 			if strings.Contains(mod.Path, "ibm-messaging/mq-golang") {
 				mqGolangVersion = mod.Version
 			}
-			//fmt.Printf("Module: %s Version: %s\n", mod.Path, mod.Version)
+			// fmt.Fprintf(os.Stderr, "Module: %s Version: %s\n", mod.Path, mod.Version)
 		}
 	}
 
