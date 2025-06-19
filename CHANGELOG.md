@@ -1,6 +1,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Jun 19 2025 (no new version)
+* Improve container building
+
 ### Jun 18 2025 (v5.6.4)
 * Update to MQ 9.4.3
 * Add MQTT channel metrics, similar to AMQP

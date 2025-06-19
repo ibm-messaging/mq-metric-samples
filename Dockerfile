@@ -7,6 +7,10 @@
 # It can cope with both platforms where a Redistributable Client is available, and platforms
 # where it is not - copy the .deb install images for such platforms into the MQINST
 # subdirectory of this repository first.
+#
+# Also note the use of "COPY --chmod" which requires the DOCKER_BUILDKIT to be
+# enabled (which it ought to be by default anyway). The legacy docker builder
+# is already deprecated and will be removed in a future Docker release.
 
 # Global ARG. To be used in all stages.
 # Override with "--build-arg EXPORTER=mq_xxxxx" when building.

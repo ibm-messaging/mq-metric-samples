@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Note the use of "COPY --chmod" which requires the DOCKER_BUILDKIT to be
+# enabled (which it ought to be by default anyway). The legacy docker builder
+# is already deprecated and will be removed in a future Docker release.
+
 ARG BASE_IMAGE=registry.access.redhat.com/ubi8/go-toolset:1.21
 FROM $BASE_IMAGE
 

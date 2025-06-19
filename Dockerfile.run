@@ -26,7 +26,7 @@ RUN mkdir -p /opt/bin \
   && mkdir -p /opt/config \
   && chmod a+rx /opt/config
 
-RUN microdnf install -y --disableplugin=subscription-manager curl tar gzip
+RUN microdnf install -y --disableplugin=subscription-manager curl tar gzip findutils
 
 # Location of the downloadable MQ client package \
 ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \

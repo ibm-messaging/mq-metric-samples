@@ -31,3 +31,10 @@ fi
 
 # This is the directory where the binary and config files live
 OUTDIR=${OUTDIR:-$HOME/tmp/mq-metric-samples/bin}
+
+if [ "$DOCKER_BUILDKIT" = "0" ]
+then
+  echo "The container build scripts will not work with the BuildKit disabled."
+  echo "Remove the DOCKER_BUILDKIT=0 environment variable."
+  exit 1
+fi
