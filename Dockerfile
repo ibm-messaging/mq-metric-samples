@@ -5,8 +5,8 @@
 # material from the build step into the runtime container.
 #
 # It can cope with both platforms where a Redistributable Client is available, and platforms
-# where it is not - copy the .deb install images for such platforms into the MQINST
-# subdirectory of this repository first.
+# where it is not - copy the .rpm or .deb install images for such platforms into the MQINST
+# subdirectory of this repository first. The UBI base image used here is rpm-based.
 #
 # Also note the use of "COPY --chmod" which requires the DOCKER_BUILDKIT to be
 # enabled (which it ought to be by default anyway). The legacy docker builder
@@ -61,9 +61,12 @@ RUN mkdir -p /go/src /go/bin /go/pkg \
 
 # Install MQ client and SDK
 # For platforms with a Redistributable client, we can use curl to pull it in and unpack it.
-# For most other platforms, we assume that you have deb files available under the current directory
-# and we then copy them into the container image. Use dpkg to install from them; these have to be
+# For most other platforms, we assume that you have deb or rpm files available under the current directory
+# and we then copy them into the container image. Use dpkg or rpm to install from them; these have to be
 # done in the right order.
+# The rpm version of the install packages have a different VRMF format: instead of "9.1.2.3", they have "9.1.2-3" in
+# the filenames. So we need to convert using sed. Note that the rpm signing information will not be in the container
+# unless you modify this Dockerfile.
 #
 # The Linux ARM64 image is a full-function server package that is directly unpacked.
 # We only need a subset of the files so strip the unneeded filesets. The download of the image could
@@ -74,7 +77,7 @@ RUN mkdir -p /go/src /go/bin /go/pkg \
 #
 # The copy of the README is so that at least one file always gets copied, even if you don't have the deb files locally.
 # Using a wildcard in the directory name also helps to ensure that this part of the build always succeeds.
-COPY README.md MQINST*/*deb MQINST*/*tar.gz /MQINST
+COPY README.md MQINST*/*deb MQINST*/*rpm MQINST*/*tar.gz /MQINST
 
 # These are values always set by the "docker build" process
 ARG TARGETARCH TARGETOS
@@ -103,8 +106,22 @@ RUN T="$TARGETOS/$TARGETARCH"; \
       elif [ "$T" = "linux/ppc64le" -o "$T" = "linux/s390x" ];\
       then \
         cd /MQINST; \
-        c=`ls ibmmq-*$VRMF*.deb 2>/dev/null| wc -l`; if [ $c -lt 4 ]; then echo "MQ installation files do not exist in MQINST subdirectory";exit 1;fi; \
-        for f in ibmmq-runtime_$VRMF*.deb ibmmq-gskit_$VRMF*.deb ibmmq-client_$VRMF*.deb ibmmq-sdk_$VRMF*.deb; do dpkg -i $f;done; \
+        RHVRMF=`echo "$VRMF" | sed "s/\(.*\)\./\1-/"`;\
+        cdeb=`ls ibmmq-*$VRMF*.deb 2>/dev/null| wc -l`; \
+        crpm=`ls MQSeries*$RHVRMF*.rpm 2>/dev/null| grep "$VRMF" | wc -l`; \
+        if [ $cdeb -ge 4 ]; \
+        then \
+          for f in ibmmq-runtime_$VRMF*.deb ibmmq-gskit_$VRMF*.deb ibmmq-client_$VRMF*.deb ibmmq-sdk_$VRMF*.deb;\
+          do dpkg -i $f;\
+          done; \
+        elif [ $crpm -ge 4 ]; \
+        then \
+          rpm --noverify -i MQSeriesRuntime-$RHVRMF*.rpm MQSeriesGSKit-$RHVRMF*.rpm MQSeriesClient-$RHVRMF*.rpm MQSeriesSDK-$RHVRMF*.rpm;\
+          if [ $? -ne 0 ]; then exit 1;fi;\
+        else \
+          echo "MQ installation files do not exist in MQINST subdirectory";\
+          exit 1;\
+        fi;\
       else   \
         echo "Unsupported platform $T";\
         exit 1;\

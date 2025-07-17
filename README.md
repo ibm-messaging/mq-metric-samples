@@ -87,8 +87,9 @@ You still need to provide the configuration file at runtime, perhaps as a mounte
 ### Platform support
 This Dockerfile should work for a variety of platforms. For those with a Redistributable client, it uses `curl` to
 automatically download and unpack the required MQ files. For other platforms, it assumes that you have an `MQINST`
-subdirectory under this root, and then copied the `.deb` files (or the `.tar.gz` file for Linux/arm64 systems) from your
-real MQ installation tree into it.
+subdirectory under this root, and then copied the `.rpm` or `deb` files (or the `.tar.gz` file for Linux/arm64 systems) from your
+real MQ installation tree into it. The base OS image in the Dockerfile is rpm-based, but you might want to change it to your
+preferred base container image.
 
 ### Additional container scripts
 
@@ -100,7 +101,7 @@ collector program alongside a queue manager (perhaps as an MQ SERVICE) and you n
 system.
 
 ## Building to run on Windows
-There is a `buildMonitors.bat` file to help with building on Windows. It assumes 
+There is a `buildMonitors.bat` file to help with building on Windows. It assumes
 * You have the
 [msys2](https://www.msys2.org/) 64-bit GCC compiler suite installed into the `C:\msys64` directory. The specific
 compiler version from this package can be installed with `pacman -S mingw-w64-ucrt-x86_64-gcc`. That should end up with
@@ -228,8 +229,8 @@ configuration attribute to true.
 When NativeHA is used, the queue manager publishes some metrics on its status. These are automatically collected
 whenever available, and can be seen in the metric lists. The metrics are given a prefix or series of "nha". For example,
 `ibmmq_nha_synchronous_log_sent_bytes` is one metric shown in Prometheus. The NativeHA "instance" or "group"
-name - given to the replicas - is added as the `nha` tag to the metrics. Each NativeHA metric 
-is associated with either an instance or group, never both. 
+name - given to the replicas - is added as the `nha` tag to the metrics. Each NativeHA metric
+is associated with either an instance or group, never both.
 
 Note: The `nha` tag was previously called `nhainstance` but
 that was confusing when the cross-region replication feature was introduced. Existing dashboards might need updating
