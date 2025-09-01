@@ -82,6 +82,7 @@ type ObjInfo struct {
 	exists          bool // Used during rediscovery
 	firstCollection bool // To indicate discard needed of first stat
 	Description     string
+	Custom          string
 	// Qmgr attributes
 	QMgrName string
 	HostName string
@@ -1643,6 +1644,25 @@ func GetObjectDescription(key string, objectType int32) string {
 		return DUMMY_STRING
 	} else {
 		return o.Description
+	}
+}
+
+func GetObjectCustom(key string, objectType int32) string {
+	var o *ObjInfo
+	ok := false
+	switch objectType {
+	case ibmmq.MQOT_Q:
+		o, ok = qInfoMap[key]
+	case OT_Q_MGR:
+		o = qMgrInfo
+		ok = true
+	}
+
+	if !ok || strings.TrimSpace(o.Custom) == "" {
+		// return something so Prometheus doesn't turn it into "0.0"
+		return DUMMY_STRING
+	} else {
+		return o.Custom
 	}
 }
 
