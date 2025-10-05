@@ -57,6 +57,7 @@ type connectionInfo struct {
 	useResetQStats       bool
 	useDepthFromStatus   bool
 	showInactiveChannels bool
+	showCustomAttribute  bool
 	hideSvrConnJobname   bool
 	hideAMQPClientId     bool
 	hideMQTTClientId     bool
@@ -148,6 +149,7 @@ func newConnectionInfo(key string) *connectionInfo {
 	ci.useStatus = false
 	ci.useResetQStats = false
 	ci.showInactiveChannels = false
+	ci.showCustomAttribute = false
 	ci.hideSvrConnJobname = false
 	ci.hideAMQPClientId = false
 	ci.hideMQTTClientId = false
