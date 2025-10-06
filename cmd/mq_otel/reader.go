@@ -374,6 +374,9 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 								if hostname != mqmetric.DUMMY_STRING {
 									tags["hostname"] = hostname
 								}
+								if showAndSupportsCustomLabel() {
+									tags["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+								}
 							} else if strings.HasPrefix(key, mqmetric.NativeHAKeyPrefix) {
 								series = "nha"
 								tags["nha"] = strings.Replace(key, mqmetric.NativeHAKeyPrefix, "", -1)
@@ -392,6 +395,9 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 								tags["usage"] = usage
 								tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
 								tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+								if showAndSupportsCustomLabel() {
+									tags["custom"] = mqmetric.GetObjectCustom(key, ibmmq.MQOT_Q)
+								}
 							}
 
 							addMetaLabels(tags)
@@ -426,6 +432,9 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 						tags["usage"] = usage
 						tags["description"] = mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q)
 						tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+						if showAndSupportsCustomLabel() {
+							tags["custom"] = mqmetric.GetObjectCustom(key, ibmmq.MQOT_Q)
+						}
 						addMetaLabels(tags)
 
 						f := mqmetric.QueueNormalise(attr, value.ValueInt64)
@@ -567,6 +576,9 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 						if hostname != mqmetric.DUMMY_STRING {
 							tags["hostname"] = hostname
 						}
+						if showAndSupportsCustomLabel() {
+							tags["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+						}
 						addMetaLabels(tags)
 
 						f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
@@ -699,4 +711,8 @@ func addMetaLabels(tags map[string]string) {
 			tags[config.cf.MetadataTagsArray[i]] = config.cf.MetadataValuesArray[i]
 		}
 	}
+}
+
+func showAndSupportsCustomLabel() bool {
+	return config.cf.CC.ShowCustomAttribute
 }

@@ -76,6 +76,7 @@ type ConfigYFilters struct {
 	HideAMQPClientId          string   `yaml:"hideAMQPClientId" default:"false"`
 	HideMQTTClientId          string   `yaml:"hideMQTTClientId" default:"false"`
 	ShowInactiveChannels      string   `yaml:"showInactiveChannels" default:"false"`
+	ShowCustomAttribute       string   `yaml:"showCustomAttribute" default:"false"`
 	QueueSubscriptionSelector []string `yaml:"queueSubscriptionSelector"`
 }
 
@@ -134,6 +135,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", AsBool(cyg.UsePublications, true))
 
 	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("filters", "showInactiveChannels", AsBool(cyf.ShowInactiveChannels, false))
+	cm.CC.ShowCustomAttribute = CopyParmIfNotSetBool("filters", "showCustomAttribute", AsBool(cyf.ShowCustomAttribute, false))
 	cm.CC.HideSvrConnJobname = CopyParmIfNotSetBool("filters", "hideSvrConnJobname", AsBool(cyf.HideSvrConnJobname, false))
 	cm.CC.HideAMQPClientId = CopyParmIfNotSetBool("filters", "hideAMQPClientId", AsBool(cyf.HideAMQPClientId, false))
 	cm.CC.HideMQTTClientId = CopyParmIfNotSetBool("filters", "hideMQTTClientId", AsBool(cyf.HideMQTTClientId, false))

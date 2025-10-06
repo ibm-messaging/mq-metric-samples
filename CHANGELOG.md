@@ -19,6 +19,7 @@ Newest updates are at the top of this file.
 ### Unreleased
 * Fix boolean logic for `isFirstCollection` in `mq_prometheus (#385)`
   * Ensure proper collection on the first poll and at regular intervals thereafter
+* Add showCustomAttribute filter config setting to include the CUSTOM attribute as metric tag/label
 
 ### Feb 28 2025 (v5.6.2)
 * Update to MQ 9.4.2
