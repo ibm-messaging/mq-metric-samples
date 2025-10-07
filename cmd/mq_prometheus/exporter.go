@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2024
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ var (
 	collectionTimeDesc    *prometheus.Desc
 
 	supportsHostnameLabelVal *bool
+	lastHostname             = mqmetric.DUMMY_STRING
 )
 
 /*
@@ -237,8 +238,15 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				"qmgr":        strings.TrimSpace(config.cf.QMgrName),
 				"description": desc,
 				"platform":    platformString}
+
+			// If we are able to get the qmgr's hostname, then use the last-known
+			// one in this disconnected metric.
+			// It will get replaced if the qmgr is doing a failover to a different machine.
 			if supportsHostnameLabel() {
-				labels["hostname"] = mqmetric.DUMMY_STRING
+				if lastHostname == "" {
+					lastHostname = mqmetric.DUMMY_STRING
+				}
+				labels["hostname"] = lastHostname
 			}
 			if showAndSupportsCustomLabel() {
 				labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
@@ -502,7 +510,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 								"platform":    platformString,
 								"description": desc}
 							if supportsHostnameLabel() {
-								labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+								// Stash the current hostname so it can be used in the "qmgr down" metric
+								lastHostname = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+								labels["hostname"] = lastHostname
 							}
 							if showAndSupportsCustomLabel() {
 								labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)

@@ -1,6 +1,10 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### xxx xx 2025 (v5.6.5)
+* Update to MQ 9.4.4
+* Add showCustomAttribute filter config setting to include the CUSTOM attribute as metric tag/label
+
 ### Jun 19 2025 (no new version)
 * Improve container building
 
