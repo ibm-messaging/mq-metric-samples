@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2024
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ var (
 	collectionTimeDesc    *prometheus.Desc
 
 	supportsHostnameLabelVal *bool
+	lastHostname             = mqmetric.DUMMY_STRING
 )
 
 /*
@@ -237,8 +238,18 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				"qmgr":        strings.TrimSpace(config.cf.QMgrName),
 				"description": desc,
 				"platform":    platformString}
+
+			// If we are able to get the qmgr's hostname, then use the last-known
+			// one in this disconnected metric.
+			// It will get replaced if the qmgr is doing a failover to a different machine.
 			if supportsHostnameLabel() {
-				labels["hostname"] = mqmetric.DUMMY_STRING
+				if lastHostname == "" {
+					lastHostname = mqmetric.DUMMY_STRING
+				}
+				labels["hostname"] = lastHostname
+			}
+			if showAndSupportsCustomLabel() {
+				labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
 			}
 			addMetaLabels(labels)
 			m.addMetric(labels, 0.0)
@@ -499,7 +510,12 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 								"platform":    platformString,
 								"description": desc}
 							if supportsHostnameLabel() {
-								labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+								// Stash the current hostname so it can be used in the "qmgr down" metric
+								lastHostname = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+								labels["hostname"] = lastHostname
+							}
+							if showAndSupportsCustomLabel() {
+								labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
 							}
 							addMetaLabels(labels)
 							m.addMetric(labels, f)
@@ -530,6 +546,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 									"description": mqmetric.GetObjectDescription(key, ibmmq.MQOT_Q),
 									"cluster":     mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME),
 									"platform":    platformString}
+								if showAndSupportsCustomLabel() {
+									labels["custom"] = mqmetric.GetObjectCustom(key, ibmmq.MQOT_Q)
+								}
 								addMetaLabels(labels)
 								m.addMetric(labels, f)
 							}
@@ -633,6 +652,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 							"description": mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q),
 							"cluster":     mqmetric.GetQueueAttribute(qName, ibmmq.MQCA_CLUSTER_NAME),
 							"queue":       qName}
+						if showAndSupportsCustomLabel() {
+							labels["custom"] = mqmetric.GetObjectCustom(qName, ibmmq.MQOT_Q)
+						}
 						addMetaLabels(labels)
 						m.addMetric(labels, f)
 					}
@@ -695,6 +717,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						"platform":    platformString}
 					if supportsHostnameLabel() {
 						labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+					}
+					if showAndSupportsCustomLabel() {
+						labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
 					}
 					addMetaLabels(labels)
 					m.addMetric(labels, f)
@@ -1061,6 +1086,9 @@ when the metrics are collected by Prometheus.
 */
 func newMqVec(elem *mqmetric.MonElement) *MQVec {
 	queueLabelNames := []string{"queue", "qmgr", "platform", "usage", "description", "cluster"}
+	if showAndSupportsCustomLabel() {
+		queueLabelNames = append(queueLabelNames, "custom")
+	}
 	nhaLabelNames := []string{"qmgr", "platform", "nha"}
 	// If the qmgr tags change, then check the special metric indicating qmgr unavailable as that's
 	// not part of the regular collection blocks.
@@ -1068,6 +1096,9 @@ func newMqVec(elem *mqmetric.MonElement) *MQVec {
 	qmgrLabelNames := []string{"qmgr", "platform", "description"}
 	if supportsHostnameLabel() {
 		qmgrLabelNames = append(qmgrLabelNames, "hostname")
+	}
+	if showAndSupportsCustomLabel() {
+		qmgrLabelNames = append(qmgrLabelNames, "custom")
 	}
 	labels := qmgrLabelNames
 	prefix := "qmgr_"
@@ -1171,6 +1202,9 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 	if supportsHostnameLabel() {
 		qmgrLabels = append(qmgrLabels, "hostname")
 	}
+	if showAndSupportsCustomLabel() {
+		qmgrLabels = append(qmgrLabels, "custom")
+	}
 	// With topic status, need to know if type is "pub" or "sub"
 	topicLabels := []string{"qmgr", "platform", objectType, "type"}
 	subLabels := []string{"qmgr", "platform", objectType, "subid", "topic", "type"}
@@ -1187,6 +1221,9 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 	// additional attributes. They should have the same labels as the stats generated
 	// through resource publications.
 	queueLabels := []string{"qmgr", "platform", objectType, "usage", "description", "cluster"}
+	if showAndSupportsCustomLabel() {
+		queueLabels = append(queueLabels, "custom")
+	}
 
 	switch objectType {
 	case "channel":
@@ -1272,6 +1309,10 @@ func supportsHostnameLabel() bool {
 	}
 	//log.Debugf("supportsHostnameLabel: %v", rc)
 	return rc
+}
+
+func showAndSupportsCustomLabel() bool {
+	return config.cf.CC.ShowCustomAttribute
 }
 
 func addMetaLabels(labels prometheus.Labels) {

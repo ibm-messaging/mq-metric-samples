@@ -55,6 +55,19 @@ package source code. But they include:
 - `OTEL_EXPORTER_OTLP_METRICS_INSECURE`
 - `OTEL_EXPORTER_OTLP_METRICS_TIMEOUT`
 
+The `*HEADERS` can be used to add header information to the flows, which might permit
+use of Basic Auth options for communication to the collector. Something like:
+```
+  s="$user:$password"  
+  b=`echo $s | base64`
+  v="Basic $b"
+  export OTEL_EXPORTER_OTLP_HEADERS="Authorization=\"$v\""
+```
+
+There is also the `OTEL_RESOURCE_ATTRIBUTES` environment variable, allowing additional key/value
+pairs to be added to the reported spans. This propagator does not explicit use that variable as it
+does not emit its own spans. But it might be useful for other aspects of your application.
+
 
 For test purposes, you can get the default OpenTelemetry Collector program running in a container with
 ```
