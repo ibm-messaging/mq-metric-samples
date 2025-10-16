@@ -234,10 +234,12 @@ func collectQueueManagerAttrsDist() error {
 	v, err := ci.si.qMgrObject.Inq(selectors)
 	desc := DUMMY_STRING
 	custom := DUMMY_STRING
+
 	if err == nil {
 		key := v[ibmmq.MQCA_Q_MGR_NAME].(string)
 		desc = v[ibmmq.MQCA_Q_MGR_DESC].(string)
 		custom = v[ibmmq.MQCA_CUSTOM].(string)
+
 		st.Attributes[ATTR_QMGR_NAME].Values[key] = newStatusValueString(key)
 		qMgrInfo.Description = desc
 		qMgrInfo.QMgrName = key

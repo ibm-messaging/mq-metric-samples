@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/go-logr/stdr v1.2.2
-	github.com/ibm-messaging/mq-golang/v5 v5.6.4
+	github.com/ibm-messaging/mq-golang/v5 v5.6.5
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.3

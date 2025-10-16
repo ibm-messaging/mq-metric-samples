@@ -71,7 +71,7 @@ github.com/google/uuid
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
-# github.com/ibm-messaging/mq-golang/v5 v5.6.4
+# github.com/ibm-messaging/mq-golang/v5 v5.6.5
 ## explicit; go 1.18
 github.com/ibm-messaging/mq-golang/v5/ibmmq
 github.com/ibm-messaging/mq-golang/v5/mqmetric

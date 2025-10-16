@@ -26,7 +26,7 @@ ARG EXPORTER
 ENV EXPORTER=${EXPORTER} \
     ORG="github.com/ibm-messaging" \
     REPO="mq-metric-samples" \
-    VRMF=9.4.3.0 \
+    VRMF=9.4.4.0 \
     CGO_CFLAGS="-I/opt/mqm/inc/" \
     CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
     genmqpkg_incnls=1 \
