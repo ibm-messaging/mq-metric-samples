@@ -17,6 +17,8 @@ This package is provided as-is with no guarantees of support or updates. There a
 with any future versions of the package; interfaces and functions are subject to change based on any feedback. You
 cannot use IBM formal support channels (Cases/PMRs) for assistance with material in this repository.
 
+This does not affect the status of the underlying MQ C client libraries which have their own support conditions.
+
 These programs use a specific version of the `mqmetric` and `ibmmq` golang packages. Those packages are in the
 [mq-golang repository](https://github.com/ibm-messaging/mq-golang) and are also included in the `vendor` tree of this
 repository. They are referenced in the `go.mod` file if you wish to reload all of the dependencies by running
