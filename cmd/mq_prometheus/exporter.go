@@ -379,60 +379,60 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 						log.Debugf("Collected all queue status")
 					}
 				}
-			}
 
-			if err == nil {
-				err = mqmetric.CollectQueueManagerStatus()
-				if err != nil {
-					log.Errorf("Error collecting queue manager status: %v", err)
-					pollError = err
-				} else {
-					log.Debugf("Collected all queue manager status")
-				}
-			}
-
-			if err == nil {
-				err = mqmetric.CollectClusterStatus()
-				if err != nil {
-					log.Errorf("Error collecting cluster status: %v", err)
-					pollError = err
-				} else {
-					log.Debugf("Collected all cluster status")
-				}
-			}
-
-			if err == nil && mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
-				err = mqmetric.CollectUsageStatus()
-				if err != nil {
-					log.Errorf("Error collecting bufferpool/pageset status: %v", err)
-					pollError = err
-				} else {
-					log.Debugf("Collected all buffer pool/pageset status")
-				}
-			}
-
-			if err == nil && mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
-				if config.cf.MonitoredAMQPChannels != "" {
-					err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
+				if err == nil {
+					err = mqmetric.CollectQueueManagerStatus()
 					if err != nil {
-						log.Errorf("Error collecting AMQP channel status: %v", err)
+						log.Errorf("Error collecting queue manager status: %v", err)
 						pollError = err
 					} else {
-						log.Debugf("Collected all AMQP channel status")
+						log.Debugf("Collected all queue manager status")
 					}
 				}
 
-				if config.cf.MonitoredMQTTChannels != "" {
-					err = mqmetric.CollectMQTTChannelStatus(config.cf.MonitoredMQTTChannels)
+				if err == nil {
+					err = mqmetric.CollectClusterStatus()
 					if err != nil {
-						log.Errorf("Error collecting MQTT channel status: %v", err)
+						log.Errorf("Error collecting cluster status: %v", err)
 						pollError = err
 					} else {
-						log.Debugf("Collected all MQTT channel status")
+						log.Debugf("Collected all cluster status")
 					}
 				}
-			}
 
+				if err == nil && mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+					err = mqmetric.CollectUsageStatus()
+					if err != nil {
+						log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+						pollError = err
+					} else {
+						log.Debugf("Collected all buffer pool/pageset status")
+					}
+				}
+
+				if err == nil && mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
+					if config.cf.MonitoredAMQPChannels != "" {
+						err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
+						if err != nil {
+							log.Errorf("Error collecting AMQP channel status: %v", err)
+							pollError = err
+						} else {
+							log.Debugf("Collected all AMQP channel status")
+						}
+					}
+
+					if config.cf.MonitoredMQTTChannels != "" {
+						err = mqmetric.CollectMQTTChannelStatus(config.cf.MonitoredMQTTChannels)
+						if err != nil {
+							log.Errorf("Error collecting MQTT channel status: %v", err)
+							pollError = err
+						} else {
+							log.Debugf("Collected all MQTT channel status")
+						}
+					}
+				}
+
+			}
 		}
 		if err == nil {
 			err = pollError

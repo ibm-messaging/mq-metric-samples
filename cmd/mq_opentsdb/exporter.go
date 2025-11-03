@@ -149,42 +149,42 @@ func Collect() error {
 			} else {
 				log.Debugf("Collected all cluster status")
 			}
-		}
 
-		err = mqmetric.CollectQueueManagerStatus()
-		if err != nil {
-			log.Errorf("Error collecting queue manager status: %v", err)
-			pollError = err
-		} else {
-			log.Debugf("Collected all queue manager status")
-		}
-
-		if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
-			err = mqmetric.CollectUsageStatus()
+			err = mqmetric.CollectQueueManagerStatus()
 			if err != nil {
-				log.Errorf("Error collecting bufferpool/pageset status: %v", err)
+				log.Errorf("Error collecting queue manager status: %v", err)
 				pollError = err
 			} else {
-				log.Debugf("Collected all buffer pool/pageset status")
-			}
-		} else {
-			if config.cf.MonitoredAMQPChannels != "" {
-				err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
-				if err != nil {
-					log.Errorf("Error collecting AMQP status: %v", err)
-					pollError = err
-				} else {
-					log.Debugf("Collected all AMQP status")
-				}
+				log.Debugf("Collected all queue manager status")
 			}
 
-			if config.cf.MonitoredMQTTChannels != "" {
-				err = mqmetric.CollectMQTTChannelStatus(config.cf.MonitoredMQTTChannels)
+			if mqmetric.GetPlatform() == ibmmq.MQPL_ZOS {
+				err = mqmetric.CollectUsageStatus()
 				if err != nil {
-					log.Errorf("Error collecting MQTT status: %v", err)
+					log.Errorf("Error collecting bufferpool/pageset status: %v", err)
 					pollError = err
 				} else {
-					log.Debugf("Collected all MQTT status")
+					log.Debugf("Collected all buffer pool/pageset status")
+				}
+			} else {
+				if config.cf.MonitoredAMQPChannels != "" {
+					err = mqmetric.CollectAMQPChannelStatus(config.cf.MonitoredAMQPChannels)
+					if err != nil {
+						log.Errorf("Error collecting AMQP status: %v", err)
+						pollError = err
+					} else {
+						log.Debugf("Collected all AMQP status")
+					}
+				}
+
+				if config.cf.MonitoredMQTTChannels != "" {
+					err = mqmetric.CollectMQTTChannelStatus(config.cf.MonitoredMQTTChannels)
+					if err != nil {
+						log.Errorf("Error collecting MQTT status: %v", err)
+						pollError = err
+					} else {
+						log.Debugf("Collected all MQTT status")
+					}
 				}
 			}
 			err = pollError

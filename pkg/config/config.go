@@ -331,9 +331,17 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 	// If someone has explicitly said not to use publications, then they
 	// must require use of the xxSTATUS commands. So override that flag even if they
 	// have set UseStatus to false on the command line.
+	// An undocumented environment variable allows us to override that behaviour just in case
+	// we want to test some stuff.
 	if err == nil {
 		if !cm.CC.UsePublications {
-			cm.CC.UseStatus = true
+			log.Debugf("VerifyConfig: UseStatus = %v", cm.CC.UseStatus)
+			if os.Getenv("MQIGO_NOFORCE_USESTATUS") == "" {
+				cm.CC.UseStatus = true
+				log.Debugf("VerifyConfig: UsePublications is false, so forcing UseStatus to true")
+			} else {
+				log.Debugf("VerifyConfig: UsePublications is false, but leaving UseStatus as-is")
+			}
 		}
 	}
 
@@ -479,7 +487,8 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 		}
 	}
 
-	log.Debugf("VerifyConfig Config: %+v", fullCf)
+	log.Debugf("VerifyConfig Loaded Config: %+v", fullCf)
+	log.Debugf("VerifyConfig Active Config: %+v", cm.CC)
 	if err != nil {
 		log.Debugf("VerifyConfig Error : %+v", err)
 	}
