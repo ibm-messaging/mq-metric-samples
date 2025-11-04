@@ -102,6 +102,9 @@ more stable attributes. For example, the `DESCRIPTION` or `MAXDEPTH` settings on
 queues that do not change frequently, then you might want to increase the rediscovery attribute. The default is 1 hour.
 The tradeoff here is that newly-defined queues may not have any metrics reported until this interval expires.
 
+The messages created by the queue manager ought to be non-persistent. There is no real value in preserving them across a
+restart. Check that the model queues, or explicitly-configured reply queues, have `DEFPSIST(NO)`.
+
 ## Dividing the workload
 One further approach that you might like to consider, though I wouldn't usually recommend it, is to have two or more
 collectors running against the same queue manager. And then configure different sets of queues to be monitored. So a

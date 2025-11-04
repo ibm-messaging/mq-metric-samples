@@ -3,8 +3,8 @@
 This repository contains a collection of IBM MQ monitoring agents that utilize the
 [IBM MQ Go metric packages](https://github.com/ibm-messaging/mq-golang) to provide programs that can be used with
 existing monitoring technologies such as Prometheus, AWS CloudWatch, etc. It can also send data to an OpenTelemetry
-environment. Statistics and status information can be
-collected from queue managers and made available in databases to enable dashboard and historic reporting.
+environment. Statistics and status information can be collected from queue managers and made available in databases to
+enable dashboard and historic reporting.
 
 ## The dspmqrtj program
 The repository also includes a program which traces the route a message can take through the MQ network. It is similar
@@ -23,6 +23,8 @@ These programs use a specific version of the `mqmetric` and `ibmmq` golang packa
 [mq-golang repository](https://github.com/ibm-messaging/mq-golang) and are also included in the `vendor` tree of this
 repository. They are referenced in the `go.mod` file if you wish to reload all of the dependencies by running
 `go mod vendor`.
+
+See the [DEPRECATIONS](DEPRECATIONS.md) file for any planned changes to the metric collectors.
 
 ## Getting started
 
@@ -89,9 +91,9 @@ You still need to provide the configuration file at runtime, perhaps as a mounte
 ### Platform support
 This Dockerfile should work for a variety of platforms. For those with a Redistributable client, it uses `curl` to
 automatically download and unpack the required MQ files. For other platforms, it assumes that you have an `MQINST`
-subdirectory under this root, and then copied the `.rpm` or `deb` files (or the `.tar.gz` file for Linux/arm64 systems) from your
-real MQ installation tree into it. The base OS image in the Dockerfile is rpm-based, but you might want to change it to your
-preferred base container image.
+subdirectory under this root, and then copied the `.rpm` or `deb` files (or the `.tar.gz` file for Linux/arm64 systems)
+from your real MQ installation tree into it. The base OS image in the Dockerfile is rpm-based, but you might want to
+change it to your preferred base container image.
 
 ### Additional container scripts
 
@@ -104,10 +106,9 @@ system.
 
 ## Building to run on Windows
 There is a `buildMonitors.bat` file to help with building on Windows. It assumes
-* You have the
-[msys2](https://www.msys2.org/) 64-bit GCC compiler suite installed into the `C:\msys64` directory. The specific
-compiler version from this package can be installed with `pacman -S mingw-w64-ucrt-x86_64-gcc`. That should end up with
-the `gcc` command being available.
+* You have the [msys2](https://www.msys2.org/) 64-bit GCC compiler suite installed into the `C:\msys64` directory. The
+  specific compiler version from this package can be installed with `pacman -S mingw-w64-ucrt-x86_64-gcc`. That should
+  end up with the `gcc` command being available.
 * You have set the GOPATH environment variable to the root of your source trees. For example, `C:\Gowork`.
 
 The script builds all the collectors and corresponding YAML configuration files into %GOPATH%/bin. An alternative
