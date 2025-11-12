@@ -95,7 +95,8 @@ The `global.pollInterval` and `global.rediscoverInterval` options may help to fu
 
 The first of these controls how frequently the `DISPLAY xxSTATUS` commands are used, assuming the
 `global.useObjectStatus` is `true`. In some circumstances, you might not want all of the responses as regularly as the
-published metrics are handled.
+published metrics are handled. The queue and queue manager status is always collected during this phase regardless of
+the `global.useObjectStatus` setting.
 
 The second attribute controls how frequently the collector reassesses the list of objects to be monitored, and their
 more stable attributes. For example, the `DESCRIPTION` or `MAXDEPTH` settings on a queue. If you have a large number of
@@ -103,7 +104,7 @@ queues that do not change frequently, then you might want to increase the redisc
 The tradeoff here is that newly-defined queues may not have any metrics reported until this interval expires.
 
 The messages created by the queue manager ought to be non-persistent. There is no real value in preserving them across a
-restart. Check that the model queues, or explicitly-configured reply queues, have `DEFPSIST(NO)`.
+restart. Check that the configured reply queues, whether model or local queues, have `DEFPSIST(NO)`.
 
 ## Dividing the workload
 One further approach that you might like to consider, though I wouldn't usually recommend it, is to have two or more

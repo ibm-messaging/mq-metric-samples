@@ -339,9 +339,31 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 				}
 			}
 
+			// Always collect the queue and qmgr status info regardless of the UseStatus flag, so that we keep
+			// the known attribute values for tagging.
+			if err == nil {
+				err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
+				if err != nil {
+					log.Errorf("Error collecting queue status: %v", err)
+					pollError = err
+				} else {
+					log.Debugf("Collected all queue status")
+				}
+			}
+
+			if err == nil {
+				err = mqmetric.CollectQueueManagerStatus()
+				if err != nil {
+					log.Errorf("Error collecting queue manager status: %v", err)
+					pollError = err
+				} else {
+					log.Debugf("Collected all queue manager status")
+				}
+			}
+
 			if config.cf.CC.UseStatus {
 				if err == nil {
-					err := mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
+					err = mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 					if err != nil {
 						log.Errorf("Error collecting channel status: %v", err)
 						pollError = err
@@ -370,26 +392,26 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					}
 				}
 
-				if err == nil {
-					err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
-					if err != nil {
-						log.Errorf("Error collecting queue status: %v", err)
-						pollError = err
-					} else {
-						log.Debugf("Collected all queue status")
-					}
-				}
+				/*				if err == nil {
+									err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
+									if err != nil {
+										log.Errorf("Error collecting queue status: %v", err)
+										pollError = err
+									} else {
+										log.Debugf("Collected all queue status")
+									}
+								}
 
-				if err == nil {
-					err = mqmetric.CollectQueueManagerStatus()
-					if err != nil {
-						log.Errorf("Error collecting queue manager status: %v", err)
-						pollError = err
-					} else {
-						log.Debugf("Collected all queue manager status")
-					}
-				}
-
+								if err == nil {
+									err = mqmetric.CollectQueueManagerStatus()
+									if err != nil {
+										log.Errorf("Error collecting queue manager status: %v", err)
+										pollError = err
+									} else {
+										log.Debugf("Collected all queue manager status")
+									}
+								}
+				*/
 				if err == nil {
 					err = mqmetric.CollectClusterStatus()
 					if err != nil {
@@ -432,6 +454,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					}
 				}
 
+			} else {
+				log.Debugf("Not collecting object status")
 			}
 		}
 		if err == nil {
@@ -478,6 +502,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			lastQueueDiscovery = thisDiscovery
 			//if err == nil {
 			_ = mqmetric.RediscoverAttributes(ibmmq.MQOT_CHANNEL, config.cf.MonitoredChannels)
+
 			//}
 			if mqmetric.GetPlatform() != ibmmq.MQPL_ZOS {
 				_ = mqmetric.RediscoverAttributes(mqmetric.OT_CHANNEL_AMQP, config.cf.MonitoredAMQPChannels)
@@ -535,6 +560,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 								} else {
 									usage = "NORMAL"
 								}
+							} else {
+								log.Debugf("Cannot find usage attr for %v", key)
 							}
 
 							// Don't submit metrics for queues where we've not done a full attribute discovery. Typically the first

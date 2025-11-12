@@ -236,7 +236,29 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 	// If there has been sufficient interval since the last explicit poll for
 	// status, then do that collection too.
 	if pollStatus {
-		if config.cf.CC.UseStatus {
+
+		// Always collect the queue and qmgr status info regardless of the UseStatus flag, so that we keep
+		// the known attribute values for tagging.
+		if err == nil {
+			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
+			if err != nil {
+				log.Errorf("Error collecting queue status: %v", err)
+				pollError = err
+			} else {
+				log.Debugf("Collected all queue status")
+			}
+
+			err = mqmetric.CollectQueueManagerStatus()
+			if err != nil {
+				log.Errorf("Error collecting queue manager status: %v", err)
+				pollError = err
+			} else {
+				log.Debugf("Collected all queue manager status")
+			}
+			err = pollError
+		}
+
+		if config.cf.CC.UseStatus && err == nil {
 			err = mqmetric.CollectChannelStatus(config.cf.MonitoredChannels)
 			if err != nil {
 				log.Errorf("Error collecting channel status: %v", err)
@@ -257,14 +279,6 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 				pollError = err
 			} else {
 				log.Debugf("Collected all subscription status")
-			}
-
-			err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
-			if err != nil {
-				log.Errorf("Error collecting queue status: %v", err)
-				pollError = err
-			} else {
-				log.Debugf("Collected all queue status")
 			}
 
 			err = mqmetric.CollectClusterStatus()
@@ -305,13 +319,6 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 				}
 			}
 
-			err = mqmetric.CollectQueueManagerStatus()
-			if err != nil {
-				log.Errorf("Error collecting queue manager status: %v", err)
-				pollError = err
-			} else {
-				log.Debugf("Collected all queue manager status")
-			}
 			err = pollError
 		}
 

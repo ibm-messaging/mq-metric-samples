@@ -349,6 +349,7 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 	// but it is based on the same cycle so force that option here
 	if err == nil {
 		if cm.CC.UseResetQStats {
+			log.Debugf("VerifyConfig: UseResetStats is true, so also forcing UseStatus to true")
 			cm.CC.UseStatus = true
 		}
 	}

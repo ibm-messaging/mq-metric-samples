@@ -1,6 +1,10 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## Nov 12 2025 - v5.6.7
+* Pull in latest mq-golang package
+* Add DEPRECATIONS file
+
 ### Nov 03 2025 (v5.6.6)
 * Pull in fix for #440
 
