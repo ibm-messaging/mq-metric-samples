@@ -26,6 +26,7 @@ and update the various Gauges.
 */
 
 import (
+	"os"
 	"strings"
 	"time"
 
@@ -100,6 +101,9 @@ var (
 
 	supportsHostnameLabelVal *bool
 	lastHostname             = mqmetric.DUMMY_STRING
+
+	unittestLoops    = 0
+	unittestMaxLoops = 0
 )
 
 /*
@@ -971,6 +975,16 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// Tags must be in same order as created in the Description. But we don't need to have exactly the same tags
 	// as all the other qmgr-level metrics
 	ch <- prometheus.MustNewConstMetric(collectionTimeDesc, prometheus.GaugeValue, float64(elapsedSecs), config.cf.QMgrName, platformString)
+
+	// Break out after a small number of iterations when we are testing
+	// log.Debugf("Max loops: %d Cur loops: %d", unittestMaxLoops, unittestLoops)
+	if unittestMaxLoops != 0 {
+		unittestLoops++
+		if unittestLoops > unittestMaxLoops {
+			log.Infof("Maximum unittest iterations of %d reached", unittestMaxLoops)
+			os.Exit(0)
+		}
+	}
 }
 
 func allocateAllGauges() {

@@ -23,6 +23,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"os"
+	"strconv"
 
 	"strings"
 	"sync"
@@ -63,6 +64,12 @@ func main() {
 			os.Exit(72) // Same as strmqm "queue manager name error"
 		}
 	*/
+
+	// This env var is purely for internal testing purposes
+	utEnv := "MQIGO_UNITTEST_MAX_LOOPS"
+	if os.Getenv(utEnv) != "" {
+		unittestMaxLoops, _ = strconv.Atoi(os.Getenv(utEnv))
+	}
 
 	if err != nil {
 		log.Error(err)
