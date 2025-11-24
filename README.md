@@ -154,7 +154,8 @@ collector is not running, so that may induce queue-full reports in the error log
 manually removed using the `DELETE SUB()` MQSC command for all subscriptions where the subscription ids begin with the
 `durableSubPrefix` value. The `scripts/cleanDur.sh` program can be used for this deletion. You should also clean the
 subscriptions when the configuration of which data to collect has changed, particularly the `queueSubscriptionSelector`
-option.
+option. Any publications generated while the the collector is not running are, in any case, discarded on startup of
+the collector.
 
 ## Monitor configuration
 The monitors always collect all of the available queue manager-wide metrics. They can also be configured to collect

@@ -20,8 +20,8 @@ If you cannot avoid running as a client (for example, you are trying to monitor 
 network latency between the queue manager and collector as low as possible. For z/OS, you might consider running the
 collector in a zLinux LPAR on the same machine. Or perhaps in a zCX container.
 
-If you are running as a client, then configure it to take advantage of readahead when getting publications. This is done by
-setting `DEFREADA(YES)` on the nominated ReplyQueue(s).
+If you are running as a client, then consider configuring it to take advantage of readahead when getting publications.
+This is done by setting `DEFREADA(YES)` on the nominated ReplyQueue(s).
 
 ## Collection processing time
 The collector reports on how long it takes to collect and process the data on each interval. You can see this in a debug
@@ -74,9 +74,10 @@ durable subscriptions.
 
 * You can reduce the total number of subscriptions made for queue metrics. The `filters.queueSubscriptionSelector` list
   defines the sets of topics that you might be interested in. The complete set - for now - is
-  [OPENCLOSE, INQSET, PUT, GET, GENERAL]. In many cases, only the last three of these may be of interest. The smaller
-  set reduces the number of publications per queue. Within each set, multiple metrics are created but there is no way to
-  report on only a subset of the metrics in each set.
+  [ OPENCLOSE, INQSET, EXTENDED, PUT, GET, GENERAL ]. In many cases, only the last three of these may be of interest.
+  The smaller set reduces the number of publications per queue. Within each set, multiple metrics are created but there
+  is no way to report on only a subset of the metrics in each set. The `EXTENDED` set is already excluded by default as
+  it is primarily intended for the L2/L3 support team.
 
 * You can choose to not subscribe to any queue metrics, but still subscribe to metrics for other resources such as the
   queue manager and Native HA by setting the filter to `NONE`. If you do this, then many queue metrics become
@@ -107,12 +108,12 @@ The messages created by the queue manager ought to be non-persistent. There is n
 restart. Check that the configured reply queues, whether model or local queues, have `DEFPSIST(NO)`.
 
 ## Dividing the workload
-One further approach that you might like to consider, though I wouldn't usually recommend it, is to have two or more
-collectors running against the same queue manager. And then configure different sets of queues to be monitored. So a
-collector listening on port 9157 might manage queues A*-M*, while another collector on port 9158 monitors queues N*-Z*.
-You would likely need additional configuration to reduce duplication of other components, for example by using the
-`jobname` or `instance` as a filter element on dashboard queries, but it might be one way to reduce the time taken for a
-single scrape.
+One further approach that you might like to consider, though I wouldn't recommend it, is to have two or more collectors
+running against the same queue manager. And then configure different sets of queues to be monitored. So a collector
+listening on port 9157 might manage queues A*-M*, while another collector on port 9158 monitors queues N*-Z*. You would
+likely need additional configuration to reduce duplication of other components, for example by using the `jobname` or
+`instance` as a filter element on dashboard queries, but it might be one way to reduce the time taken for a single
+scrape.
 
 ## Very slow queue managers
 The collectors wait for a short time for each response to a status request. If the timeout expires with no expected
