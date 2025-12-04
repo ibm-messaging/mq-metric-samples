@@ -1,6 +1,16 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## Dec 14 2025 - v5.7.0
+* Pull in latest mq-golang package
+  * Includes fixes for #444 and (probably) #439
+* Enable use of STATQ/STATMQI event messages as alternative to many of the published metrics
+  * OTel and Prometheus collectors only
+  * Look at the README for more details
+* Break cleanly out of collectors after configurable loop count for testing purposes
+  * OTel, Prometheus and JSON collectors
+* OTel collector gets a `stderr` output option to go with its `stdout`
+
 ## Nov 12 2025 - v5.6.7
 * Pull in latest mq-golang package
 * Add DEPRECATIONS file

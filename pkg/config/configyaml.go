@@ -30,9 +30,11 @@ import (
 )
 
 type ConfigYGlobal struct {
-	UseObjectStatus    string `yaml:"useObjectStatus" default:"true"`
-	UseResetQStats     string `yaml:"useResetQStats" default:"false"`
-	UsePublications    string `yaml:"usePublications" default:"true"`
+	UseObjectStatus string `yaml:"useObjectStatus" default:"true"`
+	UseResetQStats  string `yaml:"useResetQStats" default:"false"`
+	UsePublications string `yaml:"usePublications" default:"true"`
+	UseStatistics   string `yaml:"useStatistics" default:"false"`
+
 	LogLevel           string `yaml:"logLevel"`
 	MetaPrefix         string
 	PollInterval       string `yaml:"pollInterval"`
@@ -48,6 +50,7 @@ type ConfigYConnection struct {
 	PasswordFile     string            `yaml:"passwordFile"`
 	ReplyQueue       string            `yaml:"replyQueue" `
 	ReplyQueue2      string            `yaml:"replyQueue2"`
+	StatisticsQueue  string            `yaml:"statisticsQueue"`
 	DurableSubPrefix string            `yaml:"durableSubPrefix"`
 	CcdtUrl          string            `yaml:"ccdtUrl"`
 	ConnName         string            `yaml:"connName"`
@@ -133,6 +136,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", AsBool(cyg.UseObjectStatus, true))
 	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", AsBool(cyg.UseResetQStats, false))
 	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", AsBool(cyg.UsePublications, true))
+	cm.CC.UseStatistics = CopyParmIfNotSetBool("global", "useStatistics", AsBool(cyg.UseStatistics, false))
 
 	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("filters", "showInactiveChannels", AsBool(cyf.ShowInactiveChannels, false))
 	cm.CC.ShowCustomAttribute = CopyParmIfNotSetBool("filters", "showCustomAttribute", AsBool(cyf.ShowCustomAttribute, false))
@@ -167,6 +171,8 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 		cm.ReplyQ = tmpQ
 	}
 	cm.ReplyQ2 = CopyParmIfNotSetStr("connection", "replyQueue2", cyc.ReplyQueue2)
+	cm.CC.StatisticsQ = CopyParmIfNotSetStr("connection", "statisticsQueue", cyc.StatisticsQueue)
+
 	cm.CC.DurableSubPrefix = CopyParmIfNotSetStr("connection", "durableSubPrefix", cyc.DurableSubPrefix)
 
 	cm.MonitoredQueues = CopyParmIfNotSetStrArray("objects", "queues", cyo.Queues)
@@ -183,7 +189,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 	// Prefer the YAML map construct instead of the array list. If the map is provided, then make sure
 	// that the tags/values arrays are built only from the map. Note that there is no command-line or env var
 	// equivalent of the map - those have to use the separate tags/values comma-separated strings.
-	if cyc.MetadataMap == nil || len(cyc.MetadataMap) == 0 {
+	if len(cyc.MetadataMap) == 0 {
 		cm.metadataTags = CopyParmIfNotSetStrArray("connection", "metadataTags", cyc.MetadataTags)
 		cm.metadataValues = CopyParmIfNotSetStrArray("connection", "metadataValues", cyc.MetadataValues)
 	} else {

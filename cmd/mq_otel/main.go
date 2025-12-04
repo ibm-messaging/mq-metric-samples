@@ -72,7 +72,10 @@ var (
 	unittestMaxLoops = 0
 )
 
-func main() {
+// Have a separate "real" main so that deferred functions run before the exit()
+func main() { os.Exit(mainReturnWithCode()) }
+
+func mainReturnWithCode() int {
 	var err error
 	var d time.Duration
 
@@ -90,7 +93,7 @@ func main() {
 	/*
 		if err == nil && config.cf.QMgrName == "" {
 			log.Errorln("Must provide a queue manager name to connect to.")
-			os.Exit(72)
+			return 72
 		}
 	*/
 
@@ -124,7 +127,7 @@ func main() {
 		d, err = time.ParseDuration(config.ci.Interval)
 		if err != nil || d.Seconds() <= 1 {
 			log.Errorln("Invalid or too short value for interval parameter: ", err)
-			os.Exit(1)
+			return 1
 		}
 
 		// Connect and open standard queues
@@ -149,7 +152,7 @@ func main() {
 			mqcc := mqe.MQReturn.MQCC
 			if mqrc == ibmmq.MQRC_STANDBY_Q_MGR {
 				log.Errorln(err)
-				os.Exit(30) // This is the same as the strmqm return code for "active instance running elsewhere"
+				return 30 // This is the same as the strmqm return code for "active instance running elsewhere"
 			} else if mqcc == ibmmq.MQCC_WARNING {
 				log.Infoln("Connected to queue manager ", config.cf.QMgrName)
 				// Report the error but allow it to continue
@@ -251,7 +254,7 @@ func main() {
 				unittestLoops++
 				if unittestLoops > unittestMaxLoops {
 					log.Infof("Exiting: Maximum unittest iterations of %d reached", unittestMaxLoops)
-					os.Exit(0)
+					break
 				}
 			}
 
@@ -279,7 +282,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	os.Exit(0)
+	log.Info("About to drop from main")
+
+	return 0
 }
 
 func newExporter() (metricsdk.Exporter, error) {

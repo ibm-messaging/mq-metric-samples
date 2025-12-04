@@ -37,32 +37,36 @@ import (
 )
 
 type exporter struct {
-	metrics       *mqmetric.AllMetrics
-	chlStatus     *mqmetric.StatusSet
-	qStatus       *mqmetric.StatusSet
-	topicStatus   *mqmetric.StatusSet
-	subStatus     *mqmetric.StatusSet
-	qMgrStatus    *mqmetric.StatusSet
-	usageBpStatus *mqmetric.StatusSet
-	usagePsStatus *mqmetric.StatusSet
-	clusterStatus *mqmetric.StatusSet
-	amqpStatus    *mqmetric.StatusSet
-	mqttStatus    *mqmetric.StatusSet
+	metrics        *mqmetric.AllMetrics
+	chlStatus      *mqmetric.StatusSet
+	qStatus        *mqmetric.StatusSet
+	qStatistics    *mqmetric.StatusSet
+	topicStatus    *mqmetric.StatusSet
+	subStatus      *mqmetric.StatusSet
+	qMgrStatus     *mqmetric.StatusSet
+	qMgrStatistics *mqmetric.StatusSet
+	usageBpStatus  *mqmetric.StatusSet
+	usagePsStatus  *mqmetric.StatusSet
+	clusterStatus  *mqmetric.StatusSet
+	amqpStatus     *mqmetric.StatusSet
+	mqttStatus     *mqmetric.StatusSet
 }
 
 func newExporter() *exporter {
 	return &exporter{
-		metrics:       mqmetric.GetPublishedMetrics(""),
-		chlStatus:     mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL),
-		qStatus:       mqmetric.GetObjectStatus("", mqmetric.OT_Q),
-		topicStatus:   mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC),
-		subStatus:     mqmetric.GetObjectStatus("", mqmetric.OT_SUB),
-		qMgrStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_Q_MGR),
-		usageBpStatus: mqmetric.GetObjectStatus("", mqmetric.OT_BP),
-		usagePsStatus: mqmetric.GetObjectStatus("", mqmetric.OT_PS),
-		clusterStatus: mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER),
-		amqpStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP),
-		mqttStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT),
+		metrics:        mqmetric.GetPublishedMetrics(""),
+		chlStatus:      mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL),
+		qStatus:        mqmetric.GetObjectStatus("", mqmetric.OT_Q),
+		qStatistics:    mqmetric.GetObjectStatistics("", mqmetric.OT_Q),
+		topicStatus:    mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC),
+		subStatus:      mqmetric.GetObjectStatus("", mqmetric.OT_SUB),
+		qMgrStatus:     mqmetric.GetObjectStatus("", mqmetric.OT_Q_MGR),
+		qMgrStatistics: mqmetric.GetObjectStatistics("", mqmetric.OT_Q_MGR),
+		usageBpStatus:  mqmetric.GetObjectStatus("", mqmetric.OT_BP),
+		usagePsStatus:  mqmetric.GetObjectStatus("", mqmetric.OT_PS),
+		clusterStatus:  mqmetric.GetObjectStatus("", mqmetric.OT_CLUSTER),
+		amqpStatus:     mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_AMQP),
+		mqttStatus:     mqmetric.GetObjectStatus("", mqmetric.OT_CHANNEL_MQTT),
 	}
 }
 
@@ -78,17 +82,19 @@ type MQVec struct {
 }
 
 var (
-	ruaVecMap           = make(map[string]*MQVec) // Metrics collected via the publication route like amqsrua
-	channelStatusVecMap = make(map[string]*MQVec)
-	qStatusVecMap       = make(map[string]*MQVec)
-	topicStatusVecMap   = make(map[string]*MQVec)
-	subStatusVecMap     = make(map[string]*MQVec)
-	qMgrStatusVecMap    = make(map[string]*MQVec)
-	usageBpStatusVecMap = make(map[string]*MQVec)
-	usagePsStatusVecMap = make(map[string]*MQVec)
-	clusterStatusVecMap = make(map[string]*MQVec)
-	amqpStatusVecMap    = make(map[string]*MQVec)
-	mqttStatusVecMap    = make(map[string]*MQVec)
+	ruaVecMap            = make(map[string]*MQVec) // Metrics collected via the publication route like amqsrua
+	channelStatusVecMap  = make(map[string]*MQVec)
+	qStatusVecMap        = make(map[string]*MQVec)
+	qStatisticsVecMap    = make(map[string]*MQVec)
+	topicStatusVecMap    = make(map[string]*MQVec)
+	subStatusVecMap      = make(map[string]*MQVec)
+	qMgrStatusVecMap     = make(map[string]*MQVec)
+	qMgrStatisticsVecMap = make(map[string]*MQVec)
+	usageBpStatusVecMap  = make(map[string]*MQVec)
+	usagePsStatusVecMap  = make(map[string]*MQVec)
+	clusterStatusVecMap  = make(map[string]*MQVec)
+	amqpStatusVecMap     = make(map[string]*MQVec)
+	mqttStatusVecMap     = make(map[string]*MQVec)
 
 	lastPoll           = time.Now()
 	lastQueueDiscovery time.Time
@@ -136,6 +142,7 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	for _, attr := range e.qStatus.Attributes {
 		qStatusVecMap[attr.MetricName].Describe(ch)
 	}
+
 	for _, attr := range e.topicStatus.Attributes {
 		topicStatusVecMap[attr.MetricName].Describe(ch)
 	}
@@ -162,6 +169,12 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 			usagePsStatusVecMap[attr.MetricName].Describe(ch)
 		}
 	} else {
+		for _, attr := range e.qMgrStatistics.Attributes {
+			qMgrStatisticsVecMap[attr.MetricName].Describe(ch)
+		}
+		for _, attr := range e.qStatistics.Attributes {
+			qStatisticsVecMap[attr.MetricName].Describe(ch)
+		}
 		// While AMQP and MQTT are Distributed only
 		for _, attr := range e.amqpStatus.Attributes {
 			amqpStatusVecMap[attr.MetricName].Describe(ch)
@@ -181,6 +194,7 @@ func (v *MQVec) CollectWrap(ch chan<- prometheus.Metric) {
 }
 
 func (v *MQVec) Describe(ch chan<- *prometheus.Desc) {
+
 	if v.g != nil {
 		v.g.Describe(ch)
 	} else {
@@ -274,6 +288,15 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
+	if config.cf.CC.UseStatistics {
+		for _, attr := range e.qStatistics.Attributes {
+			qStatisticsVecMap[attr.MetricName].Reset()
+		}
+		for _, attr := range e.qMgrStatistics.Attributes {
+			qMgrStatisticsVecMap[attr.MetricName].Reset()
+		}
+	}
+
 	// Deal with all the publications that have arrived
 	pubProcessTime := time.Now()
 	err := mqmetric.ProcessPublications()
@@ -281,6 +304,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		log.Errorf("Error processing publications: %v", err)
 	} else {
+		if config.cf.CC.UseStatistics {
+			log.Debugf("Collected and processed %d statistics events successfully", mqmetric.GetProcessStatisticsCount())
+		}
 		log.Debugf("Collected and processed %d resource publications successfully in %d secs", mqmetric.GetProcessPublicationCount(), pubProcessSecs)
 	}
 
@@ -396,26 +422,6 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					}
 				}
 
-				/*				if err == nil {
-									err = mqmetric.CollectQueueStatus(config.cf.MonitoredQueues)
-									if err != nil {
-										log.Errorf("Error collecting queue status: %v", err)
-										pollError = err
-									} else {
-										log.Debugf("Collected all queue status")
-									}
-								}
-
-								if err == nil {
-									err = mqmetric.CollectQueueManagerStatus()
-									if err != nil {
-										log.Errorf("Error collecting queue manager status: %v", err)
-										pollError = err
-									} else {
-										log.Debugf("Collected all queue manager status")
-									}
-								}
-				*/
 				if err == nil {
 					err = mqmetric.CollectClusterStatus()
 					if err != nil {
@@ -612,6 +618,75 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// as all the other qmgr-level metrics
 	ch <- prometheus.MustNewConstMetric(pubCountDesc, prometheus.GaugeValue, float64(mqmetric.GetProcessPublicationCount()), config.cf.QMgrName, platformString)
 
+	if config.cf.CC.UseStatistics {
+		for _, attr := range e.qMgrStatistics.Attributes {
+
+			for _, value := range attr.Values {
+				if value.IsInt64 && !attr.Pseudo {
+					m := qMgrStatisticsVecMap[attr.MetricName]
+					f := mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+					desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+
+					// Labels here must be the same as the qmgr labels in the published metrics collected and reported above
+					labels := prometheus.Labels{
+						"qmgr":        strings.TrimSpace(config.cf.QMgrName),
+						"description": desc,
+						"platform":    platformString}
+					if supportsHostnameLabel() {
+						labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+					}
+					if showAndSupportsCustomLabel() {
+						labels["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+					}
+					addMetaLabels(labels)
+					m.addMetric(labels, f)
+				}
+			}
+			log.Debugf("Reporting qmgr  statistics for %s", attr.MetricName)
+
+		}
+		for _, attr := range e.qStatistics.Attributes {
+
+			for key, value := range attr.Values {
+				if value.IsInt64 && !attr.Pseudo {
+					qName := e.qStatistics.Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+					usage := ""
+					if usageAttr, ok := e.qStatus.Attributes[mqmetric.ATTR_Q_USAGE].Values[key]; ok {
+						if usageAttr.ValueInt64 == int64(ibmmq.MQUS_TRANSMISSION) {
+							usage = "XMITQ"
+						} else {
+							usage = "NORMAL"
+						}
+					}
+
+					m := qStatisticsVecMap[attr.MetricName]
+					f := mqmetric.QueueNormalise(attr, value.ValueInt64)
+					// log.Debugf("queue statistics - key: %s qName: %s metric: %s val: %v", key, qName, attr.MetricName, f)
+
+					// Don't submit metrics for queues where we've not done a full attribute discovery. Typically the first
+					// collection period after a rediscover/resubscribe.
+					// Labels here must be the same as the queue labels in the published metrics collected and reported above
+					if usage != "" {
+						labels := prometheus.Labels{
+							"qmgr":        strings.TrimSpace(config.cf.QMgrName),
+							"platform":    platformString,
+							"usage":       usage,
+							"description": mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q),
+							"cluster":     mqmetric.GetQueueAttribute(qName, ibmmq.MQCA_CLUSTER_NAME),
+							"queue":       qName}
+						if showAndSupportsCustomLabel() {
+							labels["custom"] = mqmetric.GetObjectCustom(qName, ibmmq.MQOT_Q)
+						}
+						addMetaLabels(labels)
+						m.addMetric(labels, f)
+					}
+				}
+			}
+			log.Debugf("Reporting queue statistics for %s", attr.MetricName)
+
+		}
+	}
+
 	// Next we extract the info for the object status metrics.
 	if pollStatus {
 		//Several of the attributes are used to build the tags that uniquely identify a channel instance
@@ -636,7 +711,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					if cipherSpecAttr, ok := e.chlStatus.Attributes[mqmetric.ATTR_CHL_SSLCIPH].Values[key]; ok {
 						cipherSpec = cipherSpecAttr.ValueString
 					}
-					log.Debugf("channel status - channelName: %s cipherSpec: \"%s\"", chlName, cipherSpec)
+					// log.Debugf("channel status - channelName: %s cipherSpec: \"%s\"", chlName, cipherSpec)
 					// log.Debugf("channel status - key: %s channelName: %s metric: %s val: %v", key, chlName, attr.MetricName, f)
 					labels := prometheus.Labels{
 						"qmgr":                     strings.TrimSpace(config.cf.QMgrName),
@@ -691,6 +766,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					}
 				}
 			}
+
 		}
 
 		for _, attr := range e.topicStatus.Attributes {
@@ -872,50 +948,68 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
-	// Then put the responses from DIS xxSTATUS info back to Prometheus
+	// Then put the Gauge responses from DIS xxSTATUS info back to Prometheus
 	// We do this even if we have not polled for new status, so that Grafana's "instant"
-	// view will still show up the most recently known values
+	// view will still show up the most recently known values. Counters are not added
+	// unless they have been explicitly sampled, so aggregration should be accurate. Be
+	// aware that using counters requires overrideCType=true (automatic when using statistics
+	// but currently non-default otherwise)
 	for _, attr := range e.chlStatus.Attributes {
 		if !attr.Pseudo {
 			m := channelStatusVecMap[attr.MetricName]
-			log.Debugf("Reporting chl   metrics for %s", attr.MetricName)
-			m.CollectWrap(ch)
+			if pollStatus || m.g != nil {
+				log.Debugf("Reporting chl   metrics for %s", attr.MetricName)
+				m.CollectWrap(ch)
+			} else {
+				log.Debugf("Skipping  chl   metrics for %s", attr.MetricName)
+
+			}
 		}
 	}
 	for _, attr := range e.qStatus.Attributes {
 		if !attr.Pseudo {
 			m := qStatusVecMap[attr.MetricName]
-			log.Debugf("Reporting queue metrics for %s", attr.MetricName)
-			m.CollectWrap(ch)
+			if pollStatus || m.g != nil {
+				log.Debugf("Reporting queue metrics for %s", attr.MetricName)
+				m.CollectWrap(ch)
+			}
 		}
 	}
 	for _, attr := range e.topicStatus.Attributes {
 		if !attr.Pseudo {
 			m := topicStatusVecMap[attr.MetricName]
 			//log.Debugf("Reporting topic metrics for %s", attr.MetricName)
-			m.CollectWrap(ch)
+			if pollStatus || m.g != nil {
+				m.CollectWrap(ch)
+			}
 		}
 	}
 	for _, attr := range e.subStatus.Attributes {
 		if !attr.Pseudo {
 			m := subStatusVecMap[attr.MetricName]
-			log.Debugf("Reporting subs  metrics for %s", attr.MetricName)
-			m.CollectWrap(ch)
+			if pollStatus || m.g != nil {
+				log.Debugf("Reporting subs  metrics for %s", attr.MetricName)
+				m.CollectWrap(ch)
+			}
 		}
 	}
 	for _, attr := range e.qMgrStatus.Attributes {
 		if !attr.Pseudo {
 			m := qMgrStatusVecMap[attr.MetricName]
-			log.Debugf("Reporting qmgr  metrics for %s", attr.MetricName)
-			m.CollectWrap(ch)
+			if pollStatus || m.g != nil {
+				log.Debugf("Reporting qmgr  metrics for %s", attr.MetricName)
+				m.CollectWrap(ch)
+			}
 		}
 	}
 
 	for _, attr := range e.clusterStatus.Attributes {
 		if !attr.Pseudo {
 			m := clusterStatusVecMap[attr.MetricName]
-			log.Debugf("Reporting cluster  metrics for %s", attr.MetricName)
-			m.CollectWrap(ch)
+			if pollStatus || m.g != nil {
+				log.Debugf("Reporting cluster  metrics for %s", attr.MetricName)
+				m.CollectWrap(ch)
+			}
 		}
 	}
 
@@ -923,30 +1017,55 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.usageBpStatus.Attributes {
 			if !attr.Pseudo {
 				m := usageBpStatusVecMap[attr.MetricName]
-				log.Debugf("Reporting BPool metrics for %s", attr.MetricName)
-				m.CollectWrap(ch)
+				if pollStatus || m.g != nil {
+					log.Debugf("Reporting BPool metrics for %s", attr.MetricName)
+					m.CollectWrap(ch)
+				}
 			}
 		}
 		for _, attr := range e.usagePsStatus.Attributes {
 			if !attr.Pseudo {
 				m := usagePsStatusVecMap[attr.MetricName]
-				log.Debugf("Reporting Pageset metrics for %s", attr.MetricName)
-				m.CollectWrap(ch)
+				if pollStatus || m.g != nil {
+					log.Debugf("Reporting Pageset metrics for %s", attr.MetricName)
+					m.CollectWrap(ch)
+				}
 			}
 		}
 	} else {
 		for _, attr := range e.amqpStatus.Attributes {
 			if !attr.Pseudo {
 				m := amqpStatusVecMap[attr.MetricName]
-				log.Debugf("Reporting AMQP metrics for %s", attr.MetricName)
-				m.CollectWrap(ch)
+				if pollStatus || m.g != nil {
+					log.Debugf("Reporting AMQP metrics for %s", attr.MetricName)
+					m.CollectWrap(ch)
+				}
 			}
 		}
 
 		for _, attr := range e.mqttStatus.Attributes {
 			if !attr.Pseudo {
 				m := mqttStatusVecMap[attr.MetricName]
-				log.Debugf("Reporting MQTT metrics for %s", attr.MetricName)
+				if pollStatus || m.g != nil {
+					log.Debugf("Reporting MQTT metrics for %s", attr.MetricName)
+					m.CollectWrap(ch)
+				}
+			}
+		}
+	}
+
+	if config.cf.CC.UseStatistics {
+		for _, attr := range e.qMgrStatistics.Attributes {
+			if !attr.Pseudo {
+				m := qMgrStatisticsVecMap[attr.MetricName]
+				log.Debugf("Reporting qmgr  statistics for %s", attr.MetricName)
+				m.CollectWrap(ch)
+			}
+		}
+		for _, attr := range e.qStatistics.Attributes {
+			if !attr.Pseudo {
+				m := qStatisticsVecMap[attr.MetricName]
+				log.Debugf("Reporting queue statistics for %s", attr.MetricName)
 				m.CollectWrap(ch)
 			}
 		}
@@ -1011,6 +1130,14 @@ func allocateAllGauges() {
 		log.Debugf("AMQP  Gauges allocated")
 		allocateMQTTStatusGauges()
 		log.Debugf("MQTT  Gauges allocated")
+		if config.cf.CC.UseStatistics {
+			allocateQMgrStatisticsGauges()
+			log.Debugf("QMgr  Statistics Gauges allocated")
+
+			allocateQStatisticsGauges()
+			log.Debugf("Queue Statistics Gauges allocated")
+
+		}
 	}
 }
 
@@ -1062,6 +1189,13 @@ func allocateQStatusGauges() {
 	}
 }
 
+func allocateQStatisticsGauges() {
+	for _, attr := range mqmetric.GetObjectStatistics("", mqmetric.OT_Q).Attributes {
+		m := newMqVecObj(attr, "queue")
+		qStatisticsVecMap[attr.MetricName] = m
+	}
+}
+
 func allocateTopicStatusGauges() {
 	mqmetric.TopicInitAttributes()
 	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_TOPIC).Attributes {
@@ -1083,6 +1217,14 @@ func allocateQMgrStatusGauges() {
 	for _, attr := range mqmetric.GetObjectStatus("", mqmetric.OT_Q_MGR).Attributes {
 		m := newMqVecObj(attr, "qmgr")
 		qMgrStatusVecMap[attr.MetricName] = m
+	}
+}
+
+func allocateQMgrStatisticsGauges() {
+	//mqmetric.QueueManagerInitAttributes()
+	for _, attr := range mqmetric.GetObjectStatistics("", mqmetric.OT_Q_MGR).Attributes {
+		m := newMqVecObj(attr, "qmgr")
+		qMgrStatisticsVecMap[attr.MetricName] = m
 	}
 }
 

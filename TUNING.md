@@ -107,6 +107,19 @@ The tradeoff here is that newly-defined queues may not have any metrics reported
 The messages created by the queue manager ought to be non-persistent. There is no real value in preserving them across a
 restart. Check that the configured reply queues, whether model or local queues, have `DEFPSIST(NO)`.
 
+## Using statistics event messages instead of published resource metrics
+Using these messages is unlikely to significantly change performance characteristics. But it might be worth
+experimenting, especially if the `monitoredQueues` configuration is set to only select a small percentage of the actual
+local queues defined on a queue manager. The [README](README.md) file has a section on how to configure this variation
+for metric collection. But it's worth repeating here that while there is a lot of overlap between the STATQ/STATMQI
+events and the STATQ/STATMQI classes for published metrics, they are not identical. Some metrics can be found only in
+one of the sets, and some only in the other.
+
+Tuning options here might come from the `STATINT` value, and the number of queues that have `STATQ(ON)` or
+`STATQ(QMGR)`. The `STATINT` should probably be set to approximately the same as the collector's `interval` timer. The
+queue manager writes the `STATQ` events with multiple queues' information in a single message. So the maximum queue
+depth on the reply queues is unlikely to be problematic.
+
 ## Dividing the workload
 One further approach that you might like to consider, though I wouldn't recommend it, is to have two or more collectors
 running against the same queue manager. And then configure different sets of queues to be monitored. So a collector

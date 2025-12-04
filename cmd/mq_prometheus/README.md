@@ -78,6 +78,17 @@ when running the amqsrua sample program, but with some minor modifications to ma
 
 The metrics for other object types all begin with the type of that object.
 
+## Counters and Gauges
+This exporter currently creates all metrics by default as Gauges in Prometheus, even though some really should be
+Counters. This was part of the original release of the code and changing the behaviour could break existing dashboards.
+So it has been left as the default behaviour for now. If you want to properly deal with the different types of metrics,
+then the `prometheus.overrideCType` configuration attribute should be set to `true`. The default value for this
+attribute (currently `false`) will change at the next major version (a breaking change) for this repository.
+
+If you are using the Event Statistics option to collect metrics, then this configuration is already automatically set to
+`true`. There are enough other changes when using that collection model that existing dashboards cannot be used without
+change.
+
 ## Unavailable queue managers
 If the queue manager is not available, the collector can be configured to continually attempt to reconnect with the
 `keepRunning` parameter (provided that it was available and successfully connected once). In this mode, the web server

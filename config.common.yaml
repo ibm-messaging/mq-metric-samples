@@ -8,6 +8,7 @@ global:
   useObjectStatus: true
   useResetQStats: false
   usePublications: true
+  useStatistics: false
   logLevel: INFO
   metaprefix: ""
   pollInterval: 30s

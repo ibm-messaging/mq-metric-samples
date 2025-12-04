@@ -178,6 +178,48 @@ The queue patterns are expanded at startup of the program and at regular interva
 will eventually be monitored if they match the pattern. The rediscovery interval is 1h by default, but can be modified
 by the `rediscoverInterval` parameter.
 
+### Queue Manager Statistics Events
+An experimental alternative to the published resource statistics for queue and many queue manager metrics is to use the
+Statistics Events messages. The collection of metrics from these events has been enabled for the OpenTelemetry and
+Prometheus collectors only.
+
+These events are available on the Distributed platforms by setting the queue manager `STATMQI` attribute to `ON` and
+also enabling the `STATQ` attribute for the queue manager and/or individual queues. You should also set the `STATINT`
+value to something appropriate for your collection interval. The default value of 1800 (30 minutes) is probably much too
+large. The `STATCHL` option is ignored; any Event messages reporting on channel activity are ignored as the channel
+status responses already give similar metrics.
+
+Set the `global.useStatistics` value to `true` in the collector's configuration to use this option. The default value is
+`false`. You can also use the `connection.StatisticsQueue` option to name the queue holding these events if it is not
+the standard `SYSTEM.ADMIN.STATISTICS.QUEUE`. You should still have `global.usePublications` set to `true` if you want
+to collect other metrics - for example, the queue manager logger details, or NativeHA metrics that are only available
+through the publication route. So there will still be some subscriptions, but to a much smaller number of topics.
+
+When you use these events, the `monitoredQueues` value is overridden and automatically set to `*`. All queues that have
+the `STATQ` enabled, either explicitly or through inheritance from the queue manager setting, are reported on. We
+continue to use some published metrics, primarily at the queue manager level, but there are no longer queue-specific
+subscriptions. Instead the values are taken from the Event messages.
+
+The metrics created through this mechanism may have different names than similar metrics that are returned from the
+publications. The Events may not report on every queue at every interval; it may only be queues that have had some
+activity during the interval. Regardless of the metric names, the actual set of metrics is not identical across the two
+approaches - generally, the published metrics can go into more detail on queue activity than the corresponding STATQ
+events. However some metrics can be found only in one of the sets, and some only in the other.
+
+If you look at the PCF definition of these event messages, you will see that many of them return arrays of metrics. For
+example there are separate values returned in the same element for the persistent and non-persistent MQPUT message
+counts. The collection process here simplifies the aggregation of these elements by creating and reporting an extra
+value of the total across the array. This should simplify dashboards so you do not need to query for multiple metrics,
+only to add them up yourself. But the individual numbers are still available too.
+
+Look at the metrics.txt file to see all of the metrics available through this mechanism.
+
+If you are using the Prometheus collector, the `overrideCType` value is automatically set to `true`, which gives the
+correct distinction between Counters and Gauges. See the Prometheus directory's README for more information on that
+attribute.
+
+The seemingly-similar Accounting Events are **not** handled in these collectors.
+
 ### Channel Status
 The monitor programs can process channel status, reporting that back into the database.
 

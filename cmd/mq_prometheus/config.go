@@ -19,8 +19,9 @@ package main
 */
 
 import (
-	"fmt"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	cf "github.com/ibm-messaging/mq-metric-samples/v5/pkg/config"
 )
@@ -136,8 +137,14 @@ func initConfig() error {
 	}
 
 	if err == nil {
-		// This preserves a degree of compatibility with the mq_prometheus collector in this repo and any dashboards.
+		// This preserves a degree of compatibility for the mq_prometheus collector in this repo and any dashboards.
 		config.overrideCTypeBool = cf.AsBool(config.overrideCType, false)
+
+		// But we don't need to keep backwards compatibility for the Events Statistics collection model
+		if config.cf.CC.UseStatistics && !config.overrideCTypeBool {
+			log.Warn("Using Statistics Events: Forcing overrideCType to true")
+			config.overrideCTypeBool = true
+		}
 	}
 
 	if err == nil {
@@ -162,8 +169,8 @@ func initConfig() error {
 	}
 
 	if err == nil && config.cf.CC.UseResetQStats {
-		fmt.Println("Warning: Data from 'RESET QSTATS' has been requested.")
-		fmt.Println("Ensure no other monitoring applications are also using that command.")
+		log.Warn("Warning: Data from 'RESET QSTATS' has been requested.")
+		log.Warn("Ensure no other monitoring applications are also using that command.")
 	}
 
 	return err
