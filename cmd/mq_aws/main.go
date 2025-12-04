@@ -42,6 +42,8 @@ func main() {
 
 	err = initConfig()
 
+	log.Warn("This collector is deprecated and will be removed by a future major version change in this repository. See DEPRECATIONS.md")
+
 	// The qmgr name is permitted to be blank or asterisk to connect to a default qmgr
 
 	/*
