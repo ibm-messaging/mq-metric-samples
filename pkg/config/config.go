@@ -172,6 +172,8 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.ReplyQ2, "", CP_STR, "ibmmq.replyQueue2", "connection", "replyQueue2", "Reply Queue to collect other data ")
 	AddParm(&cm.CC.DurableSubPrefix, "", CP_STR, "ibmmq.durableSubPrefix", "connection", "durableSubPrefix", "Collector identifier when using Durable Subscriptions")
 
+	AddParm(&cm.CC.StatisticsQ, "SYSTEM.ADMIN.STATISTICS.QUEUE", CP_STR, "ibmmq.statisticsQueue", "connection", "statisticsQueue", "Queue holding statistics data")
+
 	AddParm(&cm.CC.WaitInterval, defaultWaitInterval, CP_INT, "ibmmq.waitInterval", "connection", "waitInterval", "Maximum wait time for queue manager responses")
 
 	AddParm(&cm.MetaPrefix, "", CP_STR, "metaPrefix", "global", "metaPrefix", "Override path to monitoring resource topic")
@@ -204,6 +206,7 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.useStatus", "global", "useObjectStatus", "Add metrics from all object STATUS fields")
 	AddParm(&cm.CC.UsePublications, true, CP_BOOL, "ibmmq.usePublications", "global", "usePublications", "Use resource publications. Set to false to monitor older Distributed platforms")
 	AddParm(&cm.CC.UseResetQStats, false, CP_BOOL, "ibmmq.resetQStats", "global", "useResetQStats", "Use RESET QSTATS on z/OS queue managers")
+	AddParm(&cm.CC.UseStatistics, false, CP_BOOL, "ibmmq.useStatistics", "global", "useStatistics", "Use STATISTICS messages instead of publications on Distributed platforms")
 
 	AddParm(&cm.CC.UserId, "", CP_STR, "ibmmq.userid", "connection", "user", "UserId for MQ connection")
 	// If password is not given on command line (and it shouldn't be) then there's a prompt for stdin
@@ -349,8 +352,18 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 	// but it is based on the same cycle so force that option here
 	if err == nil {
 		if cm.CC.UseResetQStats {
-			log.Debugf("VerifyConfig: UseResetStats is true, so also forcing UseStatus to true")
-			cm.CC.UseStatus = true
+			if !cm.CC.UseStatus {
+				log.Debugf("VerifyConfig: UseResetStats is true, so forcing UseStatus to true")
+				cm.CC.UseStatus = true
+			}
+		}
+	}
+
+	if err == nil {
+		if cm.CC.UseStatistics {
+			if cm.CC.StatisticsQ == "" {
+				cm.CC.StatisticsQ = "SYSTEM.ADMIN.STATISTICS.QUEUE"
+			}
 		}
 	}
 
@@ -485,6 +498,16 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 			if len(cm.MetadataTagsArray) != len(cm.MetadataValuesArray) {
 				err = fmt.Errorf("Mismatch in metadata Tags/Values lengths")
 			}
+		}
+	}
+
+	// When using statistics event messages, we can discover the queues later. And we also want to make sure we've got
+	// all the relevant attributes. So we force the monitoredQueues list to "*"
+	if err == nil {
+		if cm.CC.UseStatistics {
+			tmp := cm.MonitoredQueues
+			cm.MonitoredQueues = "*"
+			log.Debugf("Collecting statistics. MonitoredQueues configured value: %s Now set to %s", tmp, cm.MonitoredQueues)
 		}
 	}
 

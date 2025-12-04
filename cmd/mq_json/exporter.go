@@ -103,6 +103,8 @@ func Collect() error {
 		log.Debugf("Polling for object status")
 		lastPoll = thisPoll
 		pollStatus = true
+	} else {
+		log.Debugf("Skipping poll for object status")
 	}
 
 	// If there has been sufficient interval since the last explicit poll for

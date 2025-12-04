@@ -20,6 +20,7 @@ package main
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,7 +33,11 @@ import (
 var BuildStamp string
 var GitCommit string
 var BuildPlatform string
-var discoverConfig mqmetric.DiscoverConfig
+var (
+	discoverConfig   mqmetric.DiscoverConfig
+	unittestLoops    = 0
+	unittestMaxLoops = 0
+)
 
 // Print this via the logger rather than direct to stdout so it can be
 // avoided if someone is using the stdout stream as the JSON input to a parser
@@ -56,6 +61,12 @@ func main() {
 	var d time.Duration
 
 	err = initConfig()
+
+	// This env var is purely for internal testing purposes
+	utEnv := "MQIGO_UNITTEST_MAX_LOOPS"
+	if os.Getenv(utEnv) != "" {
+		unittestMaxLoops, _ = strconv.Atoi(os.Getenv(utEnv))
+	}
 
 	printInfo("Starting IBM MQ metrics exporter for JSON", BuildStamp, GitCommit, BuildPlatform)
 
@@ -148,6 +159,17 @@ func main() {
 		for {
 			Collect()
 			time.Sleep(d)
+
+			// Break out after a small number of iterations when we are testing
+			// log.Debugf("Max loops: %d Cur loops: %d", unittestMaxLoops, unittestLoops)
+			if unittestMaxLoops != 0 {
+				unittestLoops++
+				if unittestLoops > unittestMaxLoops {
+					log.Infof("Exiting: Maximum unittest iterations of %d reached", unittestMaxLoops)
+					break
+				}
+			}
+
 		}
 	}
 
