@@ -951,13 +951,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	// Then put the Gauge responses from DIS xxSTATUS info back to Prometheus
 	// We do this even if we have not polled for new status, so that Grafana's "instant"
 	// view will still show up the most recently known values. Counters are not added
-	// unless they have been explicitly sampled, so aggregration should be accurate. Be
-	// aware that using counters requires overrideCType=true (automatic when using statistics
-	// but currently non-default otherwise)
+	// unless they have been explicitly sampled, so aggregration should be accurate.
 	for _, attr := range e.chlStatus.Attributes {
 		if !attr.Pseudo {
 			m := channelStatusVecMap[attr.MetricName]
-			if pollStatus || m.g != nil {
+			if pollStatus || !attr.Delta {
 				log.Debugf("Reporting chl   metrics for %s", attr.MetricName)
 				m.CollectWrap(ch)
 			} else {
@@ -969,7 +967,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, attr := range e.qStatus.Attributes {
 		if !attr.Pseudo {
 			m := qStatusVecMap[attr.MetricName]
-			if pollStatus || m.g != nil {
+			if pollStatus || !attr.Delta {
 				log.Debugf("Reporting queue metrics for %s", attr.MetricName)
 				m.CollectWrap(ch)
 			}
@@ -979,7 +977,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		if !attr.Pseudo {
 			m := topicStatusVecMap[attr.MetricName]
 			//log.Debugf("Reporting topic metrics for %s", attr.MetricName)
-			if pollStatus || m.g != nil {
+			if pollStatus || !attr.Delta {
 				m.CollectWrap(ch)
 			}
 		}
@@ -987,7 +985,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, attr := range e.subStatus.Attributes {
 		if !attr.Pseudo {
 			m := subStatusVecMap[attr.MetricName]
-			if pollStatus || m.g != nil {
+			if pollStatus || !attr.Delta {
 				log.Debugf("Reporting subs  metrics for %s", attr.MetricName)
 				m.CollectWrap(ch)
 			}
@@ -996,7 +994,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, attr := range e.qMgrStatus.Attributes {
 		if !attr.Pseudo {
 			m := qMgrStatusVecMap[attr.MetricName]
-			if pollStatus || m.g != nil {
+			if pollStatus || !attr.Delta {
 				log.Debugf("Reporting qmgr  metrics for %s", attr.MetricName)
 				m.CollectWrap(ch)
 			}
@@ -1006,7 +1004,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, attr := range e.clusterStatus.Attributes {
 		if !attr.Pseudo {
 			m := clusterStatusVecMap[attr.MetricName]
-			if pollStatus || m.g != nil {
+			if pollStatus || !attr.Delta {
 				log.Debugf("Reporting cluster  metrics for %s", attr.MetricName)
 				m.CollectWrap(ch)
 			}
@@ -1017,7 +1015,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.usageBpStatus.Attributes {
 			if !attr.Pseudo {
 				m := usageBpStatusVecMap[attr.MetricName]
-				if pollStatus || m.g != nil {
+				if pollStatus || !attr.Delta {
 					log.Debugf("Reporting BPool metrics for %s", attr.MetricName)
 					m.CollectWrap(ch)
 				}
@@ -1026,7 +1024,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.usagePsStatus.Attributes {
 			if !attr.Pseudo {
 				m := usagePsStatusVecMap[attr.MetricName]
-				if pollStatus || m.g != nil {
+				if pollStatus || !attr.Delta {
 					log.Debugf("Reporting Pageset metrics for %s", attr.MetricName)
 					m.CollectWrap(ch)
 				}
@@ -1036,7 +1034,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.amqpStatus.Attributes {
 			if !attr.Pseudo {
 				m := amqpStatusVecMap[attr.MetricName]
-				if pollStatus || m.g != nil {
+				if pollStatus || !attr.Delta {
 					log.Debugf("Reporting AMQP metrics for %s", attr.MetricName)
 					m.CollectWrap(ch)
 				}
@@ -1046,7 +1044,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, attr := range e.mqttStatus.Attributes {
 			if !attr.Pseudo {
 				m := mqttStatusVecMap[attr.MetricName]
-				if pollStatus || m.g != nil {
+				if pollStatus || !attr.Delta {
 					log.Debugf("Reporting MQTT metrics for %s", attr.MetricName)
 					m.CollectWrap(ch)
 				}

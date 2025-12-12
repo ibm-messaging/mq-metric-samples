@@ -5,7 +5,7 @@ Newest updates are at the top of this file.
 * Pull in latest mq-golang package
   * Includes fixes for #444 and (probably) #439
 * Enable use of STATQ/STATMQI event messages as alternative to many of the published metrics
-  * OTel and Prometheus collectors only
+  * OTel, JSON and Prometheus collectors only
   * Look at the README for more details
 * Break cleanly out of collectors after configurable loop count for testing purposes
   * OTel, Prometheus and JSON collectors

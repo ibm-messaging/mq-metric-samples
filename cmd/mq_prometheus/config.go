@@ -94,7 +94,7 @@ func initConfig() error {
 	cf.AddParm(&config.httpsKeyFile, "", cf.CP_STR, "ibmmq.httpsKeyFile", "prometheus", "httpsKeyFile", "TLS private key file")
 
 	cf.AddParm(&config.namespace, defaultNamespace, cf.CP_STR, "namespace", "prometheus", "namespace", "Namespace for metrics")
-	cf.AddParm(&config.overrideCType, "", cf.CP_STR, "ibmmq.otelOverrideCType", "prometheus", "overrideCType", "Override default data types to give mixture of Counters and Gauges")
+	cf.AddParm(&config.overrideCType, "", cf.CP_STR, "ibmmq.overrideCType", "prometheus", "overrideCType", "Override default data types to give mixture of Counters and Gauges")
 
 	err = cf.ParseParms()
 

@@ -230,6 +230,8 @@ func Collect() error {
 		// All of the metrics for a given set of tags are printed in a single
 		// JSON object.
 		ptMapPub := make(map[string]pointsStruct)
+		ptMapStats := make(map[string]pointsStruct)
+
 		var pt pointsStruct
 		var ok bool
 
@@ -274,18 +276,85 @@ func Collect() error {
 							addMetaLabels(pt.Tags)
 						}
 
-						pt.Metric[fixup(elem.MetricName)] = mqmetric.Normalise(elem, key, value)
+						pt.Metric[fixup(elem.MetricName, pt.ObjectType)] = mqmetric.Normalise(elem, key, value)
 						ptMapPub[key] = pt
 					}
 				}
 			}
 		}
+		if config.cf.CC.UseStatistics {
+			for _, attr := range mqmetric.GetObjectStatistics("", mqmetric.OT_Q_MGR).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
+						qMgrName := mqmetric.GetObjectStatus("", mqmetric.OT_Q_MGR).Attributes[mqmetric.ATTR_QMGR_NAME].Values[key].ValueString
 
+						key1 := "qmgr/" + qMgrName
+
+						if pt, ok = ptMapStats[mqmetric.QMgrMapKey]; !ok {
+							if pt, ok = ptMapStats[key1]; !ok {
+								pt = pointsStruct{}
+								pt.ObjectType = "qmgr"
+								pt.Metric = make(map[string]float64)
+								pt.Tags = make(map[string]string)
+								pt.Tags["qmgr"] = strings.TrimSpace(qMgrName)
+								pt.Tags["platform"] = platformString
+								pt.Tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+								if showAndSupportsCustomLabel() {
+									pt.Tags["custom"] = mqmetric.GetObjectCustom("", ibmmq.MQOT_Q_MGR)
+								}
+								hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
+								if hostname != mqmetric.DUMMY_STRING {
+									pt.Tags["hostname"] = hostname
+								}
+								addMetaLabels(pt.Tags)
+
+							}
+						}
+
+						pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+						ptMapStats[key1] = pt
+					}
+				}
+			}
+			for _, attr := range mqmetric.GetObjectStatistics("", mqmetric.OT_Q).Attributes {
+				for key, value := range attr.Values {
+					if value.IsInt64 {
+						qName := mqmetric.GetObjectStatistics("", mqmetric.OT_Q).Attributes[mqmetric.ATTR_Q_NAME].Values[key].ValueString
+						usageString := getUsageString(key)
+
+						key1 := "queue/" + qName
+
+						if pt, ok = ptMapStats[qName]; !ok {
+							if pt, ok = ptMapStats[key1]; !ok {
+								pt = pointsStruct{}
+								pt.ObjectType = "queue"
+								pt.Metric = make(map[string]float64)
+								pt.Tags = make(map[string]string)
+								pt.Tags["qmgr"] = strings.TrimSpace(config.cf.QMgrName)
+								pt.Tags["queue"] = qName
+								pt.Tags["usage"] = usageString
+								pt.Tags["description"] = mqmetric.GetObjectDescription(qName, ibmmq.MQOT_Q)
+								if showAndSupportsCustomLabel() {
+									pt.Tags["custom"] = mqmetric.GetObjectCustom(qName, ibmmq.MQOT_Q)
+								}
+								pt.Tags["cluster"] = mqmetric.GetQueueAttribute(key, ibmmq.MQCA_CLUSTER_NAME)
+								pt.Tags["platform"] = platformString
+								addMetaLabels(pt.Tags)
+
+							}
+						}
+
+						pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.QueueNormalise(attr, value.ValueInt64)
+						ptMapStats[key1] = pt
+					}
+				}
+			}
+		}
 		// Add a metric that shows how many publications were processed by this collection
 		key := mqmetric.QMgrMapKey
 		if pt, ok = ptMapPub[key]; ok {
 			pt = ptMapPub[key]
-			pt.Metric[fixup("exporter_publications")] = float64(mqmetric.GetProcessPublicationCount())
+			pt.Metric[fixup("exporter_publications", "")] = float64(mqmetric.GetProcessPublicationCount())
 			ptMapPub[key] = pt
 		}
 
@@ -334,7 +403,7 @@ func Collect() error {
 							addMetaLabels(pt.Tags)
 
 						}
-						pt.Metric[fixup(attr.MetricName)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
+						pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
 
 						ptMap[key1] = pt
 					}
@@ -368,7 +437,7 @@ func Collect() error {
 								}
 							}
 
-							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueNormalise(attr, value.ValueInt64)
+							pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.QueueNormalise(attr, value.ValueInt64)
 							ptMap[key1] = pt
 						}
 					}
@@ -394,7 +463,7 @@ func Collect() error {
 
 							}
 
-							pt.Metric[fixup(attr.MetricName)] = mqmetric.TopicNormalise(attr, value.ValueInt64)
+							pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.TopicNormalise(attr, value.ValueInt64)
 							ptMap[key1] = pt
 						}
 					}
@@ -428,7 +497,7 @@ func Collect() error {
 								}
 							}
 
-							pt.Metric[fixup(attr.MetricName)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
+							pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.QueueManagerNormalise(attr, value.ValueInt64)
 							ptMap[key1] = pt
 						}
 					}
@@ -460,7 +529,7 @@ func Collect() error {
 
 							}
 
-							pt.Metric[fixup(attr.MetricName)] = mqmetric.SubNormalise(attr, value.ValueInt64)
+							pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.SubNormalise(attr, value.ValueInt64)
 							ptMap[key1] = pt
 						}
 					}
@@ -493,7 +562,7 @@ func Collect() error {
 
 							}
 
-							pt.Metric[fixup(attr.MetricName)] = mqmetric.ClusterNormalise(attr, value.ValueInt64)
+							pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.ClusterNormalise(attr, value.ValueInt64)
 							ptMap[key1] = pt
 						}
 					}
@@ -521,7 +590,7 @@ func Collect() error {
 
 								}
 
-								pt.Metric[fixup(attr.MetricName)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
+								pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
 								ptMap[key1] = pt
 							}
 						}
@@ -545,7 +614,7 @@ func Collect() error {
 									addMetaLabels(pt.Tags)
 								}
 
-								pt.Metric[fixup(attr.MetricName)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
+								pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.UsageNormalise(attr, value.ValueInt64)
 								ptMap[key1] = pt
 							}
 
@@ -573,7 +642,7 @@ func Collect() error {
 									addMetaLabels(pt.Tags)
 
 								}
-								pt.Metric[fixup(attr.MetricName)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
+								pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
 								ptMap[key1] = pt
 							}
 						}
@@ -600,7 +669,7 @@ func Collect() error {
 									addMetaLabels(pt.Tags)
 
 								}
-								pt.Metric[fixup(attr.MetricName)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
+								pt.Metric[fixup(attr.MetricName, pt.ObjectType)] = mqmetric.ChannelNormalise(attr, value.ValueInt64)
 								ptMap[key1] = pt
 							}
 						}
@@ -618,6 +687,9 @@ func Collect() error {
 
 		// Now add the published metrics, which might have some of the xxSTATUS metrics merged
 		for _, pt := range ptMapPub {
+			AllPoints = append(AllPoints, pt)
+		}
+		for _, pt := range ptMapStats {
 			AllPoints = append(AllPoints, pt)
 		}
 
@@ -657,13 +729,19 @@ func getUsageString(key string) string {
 	return usageString
 }
 
-func fixup(s1 string) string {
+func fixup(s1 string, objectType string) string {
 	// Another reformatting of the metric name - this one converts
 	// something like queue_avoided_bytes into queueAvoidedBytes
 
 	// The new name is cached, so next time round we can find it immediately
 	if s2, ok := fixupString[s1]; ok {
 		return s2
+	}
+
+	// Some metrics look a bit silly with the name by default coming out looking like queue_queue_depth.
+	// So we strip the 2nd "queue".
+	if objectType == "queue" && strings.HasPrefix(s1, "queue_") {
+		s1 = s1[len("queue_"):]
 	}
 
 	s2 := ""

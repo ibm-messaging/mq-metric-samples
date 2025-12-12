@@ -180,7 +180,7 @@ by the `rediscoverInterval` parameter.
 
 ### Queue Manager Statistics Events
 An experimental alternative to the published resource statistics for queue and many queue manager metrics is to use the
-Statistics Events messages. The collection of metrics from these events has been enabled for the OpenTelemetry and
+Statistics Events messages. The collection of metrics from these events has been enabled for the OpenTelemetry, JSON and
 Prometheus collectors only.
 
 These events are available on the Distributed platforms by setting the queue manager `STATMQI` attribute to `ON` and
