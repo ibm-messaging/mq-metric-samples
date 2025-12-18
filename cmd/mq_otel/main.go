@@ -282,8 +282,6 @@ func mainReturnWithCode() int {
 		log.Fatal(err)
 	}
 
-	log.Info("About to drop from main")
-
 	return 0
 }
 
