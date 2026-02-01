@@ -10,7 +10,7 @@ require (
 	github.com/ibm-messaging/mq-golang/v5 v5.7.0
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.39.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.39.0
