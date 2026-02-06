@@ -11,6 +11,10 @@ The repository also includes a program which traces the route a message can take
 to the `dspmqrte` program that is part of the MQ product, but writes the output in JSON format. See the `dspmqrtj`
 subdirectory for more information.
 
+## The amqsevtg program
+The repository also includes a program that formats queue manager event messages, and can write the output
+direct to OTel backends. See the `amqsevtg` subdirectory for more information.
+
 ## Health Warning
 
 This package is provided as-is with no guarantees of support or updates. There are also no guarantees of compatibility
