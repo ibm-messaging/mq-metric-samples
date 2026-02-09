@@ -202,8 +202,8 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.CC.HideMQTTClientId, false, CP_BOOL, "ibmmq.hideMQTTClientId", "filters", "hideMQTTClientId", "Don't create multiple instances of ClientID information")
 
 	// qStatus was the original flag but prefer to use useStatus as more meaningful for all object types
-	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.qStatus", "global", "useObjectStatus", "Add metrics from the QSTATUS fields")
-	AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.useStatus", "global", "useObjectStatus", "Add metrics from all object STATUS fields")
+	//AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.qStatus", "global", "useObjectStatus", "Add metrics from the QSTATUS fields")
+	//AddParm(&cm.CC.UseStatus, false, CP_BOOL, "ibmmq.useStatus", "global", "useObjectStatus", "Add metrics from all object STATUS fields")
 	AddParm(&cm.CC.UsePublications, true, CP_BOOL, "ibmmq.usePublications", "global", "usePublications", "Use resource publications. Set to false to monitor older Distributed platforms")
 	AddParm(&cm.CC.UseResetQStats, false, CP_BOOL, "ibmmq.resetQStats", "global", "useResetQStats", "Use RESET QSTATS on z/OS queue managers")
 	AddParm(&cm.CC.UseStatistics, false, CP_BOOL, "ibmmq.useStatistics", "global", "useStatistics", "Use STATISTICS messages instead of publications on Distributed platforms")
@@ -329,6 +329,16 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 		"INQSET":    true,
 		"EXTENDED":  true,
 		"NONE":      true,
+	}
+
+	// Always force the use of object status queries which is no longer
+	// a configurable attribute. Just in case, we do allow someone to really force
+	// the value via environment variable instead of YAML attribute.
+	if err == nil {
+		cm.CC.UseStatus = true
+		if os.Getenv("MQIGO_FORCE_USESTATUS_FALSE") == "" {
+			cm.CC.UseStatus = false
+		}
 	}
 
 	// If someone has explicitly said not to use publications, then they

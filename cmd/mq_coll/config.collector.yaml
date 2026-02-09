@@ -1,5 +1,0 @@
-
-# This is the collector-specific portion of the configuration
-collectd:
-  interval: 10s
-  hostname: localhost

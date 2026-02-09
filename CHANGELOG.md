@@ -1,6 +1,11 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## Jun 2026
+* Removal of aws, collectd, influx, opentsdb collectors
+* Prometheus collector `overrideCType` default changed to `true`
+  * To correctly distinguish between Counter and Gauge types
+
 ## Feb 06 2026 - v5.7.1
 * Update to MQ 9.4.5
 * Pull in latest mq-golang package
