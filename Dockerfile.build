@@ -29,14 +29,22 @@ ENV GOPATH=$GOPATH_ARG \
 
 ENV GOVERSION=1.22.8
 
+# Go module / toolchain proxy used during the build.
+# This affects both the Go toolchain download and any module downloads.
+# Override with: docker build --build-arg GOPROXY=<proxy-url> .
+# Default is the public Go proxy.
+ARG GOPROXY=https://proxy.golang.org,direct
+RUN go env -w GOPROXY="$GOPROXY"
+
 USER 0
 RUN mkdir -p /go && chmod 777 /go
-RUN go install golang.org/dl/go${GOVERSION}@latest
 
-# The compiler is in a non-default location. For the UBI8 image,
-# this is where it ends up.
-ENV GO=/go/bin/go${GOVERSION}
-RUN $GO download && $GO version
+# Go is installed automatically by the Go toolchain using GOTOOLCHAIN.
+ENV GOTOOLCHAIN="go${GOVERSION}+auto"
+RUN go version 
+ENV GO=go
+RUN echo "GO version"
+RUN go version 
 
 # Create location for the git clone and MQ installation
 RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg $GOPATH/out \
@@ -46,8 +54,9 @@ RUN mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg $GOPATH/out \
   && mkdir -p /opt/mqm \
   && chmod a+rx /opt/mqm
 
-# Location of the downloadable MQ client package \
-ENV RDURL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist" \
+# Location of the downloadable MQ client package
+ARG RDURL_ARG="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist"
+ENV RDURL=${RDURL_ARG} \
     RDTAR="IBM-MQC-Redist-Linux${MQARCH}.tar.gz" \
     VRMF=9.4.5.0
 
