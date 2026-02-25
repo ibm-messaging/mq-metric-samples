@@ -16,6 +16,12 @@
 # Override with "--build-arg EXPORTER=mq_xxxxx" when building.
 ARG EXPORTER=mq_prometheus
 
+# Runtime base image.
+# This must be declared before the first FROM so Docker BuildKit
+# can correctly expand it when selecting the runtime image.
+# Override with: docker build --build-arg RUNTIME_IMAGE=<image> .
+ARG RUNTIME_IMAGE=registry.access.redhat.com/ubi8-minimal:latest
+
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 ## ### ### ### ### ### ### BUILD ### ### ### ### ### ### ##
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
@@ -37,19 +43,29 @@ ENV EXPORTER=${EXPORTER} \
 ENV GOVERSION=1.22.8
 USER 0
 
+# Go module / toolchain proxy used during the build.
+# This affects both the Go toolchain download and any module downloads.
+# Override with: docker build --build-arg GOPROXY=<proxy-url> .
+# Default is the public Go proxy.
+ARG GOPROXY=https://proxy.golang.org,direct
+RUN go env -w GOPROXY="$GOPROXY"
+
 # The base UBI8 image does not (currently) contain the most
 # recent Go compiler. Which tends to be required for the OTel
-# packages. So we have to explicitly download and install it.
-# As long as we've got SOME level of compiler (which this base image)
-# does have, we can use it to pull down the more recent levels. It appears as if a
-# "go build ..." will now actually automatically pull in the newer level if needed
-# by the go.mod directives. But let's be explicit.
-RUN go install golang.org/dl/go${GOVERSION}@latest
-
-# The compiler is in a non-default location. For the UBI8 image,
-# this is where it ends up.
-ENV GO=/opt/app-root/src/go/bin/go${GOVERSION}
-RUN $GO download && $GO version
+# packages.
+# Go (1.21+) provides automatic toolchain selection via GOTOOLCHAIN.
+# The Go version specified in this image (via GOVERSION) is installed
+# by the Go toolchain and automatically downloaded if not present.
+# In restricted environments, this requires GOPROXY to point to an
+# internal repository.
+# As long as the base image includes some Go compiler, the required Go version
+# can be automatically downloaded and used when needed (for example, based on
+# go.mod directives), without explicitly installing it in the image.
+ENV GOTOOLCHAIN="go${GOVERSION}+auto"
+RUN go version 
+ENV GO=go
+RUN echo "GO version"
+RUN go version 
 
 # Create directory structure
 RUN mkdir -p /go/src /go/bin /go/pkg \
@@ -149,7 +165,7 @@ RUN buildStamp=`date +%Y%m%d-%H%M%S`; \
 ### ### ### ### ### ### ### RUN ### ### ### ### ### ### ###
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 # Use a "minimal" runtime image
-FROM registry.access.redhat.com/ubi8-minimal:latest AS runtime
+FROM ${RUNTIME_IMAGE} AS runtime
 
 ARG EXPORTER
 
