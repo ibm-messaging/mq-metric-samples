@@ -1,7 +1,7 @@
 package config
 
 /*
-  Copyright (c) IBM Corporation 2016, 2021
+  Copyright (c) IBM Corporation 2016, 2026
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -75,12 +75,14 @@ type ConfigYObjects struct {
 }
 
 type ConfigYFilters struct {
-	HideSvrConnJobname        string   `yaml:"hideSvrConnJobname" default:"false"`
-	HideAMQPClientId          string   `yaml:"hideAMQPClientId" default:"false"`
-	HideMQTTClientId          string   `yaml:"hideMQTTClientId" default:"false"`
-	ShowInactiveChannels      string   `yaml:"showInactiveChannels" default:"false"`
-	ShowCustomAttribute       string   `yaml:"showCustomAttribute" default:"false"`
-	QueueSubscriptionSelector []string `yaml:"queueSubscriptionSelector"`
+	HideSvrConnJobname        string      `yaml:"hideSvrConnJobname" default:"false"`
+	HideAMQPClientId          string      `yaml:"hideAMQPClientId" default:"false"`
+	HideMQTTClientId          string      `yaml:"hideMQTTClientId" default:"false"`
+	ShowInactiveChannels      string      `yaml:"showInactiveChannels" default:"false"`
+	ShowCustomAttribute       string      `yaml:"showCustomAttribute" default:"false"`
+	QueueSubscriptionSelector []string    `yaml:"queueSubscriptionSelector"`
+	MetricInclude             interface{} `yaml:"metricInclude"` // We'll convert these maps of arrays by hand:
+	MetricExclude             interface{} `yaml:"metricExclude"`
 }
 
 type ConfigMoved struct {
@@ -131,7 +133,9 @@ func asInt(s string, def int) int {
 
 // This handles the configuration parameters that are common to all the collectors. The individual
 // collectors call similar code for their own specific attributes
-func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo ConfigYObjects, cyf ConfigYFilters) {
+func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo ConfigYObjects, cyf ConfigYFilters) error {
+
+	var err error
 
 	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", AsBool(cyg.UseObjectStatus, true))
 	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", AsBool(cyg.UseResetQStats, false))
@@ -201,7 +205,66 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 		}
 	}
 
-	return
+	// Populate the metric include/exclude maps in the ConnectionConfig structure.
+	// Only do this if the corresponding parameter has not already been set by command line
+	// parms or an environment variable
+
+	// These maps are how we parse the YAML elements. Errors in the YAML file will likely lead
+	// to panics
+	var im map[interface{}]interface{}
+	var em map[interface{}]interface{}
+	var emptyStruc struct{}
+
+	imi := cyf.MetricInclude
+	if imi != nil {
+		im = imi.(map[interface{}]interface{})
+	}
+	emi := cyf.MetricExclude
+	if emi != nil {
+		em = emi.(map[interface{}]interface{})
+	}
+
+	if im != nil {
+		for k, v := range im {
+			otStr := k.(string)
+			otIdx, _ := otString[otStr]
+			s := filters[otIdx].include
+			if s == "" && v != nil {
+				v2, ok := v.([]interface{})
+				if ok {
+					for _, b := range v2 {
+						cm.CC.MetricFilter[otIdx].Include[b.(string)] = emptyStruc
+					}
+				} else {
+					err = fmt.Errorf("Failure parsing YAML configuration file")
+				}
+			} else {
+				//fmt.Printf("Ignoring already-configured include string for %s: %s\n", otStr, s)
+			}
+		}
+	}
+	if em != nil {
+		for k, v := range em {
+			otStr := k.(string)
+			otIdx, _ := otString[otStr]
+			s := filters[otIdx].exclude
+			if s == "" && v != nil {
+				v2, ok := v.([]interface{})
+				if ok {
+
+					for _, b := range v2 {
+						cm.CC.MetricFilter[otIdx].Exclude[b.(string)] = emptyStruc
+					}
+				} else {
+					err = fmt.Errorf("Failure parsing YAML configuration file")
+				}
+			} else {
+				//fmt.Printf("Ignoring already-configured exclude string for %s: %s\n", otStr, s)
+			}
+		}
+	}
+
+	return err
 }
 
 // If the parameter has already been set by env var or cli, then the value in the main config structure is returned. Otherwise

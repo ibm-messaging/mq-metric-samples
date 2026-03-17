@@ -64,7 +64,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
+				err = cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.interval = cf.CopyParmIfNotSetStr("collectd", "interval", cfy.Collectd.Interval)
 				config.hostname = cf.CopyParmIfNotSetStr("collectd", "hostname", cfy.Collectd.Hostname)
 			}

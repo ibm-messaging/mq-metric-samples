@@ -602,7 +602,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		for _, ty := range cl.Types {
 			for _, elem := range ty.Elements {
 				ruaVecMap[makeKey(elem)].Collect(ch)
-				log.Debugf("Reporting metrics for %s", elem.MetricName)
+				log.Debugf("Reporting %s metrics for %s", cl.Name, elem.MetricName)
 			}
 		}
 	}

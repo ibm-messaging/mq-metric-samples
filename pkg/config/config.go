@@ -1,7 +1,7 @@
 package config
 
 /*
-  Copyright (c) IBM Corporation 2016, 2023
+  Copyright (c) IBM Corporation 2016, 2026
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -109,6 +109,18 @@ const (
 	CP_BOOL = 2
 )
 
+/*
+This array needs to match the OT_ definitions, but with the strings
+matching the keys used for configuration attributes. So "queues" rather than "queue".
+Not all of the object types are actually needed or used during configuration
+*/
+var otString map[string]int
+
+var filters [mqmetric.OT_LAST_USED + 1]struct {
+	include string
+	exclude string
+}
+
 var configParms map[string]*ConfigParm
 var keys []string
 
@@ -133,6 +145,7 @@ func AddParm(loc interface{}, defaultValue interface{}, parmType int, cliName st
 
 func InitConfig(cm *Config) {
 	configParms = make(map[string]*ConfigParm)
+	otString = make(map[string]int)
 
 	// Setup a slightly non-default error handler that gets called if there are problems parsing the command line parms
 	flag.Usage = func() {
@@ -156,6 +169,26 @@ func InitConfig(cm *Config) {
 			}
 		}
 		fmt.Fprintf(o, "\n")
+	}
+
+	// These strings are used to parse the metric filter include/exclude sections and then populate the
+	// maps used at runtime which are indexed by mqmetric.OT_* values. Not all of the OT values need to be
+	// listed here as some are not monitorable or configurable (eg MQOT_PUB)
+	otString["qmgr"] = mqmetric.OT_Q_MGR
+	otString["queues"] = mqmetric.OT_Q
+	otString["channels"] = mqmetric.OT_CHANNEL
+	otString["topics"] = mqmetric.OT_TOPIC
+
+	otString["subscriptions"] = mqmetric.OT_SUB
+	otString["amqpChannels"] = mqmetric.OT_CHANNEL_AMQP
+	otString["mqttChannels"] = mqmetric.OT_CHANNEL_MQTT
+
+	otString["bufferpools"] = mqmetric.OT_BP
+	otString["pagesets"] = mqmetric.OT_PS
+
+	for i := 1; i <= mqmetric.OT_LAST_USED; i++ {
+		cm.CC.MetricFilter[i].Include = make(map[string]struct{})
+		cm.CC.MetricFilter[i].Exclude = make(map[string]struct{})
 	}
 
 	// Setup the CLI flags and the equivalent Environment variable names. The env vars are named
@@ -231,6 +264,11 @@ func InitConfig(cm *Config) {
 
 	AddParm(&cm.metadataTags, "", CP_STR, "ibmmq.metadataTags", "connection", "metadataTags", "Additional Tags")
 	AddParm(&cm.metadataValues, "", CP_STR, "ibmmq.metadataValues", "connection", "metadataValues", "Additional Values (one per tag)")
+
+	for ot, idx := range otString {
+		AddParm(&filters[idx].include, "", CP_STR, "includeMetric."+ot, "filters", "Include_"+ot, "Metric inclusion list for "+ot)
+		AddParm(&filters[idx].exclude, "", CP_STR, "excludeMetric."+ot, "filters", "Exclude_"+ot, "Metric exclusion list for "+ot)
+	}
 
 }
 
@@ -497,6 +535,37 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 			cm.MetadataValuesArray = strings.Split(cm.metadataValues, ",")
 			if len(cm.MetadataTagsArray) != len(cm.MetadataValuesArray) {
 				err = fmt.Errorf("Mismatch in metadata Tags/Values lengths")
+			}
+		}
+	}
+
+	// Populate the connection info filter maps by splitting any comma-separated string
+	// and then adding each entry for the given object type
+	var emptyStruc struct{}
+	if err == nil {
+		for _, idx := range otString {
+			s := filters[idx].include
+			s = strings.ReplaceAll(s, " ", "")
+			if s != "" {
+				arr := strings.Split(s, ",")
+				if len(arr) != 0 {
+					for i := range arr {
+						cm.CC.MetricFilter[idx].Include[arr[i]] = emptyStruc
+					}
+				}
+			}
+		}
+		for _, idx := range otString {
+			s := filters[idx].exclude
+			s = strings.ReplaceAll(s, " ", "")
+
+			if s != "" {
+				arr := strings.Split(s, ",")
+				if len(arr) != 0 {
+					for i := range arr {
+						cm.CC.MetricFilter[idx].Exclude[arr[i]] = emptyStruc
+					}
+				}
 			}
 		}
 	}

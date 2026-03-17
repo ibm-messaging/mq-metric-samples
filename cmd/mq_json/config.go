@@ -64,7 +64,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
+				err = cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.interval = cf.CopyParmIfNotSetStr("json", "interval", cfy.JSON.Interval)
 				config.oneline = cf.CopyParmIfNotSetBool("json", "oneline", cfy.JSON.OneLine)
 				config.recordmax = cf.CopyParmIfNotSetInt("json", "recordmax", cfy.JSON.RecordMax)

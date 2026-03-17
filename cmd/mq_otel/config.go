@@ -70,7 +70,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
+				err = cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.ci.Endpoint = cf.CopyParmIfNotSetStr("otel", "endpoint", cfy.OTel.Endpoint)
 				config.ci.Interval = cf.CopyParmIfNotSetStr("otel", "interval", cfy.OTel.Interval)
 				config.ci.MaxErrors = cf.CopyParmIfNotSetInt("otel", "maxErrors", cfy.OTel.MaxErrors)

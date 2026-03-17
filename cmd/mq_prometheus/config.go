@@ -103,7 +103,7 @@ func initConfig() error {
 
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
+				err = cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.httpListenPort = cf.CopyParmIfNotSetStr("prometheus", "port", cfy.Prometheus.Port)
 				config.httpListenHost = cf.CopyParmIfNotSetStr("prometheus", "host", cfy.Prometheus.Host)
 				config.httpMetricPath = cf.CopyParmIfNotSetStr("prometheus", "MetricsPath", cfy.Prometheus.MetricsPath)

@@ -81,7 +81,7 @@ func initConfig() error {
 		if config.cf.ConfigFile != "" {
 			err = cf.ReadConfigFile(config.cf.ConfigFile, &cfy)
 			if err == nil {
-				cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
+				err = cf.CopyYamlConfig(&config.cf, cfy.Global, cfy.Connection, cfy.Objects, cfy.Filters)
 				config.ci.BucketName = cf.CopyParmIfNotSetStr("influx", "bucketName", cfy.Influx.BucketName)
 				//config.ci.DatabaseName = cf.CopyParmIfNotSetStr("influx", "databaseName", cfy.Influx.DatabaseName)
 				config.ci.DatabaseAddress = cf.CopyParmIfNotSetStr("influx", "databaseAddress", cfy.Influx.DatabaseAddress)
