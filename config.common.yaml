@@ -5,15 +5,15 @@
 # subdirectory to create the complete configuration file.
 
 global:
-  useObjectStatus: true
-  useResetQStats: false
-  usePublications: true
-  useStatistics: false
-  logLevel: INFO
-  metaprefix: ""
-  pollInterval: 30s
-  rediscoverInterval: 1h
-  tzOffset: 0h
+    useObjectStatus: true
+    useResetQStats: false
+    usePublications: true
+    useStatistics: false
+    logLevel: INFO
+    metaprefix: ""
+    pollInterval: 30s
+    rediscoverInterval: 1h
+    tzOffset: 0h
 
 connection:
     queueManager: QM1
@@ -65,13 +65,13 @@ connection:
 # status for the AMQP objects; similarly for MQTT channels
 objects:
     queues:
-    - APP.*
-    - "!SYSTEM.*"
-    - "!AMQ.*"
-    - QM*
+        - APP.*
+        - "!SYSTEM.*"
+        - "!AMQ.*"
+        - QM*
     channels:
-    - SYSTEM.*
-    - TO.*
+        - SYSTEM.*
+        - TO.*
     topics:
     subscriptions:
 #    amqpChannels:
@@ -97,12 +97,39 @@ filters:
     # shown here gives best balance for number of subscriptions and useful metrics. If this is an empty
     # list, all queue metrics are collected.
     queueSubscriptionSelector:
-    - PUT
-    - GET
-    - GENERAL
+        - PUT
+        - GET
+        - GENERAL
     # Setting this to "true" will include the CUSTOM attribute of a queue manager and queue as
     # tag/label.
     showCustomAttribute: false
+
+    # The include/exclude filters apply to each of the object types. Insert arrays that name the
+    # metrics you want to include or exclude. For each object type, you should probably only use one of the
+    # include/exclude options to avoid confusion. If both filters are empty for a given type, then all metrics
+    # are emitted.
+    metricInclude:
+        qmgr:
+        queues:
+        channels:
+
+        topics:
+        subscriptions:
+        amqpChannels:
+        mqttChannels:
+
+    metricExclude:
+        qmgr:
+        # - mq_fdc_file_count
+        queues:
+        # - mqput_bytes
+        # - mqget_bytes
+        channels:
+        # - nettime_short
+        topics:
+        subscriptions:
+        amqpChannels:
+        mqttChannels:
 
 # Collector-specific configuration will also need to be added here. Some of the sample build
 # scripts will concatenate default definitions from the cmd/mq_* directories.

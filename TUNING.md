@@ -75,8 +75,7 @@ durable subscriptions.
 * You can reduce the total number of subscriptions made for queue metrics. The `filters.queueSubscriptionSelector` list
   defines the sets of topics that you might be interested in. The complete set - for now - is
   [ OPENCLOSE, INQSET, EXTENDED, PUT, GET, GENERAL ]. In many cases, only the last three of these may be of interest.
-  The smaller set reduces the number of publications per queue. Within each set, multiple metrics are created but there
-  is no way to report on only a subset of the metrics in each set. The `EXTENDED` set is already excluded by default as
+  The smaller set reduces the number of publications per queue.  The `EXTENDED` set is already excluded by default as
   it is primarily intended for the L2/L3 support team.
 
 * You can choose to not subscribe to any queue metrics, but still subscribe to metrics for other resources such as the
@@ -90,6 +89,18 @@ monitored. While both positive and negative wildcards can be used in these block
 only positive wildcards. That allows the `DISPLAY xxSTATUS` requests to pass the wildcards directly into the queue
 manager commands; if there are any negative patterns, the collector has to work out which objects match the pattern, and
 then inquire for the remainder individually.
+
+## Reducing the number of reported metrics
+Each object type can have an subset of the metrics reported via include/exclude lists. This does not affect how much
+data is collected from the queue manager, but it does affect how much is then reported to the backend. It might be of
+particular interest in environments (eg clouds) where you get charged essentially per metric.
+
+The configuration is set up in the `filters` section of the YAML file, with the `metricInclude` or `metricExclude`
+blocks containing arrays associated with each of the object types. If an object has an exclude list, then all items except
+those metrics are reported; if an object has an include list, only those items are reported.
+
+Look at the `cf.common.yaml` file to see a skeleton of the configuration options. Running a collector with the debug
+mode might help you construct the filters.
 
 ## Other configuration options
 The `global.pollInterval` and `global.rediscoverInterval` options may help to further reduce inquiries.
