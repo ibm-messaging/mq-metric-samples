@@ -1,10 +1,9 @@
 # mq-metric-samples
 
-This repository contains a collection of IBM MQ monitoring agents that utilize the
-[IBM MQ Go metric packages](https://github.com/ibm-messaging/mq-golang) to provide programs that can be used with
-existing monitoring technologies such as Prometheus, AWS CloudWatch, etc. It can also send data to an OpenTelemetry
-environment. Statistics and status information can be collected from queue managers and made available in databases to
-enable dashboard and historic reporting.
+This repository contains a collection of IBM MQ monitoring agents that utilize the [IBM MQ Go metric
+packages](https://github.com/ibm-messaging/mq-golang) to provide programs that can be used with existing monitoring
+technologies such as Prometheus and OpenTelemetry environment. Statistics and status information can be collected from
+queue managers and made available in databases to enable dashboard and historic reporting.
 
 ## The dspmqrtj program
 The repository also includes a program which traces the route a message can take through the MQ network. It is similar
@@ -36,7 +35,8 @@ See the [DEPRECATIONS](DEPRECATIONS.md) file for any planned changes to the metr
 
 You will require the following programs:
 
-* Go compiler - version 1.21 is the minimum defined here
+* Go compiler - version 1.24 is the minimum defined here; newer versions are automatically installed during the build
+  process if required.
 * C compiler
 
 ### MQ Client SDK

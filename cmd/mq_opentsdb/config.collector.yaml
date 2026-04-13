@@ -1,8 +1,0 @@
-
-# This is the collector-specific piece of the configuration
-opentsdb:
-  databaseAddress: "http://localhost:4242"
-  interval: 10s
-  maxErrors: 10
-  maxPoints: 10
-  seriesPrefix: ibmmq

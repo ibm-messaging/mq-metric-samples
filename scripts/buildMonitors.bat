@@ -30,15 +30,9 @@ go build -mod=vendor -o bin/%%M.exe %D%\%%M\config.go %D%\%%M\main.go %D%\%%M\ex
 type %R%\config.common.yaml %D%\%%M\config.collector.yaml > bin\%%M.yaml 2>NUL:
 )
 
-for %%M in (mq_json mq_coll mq_influx) do (
+for %%M in (mq_json ) do (
 echo Building %%M
 go build -mod=vendor -o bin/%%M.exe %D%\%%M\config.go %D%\%%M\main.go %D%\%%M\exporter.go
-type %R%\config.common.yaml %D%\%%M\config.collector.yaml > bin\%%M.yaml 2>NUL:
-)
-
-for %%M in (mq_aws mq_opentsdb) do (
-echo Building %%M
-go build -mod=vendor -o bin/%%M.exe %D%\%%M\config.go %D%\%%M\main.go %D%\%%M\exporter.go %D%\%%M\points.go
 type %R%\config.common.yaml %D%\%%M\config.collector.yaml > bin\%%M.yaml 2>NUL:
 )
 

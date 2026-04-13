@@ -30,8 +30,8 @@ package ibmmq
 ****************************************************************
 *
 *   <BEGIN_BUILDINFO>
-*   Generated on:  1/20/26, 9:18 AM
-*   Build Level:   p945-L260120
+*   Generated on:  2/10/26, 9:01 AM
+*   Build Level:   p1000-dev-klein-L260210
 *   Build Type:    Production
 *   <END_BUILDINFO>
  */
@@ -1051,8 +1051,9 @@ const (
 	MQCMDI_SEC_SIGNOFF_ERROR       int32  = 17
 	MQCMDI_SEC_TIMER_ZERO          int32  = 14
 	MQCMDI_SEC_UPPERCASE           int32  = 21
-	MQCMDL_CURRENT_LEVEL           int32  = 945
+	MQCMDL_CURRENT_LEVEL           int32  = 1000
 	MQCMDL_LEVEL_1                 int32  = 100
+	MQCMDL_LEVEL_1000              int32  = 1000
 	MQCMDL_LEVEL_101               int32  = 101
 	MQCMDL_LEVEL_110               int32  = 110
 	MQCMDL_LEVEL_114               int32  = 114

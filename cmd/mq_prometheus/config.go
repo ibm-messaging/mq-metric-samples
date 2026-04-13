@@ -137,8 +137,8 @@ func initConfig() error {
 	}
 
 	if err == nil {
-		// This preserves a degree of compatibility for the mq_prometheus collector in this repo and any dashboards.
-		config.overrideCTypeBool = cf.AsBool(config.overrideCType, false)
+		// Default value of overrideCType changes to true in this version. This is a breaking change and needs a new major number for the repo.
+		config.overrideCTypeBool = cf.AsBool(config.overrideCType, true)
 
 		// But we don't need to keep backwards compatibility for the Events Statistics collection model
 		if config.cf.CC.UseStatistics && !config.overrideCTypeBool {

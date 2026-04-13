@@ -137,7 +137,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 
 	var err error
 
-	cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", AsBool(cyg.UseObjectStatus, true))
+	// cm.CC.UseStatus = CopyParmIfNotSetBool("global", "useObjectStatus", AsBool(cyg.UseObjectStatus, true))
 	cm.CC.UseResetQStats = CopyParmIfNotSetBool("global", "useResetQStats", AsBool(cyg.UseResetQStats, false))
 	cm.CC.UsePublications = CopyParmIfNotSetBool("global", "usePublications", AsBool(cyg.UsePublications, true))
 	cm.CC.UseStatistics = CopyParmIfNotSetBool("global", "useStatistics", AsBool(cyg.UseStatistics, false))

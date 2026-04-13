@@ -5,6 +5,9 @@ Newest updates are at the top of this file.
 ## xxx xx 2026 - vxxx
 * Pull in latest mq-golang package
 * Individual metrics can be included/excluded from reporting
+* Removal of aws, collectd, influx, opentsdb collectors
+* Prometheus collector `overrideCType` default changed to `true`
+  * To correctly distinguish between Counter and Gauge types
 
 ## Feb 06 2026 - v5.7.1
 * Update to MQ 9.4.5

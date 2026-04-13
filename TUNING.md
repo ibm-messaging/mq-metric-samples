@@ -105,10 +105,7 @@ mode might help you construct the filters.
 ## Other configuration options
 The `global.pollInterval` and `global.rediscoverInterval` options may help to further reduce inquiries.
 
-The first of these controls how frequently the `DISPLAY xxSTATUS` commands are used, assuming the
-`global.useObjectStatus` is `true`. In some circumstances, you might not want all of the responses as regularly as the
-published metrics are handled. The queue and queue manager status is always collected during this phase regardless of
-the `global.useObjectStatus` setting.
+The first of these controls how frequently the `DISPLAY xxSTATUS` commands are used.
 
 The second attribute controls how frequently the collector reassesses the list of objects to be monitored, and their
 more stable attributes. For example, the `DESCRIPTION` or `MAXDEPTH` settings on a queue. If you have a large number of
