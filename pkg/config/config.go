@@ -382,7 +382,7 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 	// the value via environment variable instead of YAML attribute.
 	if err == nil {
 		cm.CC.UseStatus = true
-		if os.Getenv("MQIGO_FORCE_USESTATUS_FALSE") == "" {
+		if os.Getenv("MQIGO_FORCE_USESTATUS_FALSE") != "" {
 			cm.CC.UseStatus = false
 		}
 	}
@@ -599,7 +599,7 @@ func VerifyConfig(cm *Config, fullCf interface{}) error {
 	}
 
 	log.Debugf("VerifyConfig Loaded Config: %+v", fullCf)
-	log.Debugf("VerifyConfig Active Config: %+v", cm.CC)
+	log.Debugf("VerifyConfig Active Config: %+v", cm)
 	if err != nil {
 		log.Debugf("VerifyConfig Error : %+v", err)
 	}
