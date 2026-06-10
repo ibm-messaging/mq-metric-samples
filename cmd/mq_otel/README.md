@@ -19,7 +19,7 @@ configuration attribute. For example,
 otel:
   endpoint: localhost:4317
 ```
-in the YAML file. The GRPC component has few additional configuration options enabled; other options can be 
+in the YAML file. The GRPC component has few additional configuration options enabled; other options can be
 applied via environment variables - in particular, for TLS.
 
 To use OTLP over HTTP, then the endpoint needs to be a fuller URL. For example, `http://localhost:4318`.
@@ -33,8 +33,8 @@ One full path to visualisation of metrics that I have tested goes
   queue manager -> mq_otel reader -> OpenTelemetry Collector -> Prometheus -> Grafana
 ```
 
-### Additional OTLP Configuration options 
-   
+### Additional OTLP Configuration options
+
 There are a number of environment variables that can be used to configure the OTLP exporters, without needing explicit
 configuration in this package. See *otlp/otlpmetric/otlpmetricgrpc/config.go* for more details in the OpenTelemetry
 package source code. But they include:
@@ -58,7 +58,7 @@ package source code. But they include:
 The `*HEADERS` can be used to add header information to the flows, which might permit
 use of Basic Auth options for communication to the collector. Something like:
 ```
-  s="$user:$password"  
+  s="$user:$password"
   b=`echo $s | base64`
   v="Basic $b"
   export OTEL_EXPORTER_OTLP_HEADERS="Authorization=\"$v\""
@@ -72,8 +72,8 @@ does not emit its own spans. But it might be useful for other aspects of your ap
 For test purposes, you can get the default OpenTelemetry Collector program running in a container with
 ```
   v=latest
-  docker pull otel/opentelemetry-collector:$v      
-  docker run -it -p 127.0.0.1:4317:4317 -p 127.0.0.1:55679:55679 otel/opentelemetry-collector:$v   
+  docker pull otel/opentelemetry-collector:$v
+  docker run -it -p 127.0.0.1:4317:4317 -p 127.0.0.1:55679:55679 otel/opentelemetry-collector:$v
 ```
 
 ### Exporting from the OTel Collector to Prometheus
@@ -101,22 +101,24 @@ that can go down as well as up. For example, the number of connections to a queu
 viewing metrics. See [here](https://www.innoq.com/en/blog/2019/05/prometheus-counters/) for a good introduction to
 viewing Prometheus Counters.
 
-For historic reasons, the Prometheus collector that is also in this repository reports all metrics as Gauges by default.
-There is now an option to also have a mixture of Counters and Gauges but enabling that is an incompatible change. 
+The Prometheus collector that is also in this repository originally reported all metrics as Gauges. That model has now
+changed to generate both Gauges and Counters, although an option is available to revert to the older approach.
 
-The difference means that any dashboards that have been built using the current Prometheus model may need to change
+The difference means that any dashboards that have been built using the older Prometheus model may need to change
 queries/style if they are going to deal with metrics reported through this OpenTelemetry path.
 
-If you want to use existing dashboards with minimal changes, then you can set the `overrideCType` configuration
-attribute to `true`; that causes this collector to report everything as Gauges instead of the mixture of types.
+If you want to use existing Prometheus dashboards with minimal changes, then you can set the `overrideCType`
+configuration attribute to `true`; that causes this collector to report everything as Gauges instead of the mixture of
+types. The default value of `false` correctly splits the metrics into the two classes. (Note that this meaning of the
+`overrideCType` option is the OPPOSITE of its meaning in the Prometheus collector.)
 
 A sample Grafana dashboard in this directory shows a couple of ways of looking at counters.
 
 ## Timestamps
 Note that the timestamps in the data are derived from when they were sent from this tool to the OTel Collector, rather
 than when they were read from the queue manager or when the reading cycle started. So they might have small variations
-between the timestamps, rather than having all metrics in a given scrape appearing with an identical value.
-
+between the timestamps, rather than having all metrics in a given scrape appearing with an identical value. For some
+reason, the OTel developers don't seem to believe this is a requirement.
 
 ## Metric Naming
 Metrics are initially named like `ibmmq.channel.buffers_sent`. The middle element is the object type: queue, channel,

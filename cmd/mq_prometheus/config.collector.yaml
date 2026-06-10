@@ -15,3 +15,5 @@ prometheus:
   keepRunning: true
 # How often to check the status and to attempt to reconnect if there's been a failure  
   reconnectInterval: 5s
+# Set this to false to revert to original behaviour which did not distinguish between Counters/Gauges
+# overrideCType: true

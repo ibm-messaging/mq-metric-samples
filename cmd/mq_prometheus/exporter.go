@@ -1,7 +1,7 @@
 package main
 
 /*
-  Copyright (c) IBM Corporation 2016, 2025
+  Copyright (c) IBM Corporation 2016, 2026
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -1323,8 +1323,8 @@ func newMqVec(elem *mqmetric.MonElement) *MQVec {
 	name := elem.MetricName
 
 	// Create either a Counter or a Gauge. For historic reasons, everything used
-	// to be a Gauge. Because the change might affect any dashboards you have created.
-	// you have to explicitly opt in to splitting the types.
+	// to be a Gauge. The override flag splits the metrics into the two classes, and
+	// this behaviour is now the default.
 	if config.overrideCTypeBool && delta {
 		counterVec := prometheus.NewCounterVec(
 			prometheus.CounterOpts{

@@ -7,15 +7,15 @@ the collectors in this repository.
 This directory contains the code for a monitoring solution that exports queue manager data to a Prometheus data
 collection system. It also contains configuration files to run the monitor program
 
-The monitor collects metrics published by an MQ queue manager. Prometheus than calls the monitor
-program at regular intervals to pull those metrics into its database, where they can then be queried directly or used by
-other packages such as Grafana.
+The monitor collects metrics published by an MQ queue manager. Prometheus than calls the monitor program at regular
+intervals to pull those metrics into its database, where they can then be queried directly or used by other packages
+such as Grafana.
 
 You can see data such as disk or CPU usage, queue depths, and MQI call counts. Channel status is also reported.
 
 Example Grafana dashboards are included, to show how queries might be constructed. To use the dashboard, create a data
-source in Grafana called "MQ Prometheus" that points at your database server, and then import the JSON file. This
-dashboard was originally built using Grafana v5.3.1
+source in Grafana called "MQ Prometheus" that points at your database server, and then import the JSON file. These
+dashboards were originally built using Grafana v5.3.1
 
 ## Configuring MQ
 It is convenient to run the monitor program as a queue manager service whenever possible.
@@ -79,15 +79,14 @@ when running the amqsrua sample program, but with some minor modifications to ma
 The metrics for other object types all begin with the type of that object.
 
 ## Counters and Gauges
-This exporter currently creates all metrics by default as Gauges in Prometheus, even though some really should be
-Counters. This was part of the original release of the code and changing the behaviour could break existing dashboards.
-So it has been left as the default behaviour for now. If you want to properly deal with the different types of metrics,
-then the `prometheus.overrideCType` configuration attribute should be set to `true`. The default value for this
-attribute (currently `false`) will change at the next major version (a breaking change) for this repository.
+This exporter originally created all metrics as Gauges in Prometheus, even though some really should be Counters. The
+default behaviour of the exporter has changed to correctly distinguish between Counters and Gauges. If you want to
+revert to the original behaviour to avoid changing existing dashboards, then the `prometheus.overrideCType`
+configuration attribute should be set to `false`.
 
-If you are using the Event Statistics option to collect metrics, then this configuration is already automatically set to
+If you are using the Event Statistics option to collect metrics, then this configuration is always automatically set to
 `true`. There are enough other changes when using that collection model that existing dashboards cannot be used without
-change.
+change. So there was no real migration concern.
 
 ## Unavailable queue managers
 If the queue manager is not available, the collector can be configured to continually attempt to reconnect with the
