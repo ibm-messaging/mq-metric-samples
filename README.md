@@ -2,7 +2,7 @@
 
 This repository contains a collection of IBM MQ monitoring agents that utilize the [IBM MQ Go metric
 packages](https://github.com/ibm-messaging/mq-golang) to provide programs that can be used with existing monitoring
-technologies such as Prometheus and OpenTelemetry environment. Statistics and status information can be collected from
+technologies such as Prometheus and OpenTelemetry environments. Statistics and status information can be collected from
 queue managers and made available in databases to enable dashboard and historic reporting.
 
 ## The dspmqrtj program
@@ -35,7 +35,7 @@ See the [DEPRECATIONS](DEPRECATIONS.md) file for any planned changes to the metr
 
 You will require the following programs:
 
-* Go compiler - version 1.24 is the minimum defined here; newer versions are automatically installed during the build
+* Go compiler - version 1.25 is the minimum defined here; newer versions are automatically installed during the build
   process if required.
 * C compiler
 
@@ -183,9 +183,8 @@ will eventually be monitored if they match the pattern. The rediscovery interval
 by the `rediscoverInterval` parameter.
 
 ### Queue Manager Statistics Events
-An experimental alternative to the published resource statistics for queue and many queue manager metrics is to use the
-Statistics Events messages. The collection of metrics from these events has been enabled for the OpenTelemetry, JSON and
-Prometheus collectors only.
+An alternative to the published resource statistics for queue and many queue manager metrics is to use the
+Statistics Events messages.
 
 These events are available on the Distributed platforms by setting the queue manager `STATMQI` attribute to `ON` and
 also enabling the `STATQ` attribute for the queue manager and/or individual queues. You should also set the `STATINT`
@@ -218,9 +217,9 @@ only to add them up yourself. But the individual numbers are still available too
 
 Look at the metrics.txt file to see all of the metrics available through this mechanism.
 
-If you are using the Prometheus collector, the `overrideCType` value is automatically set to `true`, which gives the
-correct distinction between Counters and Gauges. See the Prometheus directory's README for more information on that
-attribute.
+If you are using the Prometheus collector, the `overrideCType` value is always automatically set to `true` (regardless
+of any configuration value) to give the correct distinction between Counters and Gauges. See the Prometheus directory's
+README for more information on that attribute.
 
 The seemingly-similar Accounting Events are **not** handled in these collectors.
 

@@ -30,8 +30,8 @@ package ibmmq
 ****************************************************************
 *
 *   <BEGIN_BUILDINFO>
-*   Generated on:  2/10/26, 9:01 AM
-*   Build Level:   p1000-dev-klein-L260210
+*   Generated on:  5/22/26, 1:19 PM
+*   Build Level:   p1000-L260522
 *   Build Type:    Production
 *   <END_BUILDINFO>
  */
@@ -785,12 +785,13 @@ const (
 	MQCC_OK                        int32  = 0
 	MQCC_UNKNOWN                   int32  = -1
 	MQCC_WARNING                   int32  = 1
-	MQCDC_CURRENT_LENGTH           int32  = 1992
-	MQCDC_CURRENT_VERSION          int32  = 12
+	MQCDC_CURRENT_LENGTH           int32  = 2000
+	MQCDC_CURRENT_VERSION          int32  = 13
 	MQCDC_LENGTH_1                 int32  = 984
 	MQCDC_LENGTH_10                int32  = 1920
 	MQCDC_LENGTH_11                int32  = 1984
 	MQCDC_LENGTH_12                int32  = 1992
+	MQCDC_LENGTH_13                int32  = 2000
 	MQCDC_LENGTH_2                 int32  = 1312
 	MQCDC_LENGTH_3                 int32  = 1480
 	MQCDC_LENGTH_4                 int32  = 1568
@@ -805,6 +806,7 @@ const (
 	MQCDC_VERSION_10               int32  = 10
 	MQCDC_VERSION_11               int32  = 11
 	MQCDC_VERSION_12               int32  = 12
+	MQCDC_VERSION_13               int32  = 13
 	MQCDC_VERSION_2                int32  = 2
 	MQCDC_VERSION_3                int32  = 3
 	MQCDC_VERSION_4                int32  = 4
@@ -813,12 +815,13 @@ const (
 	MQCDC_VERSION_7                int32  = 7
 	MQCDC_VERSION_8                int32  = 8
 	MQCDC_VERSION_9                int32  = 9
-	MQCD_CURRENT_LENGTH            int32  = 1992
-	MQCD_CURRENT_VERSION           int32  = 12
+	MQCD_CURRENT_LENGTH            int32  = 2000
+	MQCD_CURRENT_VERSION           int32  = 13
 	MQCD_LENGTH_1                  int32  = 984
 	MQCD_LENGTH_10                 int32  = 1920
 	MQCD_LENGTH_11                 int32  = 1984
 	MQCD_LENGTH_12                 int32  = 1992
+	MQCD_LENGTH_13                 int32  = 2000
 	MQCD_LENGTH_2                  int32  = 1312
 	MQCD_LENGTH_3                  int32  = 1480
 	MQCD_LENGTH_4                  int32  = 1568
@@ -831,6 +834,7 @@ const (
 	MQCD_VERSION_10                int32  = 10
 	MQCD_VERSION_11                int32  = 11
 	MQCD_VERSION_12                int32  = 12
+	MQCD_VERSION_13                int32  = 13
 	MQCD_VERSION_2                 int32  = 2
 	MQCD_VERSION_3                 int32  = 3
 	MQCD_VERSION_4                 int32  = 4
@@ -2251,7 +2255,7 @@ const (
 	MQIACH_KEEP_ALIVE_INTERVAL     int32  = 1566
 	MQIACH_LAST_SEQUENCE_NUMBER    int32  = 1529
 	MQIACH_LAST_SEQ_NUMBER         int32  = 1529
-	MQIACH_LAST_USED               int32  = 1646
+	MQIACH_LAST_USED               int32  = 1648
 	MQIACH_LISTENER_CONTROL        int32  = 1601
 	MQIACH_LISTENER_STATUS         int32  = 1599
 	MQIACH_LONG_RETRIES_LEFT       int32  = 1540
@@ -2302,6 +2306,8 @@ const (
 	MQIACH_SSLTASKS_STARTED        int32  = 1587
 	MQIACH_SSL_CLIENT_AUTH         int32  = 1568
 	MQIACH_SSL_KEY_RESETS          int32  = 1610
+	MQIACH_SSL_QS                  int32  = 1647
+	MQIACH_SSL_QSR                 int32  = 1648
 	MQIACH_SSL_RETURN_CODE         int32  = 1533
 	MQIACH_STOP_REQUESTED          int32  = 1543
 	MQIACH_USER_SOURCE             int32  = 1638
@@ -2988,6 +2994,7 @@ const (
 	MQNHASTATUS_PARTITIONED        int32  = 7
 	MQNHASTATUS_REBASING           int32  = 4
 	MQNHASTATUS_SYNCHRONIZING      int32  = 3
+	MQNHASTATUS_SYNC_FAILED        int32  = 8
 	MQNHASTATUS_UNKNOWN            int32  = 0
 	MQNHATYPE_ALL                  int32  = -1
 	MQNHATYPE_GROUP                int32  = 1
@@ -3318,8 +3325,14 @@ const (
 	MQQSO_NO                       int32  = 0
 	MQQSO_SHARED                   int32  = 1
 	MQQSO_YES                      int32  = 1
+	MQQSR_OPTIONAL                 int32  = 0
+	MQQSR_REQUIRED                 int32  = 1
 	MQQSUM_NO                      int32  = 0
 	MQQSUM_YES                     int32  = 1
+	MQQS_HYBMLKEM                  int32  = 1
+	MQQS_MLKEM                     int32  = 2
+	MQQS_UNKNOWN                   int32  = -1
+	MQQS_UNPROTECTED               int32  = 0
 	MQQT_ALIAS                     int32  = 3
 	MQQT_ALL                       int32  = 1001
 	MQQT_CLUSTER                   int32  = 7
@@ -3600,6 +3613,7 @@ const (
 	MQRCCF_PUT_AUTH_ERROR          int32  = 3045
 	MQRCCF_PUT_AUTH_WRONG_TYPE     int32  = 4059
 	MQRCCF_PWD_LENGTH_ERROR        int32  = 3098
+	MQRCCF_QUANTUM_ATTR_CONFLICT   int32  = 3392
 	MQRCCF_QUEUES_VALUE_ERROR      int32  = 3051
 	MQRCCF_QUIESCE_VALUE_ERROR     int32  = 3029
 	MQRCCF_Q_ALREADY_IN_CELL       int32  = 3021
@@ -3653,6 +3667,7 @@ const (
 	MQRCCF_SSL_CIPHER_SUITE_ERROR  int32  = 3361
 	MQRCCF_SSL_CLIENT_AUTH_ERROR   int32  = 4094
 	MQRCCF_SSL_PEER_NAME_ERROR     int32  = 4093
+	MQRCCF_SSL_QS_ALG_DISABLED     int32  = 3393
 	MQRCCF_STORAGE_CLASS_IN_USE    int32  = 3207
 	MQRCCF_STREAMQ_CONFLICT        int32  = 3387
 	MQRCCF_STREAMQ_DEST_CONFLICT   int32  = 3385

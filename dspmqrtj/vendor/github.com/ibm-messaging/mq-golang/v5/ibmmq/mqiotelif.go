@@ -1,5 +1,5 @@
 /*
-  Copyright (c) IBM Corporation 2024
+  Copyright (c) IBM Corporation 2024, 2026
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ type OtelPutTraceBefore func(OtelOpts, *MQQueueManager, *MQMD, *MQPMO, []byte)
 type OtelPutTraceAfter func(OtelOpts, *MQQueueManager, *MQPMO)
 type OtelGetTraceBefore func(OtelOpts, *MQQueueManager, *MQObject, *MQGMO, bool)
 type OtelGetTraceAfter func(OtelOpts, *MQObject, *MQGMO, *MQMD, []byte, bool) int
-type OtelOpen func(*MQObject, *MQOD, int32)
+type OtelOpen func(*MQObject, *MQOD, int32, *MQObject)
 type OtelClose func(*MQObject)
 
 type MQOtelFuncs struct {

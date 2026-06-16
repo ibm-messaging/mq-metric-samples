@@ -22,7 +22,7 @@ directories.
 package ibmmq
 
 /*
-  Copyright (c) IBM Corporation 2016, 2024
+  Copyright (c) IBM Corporation 2016, 2026
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -175,8 +175,15 @@ func (hObj *MQObject) GetHConn() *MQQueueManager {
 }
 
 var endian binary.ByteOrder // Used by structure formatters such as MQCFH
+
+// Some padding blocks that are sometimes needed to make strings the correct length
 const space4 = "    "
 const space8 = "        "
+const space32 = space8 + space8 + space8 + space8
+const space64 = space32 + space32
+const space128 = space64 + space64
+const space256 = space128 + space128
+
 const (
 	mqDateTimeFormat = "20060102150405.00 MST" // Used as the way to parse a string into a time.Time type with magic values
 	mqDateFormat     = "20060102"
@@ -385,7 +392,7 @@ func (x *MQQueueManager) Open(good *MQOD, goOpenOptions int32) (MQObject, error)
 
 	f := otelFuncs.Open
 	if f != nil {
-		f(&object, good, goOpenOptions)
+		f(&object, good, goOpenOptions, nil)
 	}
 
 	// ObjectName may have changed because it's a model queue
@@ -437,7 +444,11 @@ func (object *MQObject) Close(goCloseOptions int32) error {
 
 	f := otelFuncs.Close
 	if f != nil {
+		// Temporarily flip the hObj back to the original value
+		t := object.hObj
+		object.hObj = savedHObj
 		f(object)
+		object.hObj = t
 	}
 	cbRemoveHandle(savedHConn, savedHObj)
 	traceExit("Close")
@@ -489,6 +500,11 @@ func (x *MQQueueManager) Sub(gosd *MQSD, qObject *MQObject) (MQObject, error) {
 	}
 
 	qObject.qMgr = x // Force the correct hConn for managed objects
+
+	f := otelFuncs.Open
+	if f != nil && (gosd.Options&MQSO_MANAGED) != 0 {
+		f(&subObject, nil, 0, qObject)
+	}
 
 	traceExit("Sub")
 	return subObject, nil

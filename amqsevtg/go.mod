@@ -3,7 +3,7 @@ module github.com/ibm-messaging/mq-metric-samples/amqsevtg
 go 1.25.8
 
 require (
-	github.com/ibm-messaging/mq-golang/v5 v5.7.1
+	github.com/ibm-messaging/mq-golang/v5 v5.7.2
 	go.opentelemetry.io/contrib/bridges/otelslog v0.19.0
 	go.opentelemetry.io/otel v1.44.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.20.0
