@@ -230,6 +230,7 @@ func InitConfig(cm *Config) {
 	AddParm(&cm.QueueSubscriptionSelector, "", CP_STR, "ibmmq.queueSubscriptionSelector", "filters", "queueSubscriptionSelector", "Resource topic selection for queues")
 	AddParm(&cm.CC.ShowInactiveChannels, false, CP_BOOL, "ibmmq.showInactiveChannels", "filters", "showInactiveChannels", "Show inactive channels (not just stopped ones)")
 	AddParm(&cm.CC.ShowCustomAttribute, false, CP_BOOL, "ibmmq.showCustomAttribute", "filters", "showCustomAttribute", "Include custom attribute in metrics")
+	AddParm(&cm.CC.ShowUnknownSince, false, CP_BOOL, "ibmmq.showUnknownSince", "filters", "showUnknownSince", "Show the 'since last put/get' values as very large value if not known")
 
 	AddParm(&cm.CC.HideSvrConnJobname, false, CP_BOOL, "ibmmq.hideSvrConnJobname", "filters", "hideSvrConnJobname", "Don't create multiple instances of SVRCONN information")
 	AddParm(&cm.CC.HideAMQPClientId, false, CP_BOOL, "ibmmq.hideAMQPClientId", "filters", "hideAMQPClientId", "Don't create multiple instances of ClientID information")

@@ -80,6 +80,7 @@ type ConfigYFilters struct {
 	HideMQTTClientId          string      `yaml:"hideMQTTClientId" default:"false"`
 	ShowInactiveChannels      string      `yaml:"showInactiveChannels" default:"false"`
 	ShowCustomAttribute       string      `yaml:"showCustomAttribute" default:"false"`
+	ShowUnknownSince          string      `yaml:"showUnknownSince" default:"false"`
 	QueueSubscriptionSelector []string    `yaml:"queueSubscriptionSelector"`
 	MetricInclude             interface{} `yaml:"metricInclude"` // We'll convert these maps of arrays by hand:
 	MetricExclude             interface{} `yaml:"metricExclude"`
@@ -144,6 +145,7 @@ func CopyYamlConfig(cm *Config, cyg ConfigYGlobal, cyc ConfigYConnection, cyo Co
 
 	cm.CC.ShowInactiveChannels = CopyParmIfNotSetBool("filters", "showInactiveChannels", AsBool(cyf.ShowInactiveChannels, false))
 	cm.CC.ShowCustomAttribute = CopyParmIfNotSetBool("filters", "showCustomAttribute", AsBool(cyf.ShowCustomAttribute, false))
+	cm.CC.ShowUnknownSince = CopyParmIfNotSetBool("filters", "showUnknownSince", AsBool(cyf.ShowUnknownSince, false))
 	cm.CC.HideSvrConnJobname = CopyParmIfNotSetBool("filters", "hideSvrConnJobname", AsBool(cyf.HideSvrConnJobname, false))
 	cm.CC.HideAMQPClientId = CopyParmIfNotSetBool("filters", "hideAMQPClientId", AsBool(cyf.HideAMQPClientId, false))
 	cm.CC.HideMQTTClientId = CopyParmIfNotSetBool("filters", "hideMQTTClientId", AsBool(cyf.HideMQTTClientId, false))
