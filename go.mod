@@ -6,7 +6,7 @@ require (
 	github.com/go-logr/stdr v1.2.2
 	github.com/ibm-messaging/mq-golang/v5 v5.7.2
 	github.com/prometheus/client_golang v1.24.1
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.2
 	go.opentelemetry.io/otel v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.44.0
