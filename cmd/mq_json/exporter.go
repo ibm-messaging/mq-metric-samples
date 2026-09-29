@@ -251,6 +251,8 @@ func Collect() error {
 							pt.Tags["platform"] = platformString
 							if key == mqmetric.QMgrMapKey {
 								pt.Tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+								pt.Tags["qmid"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCA_Q_MGR_IDENTIFIER)
+
 								hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
 								if hostname != mqmetric.DUMMY_STRING {
 									pt.Tags["hostname"] = hostname

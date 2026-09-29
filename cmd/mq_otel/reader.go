@@ -382,6 +382,8 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 						series = "qmgr"
 						if key == mqmetric.QMgrMapKey {
 							tags["description"] = mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
+							tags["qmid"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCA_Q_MGR_IDENTIFIER)
+
 							hostname := mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
 							if hostname != mqmetric.DUMMY_STRING {
 								tags["hostname"] = hostname
