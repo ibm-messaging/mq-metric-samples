@@ -45,6 +45,7 @@ var (
 	usingTLS       = false
 	server         *http.Server
 	startChannel   = make(chan bool)
+	serverOnce     sync.Once
 	collector      prometheus.Collector
 	mutex          sync.RWMutex
 	retryCount     = 0 // Might use this with a maxRetry to force a quit out of collector
@@ -82,6 +83,11 @@ func main() {
 
 		// Start the webserver in a separate thread
 		go startServer()
+
+		// Ensure the last open MQ connection is always closed when main() returns.
+		// Previous connections within the loop are closed by the EndConnection() call
+		// at the top of the reconnect block (line ~97) before each new InitConnection.
+		defer mqmetric.EndConnection()
 
 		// This is the main loop that tries to keep the collector connected to a queue manager
 		// even after a failure.
@@ -128,7 +134,6 @@ func main() {
 
 				if err == nil {
 					retryCount = 0
-					defer mqmetric.EndConnection()
 				}
 
 				// What metrics can the queue manager provide? Find out, and subscribe.
@@ -167,6 +172,9 @@ func main() {
 				// created, allocate the Prometheus gauges for each resource. If this is
 				// a reconnect, then we clean up and create a new collector with new gauges
 				if err == nil {
+					// Reset this in case there's a change in qmgr version on reconnect: unlikely but
+					// it might have been taken down for an upgrade
+					supportsHostnameLabelVal = nil
 					allocateAllGauges()
 
 					if collector != nil {
@@ -180,10 +188,10 @@ func main() {
 					prometheus.MustRegister(collector)
 					setConnectedQMgr(true)
 
-					if !isConnectedOnce() {
+					serverOnce.Do(func() {
 						startChannel <- true
 						setConnectedOnce(true)
-					}
+					})
 				} else {
 					if !isConnectedOnce() || !config.keepRunning {
 						// If we've never successfully connected, then exit instead
@@ -312,14 +320,14 @@ func startServer() {
 		log.Infoln("Listening on https address", address)
 		err = server.ListenAndServeTLS("", "")
 		if err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Metrics Error: Failed to handle metrics request: %v", err)
 			stopServer()
+			log.Fatalf("Metrics Error: Failed to handle metrics request: %v", err)
 		}
 	} else {
 		log.Infoln("Listening on http address", address)
 		err = server.ListenAndServe()
-		log.Fatalf("Metrics Error: Failed to handle metrics request: %v", err)
 		stopServer()
+		log.Fatalf("Metrics Error: Failed to handle metrics request: %v", err)
 	}
 }
 

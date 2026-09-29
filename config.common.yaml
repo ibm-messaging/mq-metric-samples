@@ -103,6 +103,10 @@ filters:
     # Setting this to "true" will include the CUSTOM attribute of a queue manager and queue as
     # tag/label.
     showCustomAttribute: false
+    # Setting this to "true" will make any blank "since" metric (eg queue_since_last_get) show as 
+    # a very large number (MaxInt64). It's set to false by default as otherwise it could require
+    # dashboard changes.
+    showUnknownSince: false
 
     # The include/exclude filters apply to each of the object types. Insert arrays that name the
     # metrics you want to include or exclude. For each object type, you should probably only use one of the

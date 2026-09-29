@@ -207,6 +207,9 @@ func mainReturnWithCode() int {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer func() {
+			_ = exporter.Shutdown(context.Background())
+		}()
 
 		// Some MQ metrics come out as truly cumulative (eg channel message count). But we convert all counter metrics to deltas.
 		deltaTemporalitySelector := func(metricsdk.InstrumentKind) metricdata.Temporality { return metricdata.DeltaTemporality }
@@ -227,7 +230,7 @@ func mainReturnWithCode() int {
 		otel.SetMeterProvider(meterProvider)
 		meter = meterProvider.Meter("ibmmq")
 
-		ctx, stop = signal.NotifyContext(context.TODO(), os.Interrupt)
+		ctx, stop = signal.NotifyContext(context.Background(), os.Interrupt)
 		defer stop()
 	}
 
@@ -266,10 +269,12 @@ func mainReturnWithCode() int {
 			}
 
 			if totalErrorCount > config.ci.MaxErrors {
+				stop()
 				log.Fatal("Too many errors communicating with server")
 			}
 			log.Debugf("Error counts: global %d", totalErrorCount)
 			if ctx.Err() != nil {
+				stop()
 				log.Fatalf("Exiting: %v", ctx.Err())
 			}
 

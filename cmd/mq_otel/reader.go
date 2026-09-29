@@ -838,6 +838,16 @@ func GetMetrics(ctx context.Context, meter metric.Meter) error {
 	addMetaLabels(tags)
 	addMetric(meter, series, "exporter_collection_time", "How long last collection took", false, float64(elapsedSecs), tags, t)
 
+	// Evict stale gaugeMap keys for MQ objects that were not reported this cycle.
+	// The clearing loop above sets every value to nil before collection begins;
+	// any key still nil here belongs to a deleted/renamed object and must be removed
+	// so the map does not grow unboundedly over time.
+	for gaugeName, guAr := range gaugeMap {
+		if guAr == nil {
+			delete(gaugeMap, gaugeName)
+		}
+	}
+
 	return err
 
 }

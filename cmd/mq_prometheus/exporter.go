@@ -1105,6 +1105,22 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 }
 
 func allocateAllGauges() {
+
+	// Make sure we start clean
+	ruaVecMap = make(map[string]*MQVec) // Metrics collected via the publication route like amqsrua
+	channelStatusVecMap = make(map[string]*MQVec)
+	qStatusVecMap = make(map[string]*MQVec)
+	qStatisticsVecMap = make(map[string]*MQVec)
+	topicStatusVecMap = make(map[string]*MQVec)
+	subStatusVecMap = make(map[string]*MQVec)
+	qMgrStatusVecMap = make(map[string]*MQVec)
+	qMgrStatisticsVecMap = make(map[string]*MQVec)
+	usageBpStatusVecMap = make(map[string]*MQVec)
+	usagePsStatusVecMap = make(map[string]*MQVec)
+	clusterStatusVecMap = make(map[string]*MQVec)
+	amqpStatusVecMap = make(map[string]*MQVec)
+	mqttStatusVecMap = make(map[string]*MQVec)
+
 	log.Debugf("About to allocate gauges")
 	allocateGauges()
 	log.Debugf("PubSub Gauges allocated")
