@@ -543,7 +543,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 							labels := prometheus.Labels{"qmgr": config.cf.QMgrName,
 								"platform":    platformString,
-								"description": desc}
+								"description": desc,
+								"qmid":        mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCA_Q_MGR_IDENTIFIER)}
 							if supportsHostnameLabel() {
 								// Stash the current hostname so it can be used in the "qmgr down" metric
 								lastHostname = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
@@ -631,7 +632,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					labels := prometheus.Labels{
 						"qmgr":        strings.TrimSpace(config.cf.QMgrName),
 						"description": desc,
-						"platform":    platformString}
+						"platform":    platformString,
+						"qmid":        mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCA_Q_MGR_IDENTIFIER)}
 					if supportsHostnameLabel() {
 						labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
 					}
@@ -821,7 +823,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 					labels := prometheus.Labels{
 						"qmgr":        strings.TrimSpace(config.cf.QMgrName),
 						"description": desc,
-						"platform":    platformString}
+						"platform":    platformString,
+						"qmid":        mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCA_Q_MGR_IDENTIFIER)}
 					if supportsHostnameLabel() {
 						labels["hostname"] = mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCACF_HOST_NAME)
 					}
@@ -1274,7 +1277,7 @@ func newMqVec(elem *mqmetric.MonElement) *MQVec {
 	// If the qmgr tags change, then check the special metric indicating qmgr unavailable as that's
 	// not part of the regular collection blocks.
 	// "Hostname" was added to DIS QMSTATUS on Distributed platforms at version 9.3.2
-	qmgrLabelNames := []string{"qmgr", "platform", "description"}
+	qmgrLabelNames := []string{"qmgr", "platform", "description", "qmid"}
 	if supportsHostnameLabel() {
 		qmgrLabelNames = append(qmgrLabelNames, "hostname")
 	}
@@ -1379,7 +1382,7 @@ func newMqVecObj(attr *mqmetric.StatusAttribute, objectType string) *MQVec {
 
 	// These labels have to be the same set as those used by the published
 	// resources.
-	qmgrLabels := []string{"qmgr", "platform", "description"}
+	qmgrLabels := []string{"qmgr", "platform", "description", "qmid"}
 	if supportsHostnameLabel() {
 		qmgrLabels = append(qmgrLabels, "hostname")
 	}
