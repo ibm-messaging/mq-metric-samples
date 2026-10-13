@@ -85,8 +85,8 @@ type ObjInfo struct {
 	Custom          string
 	// Qmgr attributes
 	QMgrName       string
-	HostName       string
 	QMgrIdentifier string
+	HostName       string
 	// These are used for queue information
 	AttrMaxDepth int64  // The queue attribute value. Not the max depth reported by RESET QSTATS
 	AttrUsage    int64  // Normal or XMITQ

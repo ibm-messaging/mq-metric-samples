@@ -254,6 +254,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 			desc := mqmetric.GetObjectDescription("", ibmmq.MQOT_Q_MGR)
 			labels := prometheus.Labels{
 				"qmgr":        strings.TrimSpace(config.cf.QMgrName),
+				"qmid":        mqmetric.GetQueueManagerAttribute(config.cf.QMgrName, ibmmq.MQCA_Q_MGR_IDENTIFIER),
 				"description": desc,
 				"platform":    platformString}
 

@@ -2,8 +2,10 @@
 Newest updates are at the top of this file.
 
 
-### Sep 08 2026 (no new version)
-* Add `qmid` tag/label for qmgr metrics in the Prometheus collector, carrying the queue manager's QMID (MQCA_Q_MGR_IDENTIFIER)
+### Oct 13 2026 (v6.0.1)
+* Pull in latest mq-golang package
+* Merge other dependency udpates
+* Add `qmid` tag/label for qmgr metrics (#517)
 
 ## Jun 16 2026 - v6.0.0
 * Pull in latest mq-golang package
