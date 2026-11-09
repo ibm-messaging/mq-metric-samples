@@ -5,12 +5,14 @@ of the mqiPCFstr.go functions in the `ibmmq` package, but evolved until it was a
 
 ## Differences from the C program
 * Only JSON output is available, not the "English-ish" text version
-* Object names (queues, topics) are given on the command line as single comma-separated lists instead of 
+* Object names (queues, topics) are given on the command line as single comma-separated lists instead of
   multiple repeated flags
 * The ordering of JSON fields is likely different because Go's `map` type does not give any order guarantees
 * Fields may be spelled slightly differently
 * The event messages can be written directly to an OpenTelemetry logging service. Available exporters include
   `stdout`, OTLP/http and OTLP/gRPC.
+* The event messages can also be written directly to an Apache Kafka topic using the IBM Sarama client library
+  (`github.com/IBM/sarama`).
 
 ## Testing
 There is an `evtTest.sh` script in this directory that can be used as the basis of your own testing. It builds and runs

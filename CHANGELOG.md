@@ -1,6 +1,8 @@
 # Changelog
 Newest updates are at the top of this file.
 
+### Nov 09 2026 (no new version)
+* Extend amqsevtg to optionally send formatted MQ events direct to a Kafka topic
 
 ### Oct 13 2026 (v6.0.1)
 * Pull in latest mq-golang package

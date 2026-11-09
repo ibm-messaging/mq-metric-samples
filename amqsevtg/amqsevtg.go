@@ -9,7 +9,7 @@
  * ordering guarantees.
  *
  * There is also an option to send the event messages directly to an
- * OpenTelemetry backend.
+ * OpenTelemetry backend or to a Kafka topic.
  */
 package main
 
@@ -139,6 +139,16 @@ func mainWithRc() int {
 		}
 
 		defer shutdownOTel()
+	}
+
+	if cf.KafkaBrokers != "" {
+		err = initKafka()
+		if err != nil {
+			fmt.Fprintf(statusStream, "%v\n", err)
+			return (1)
+		}
+
+		defer shutdownKafka()
 	}
 
 	// After this point, "err" should always be an MQReturn type

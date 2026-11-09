@@ -64,6 +64,9 @@ type Config struct {
 
 	OTelEndpoint string
 	OTelInsecure bool
+
+	KafkaBrokers string
+	KafkaTopic   string
 }
 
 var cf Config
@@ -86,6 +89,10 @@ func initParms() {
 	// New options to handle sending events direct to an OpenTelemetry endpoint
 	flag.StringVar(&cf.OTelEndpoint, "e", "", "OTel Endpoint: 'stdout', 'http(s)://example.com:4318', 'example.com:4317'")
 	flag.BoolVar(&cf.OTelInsecure, "i", false, "OTel Insecure connections allowed - certificate validation not required")
+
+	// Options to handle sending events direct to a Kafka topic
+	flag.StringVar(&cf.KafkaBrokers, "kb", "", "Kafka Broker endpoints (comma-separated, eg 'localhost:9092,example.com:9094')")
+	flag.StringVar(&cf.KafkaTopic, "kt", "", "Kafka Topic name")
 
 }
 
@@ -114,6 +121,16 @@ func parseParms() error {
 			err = fmt.Errorf("Incorrect value for Output (-o) option")
 			flag.Usage()
 		}
+	}
+
+	if err == nil && cf.KafkaBrokers != "" && cf.KafkaTopic == "" {
+		err = fmt.Errorf("Kafka Topic (-kt) must be specified when Kafka Brokers (-kb) are provided")
+		flag.Usage()
+	}
+
+	if err == nil && cf.KafkaBrokers == "" && cf.KafkaTopic != "" {
+		err = fmt.Errorf("Kafka Brokers (-kb) must be specified when Kafka Topic (-kt) is provided")
+		flag.Usage()
 	}
 
 	if err == nil && cf.Reconnect != "" {

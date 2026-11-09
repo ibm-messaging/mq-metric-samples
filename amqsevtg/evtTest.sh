@@ -23,9 +23,10 @@ amqsput="/opt/mqm/samp/bin/amqsput"
 # Use the product sample to start with, to check we are getting a good set of data
 # amqsevt="/opt/mqm/samp/bin/amqsevt  -o json"
 
-# This is the compiled program with some designated output options
+# Pick/modify one of these lines to act as the executed program and output paths:
 # amqsevt="./amqsevtg -e localhost:4317 -i " # An OTel output path
 # amqsevt="./amqsevtg -e stdout" # An OTel output path
+# amqsevt="./amqsevtg -kb localhost:9092 -kt mqevents" # A Kafka output path
 amqsevt="./amqsevtg" # The default processing with JSON output
 
 go build -o amqsevtg .

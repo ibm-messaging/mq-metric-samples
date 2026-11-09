@@ -268,7 +268,7 @@ func formatEvent(objectName string, objectType int32, callbackReason int32, md *
 	// can now print it.
 	var data []byte
 
-	if cf.OTelEndpoint == "" {
+	if cf.OTelEndpoint == "" && cf.KafkaBrokers == "" {
 		if cf.compact {
 			data, _ = json.Marshal(event)
 		} else {
@@ -288,8 +288,14 @@ func formatEvent(objectName string, objectType int32, callbackReason int32, md *
 		}
 
 		fmt.Printf("%s%s\n", separator, data)
-	} else {
+	}
+
+	if cf.OTelEndpoint != "" {
 		otelLog(event)
+	}
+
+	if cf.KafkaBrokers != "" {
+		kafkaProduce(event)
 	}
 }
 
