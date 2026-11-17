@@ -8,12 +8,12 @@ updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "monthly"
+      interval: "weekly"
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/dspmqrtj" # Location of package manifests
     schedule:
-      interval: "monthly"
+      interval: "weekly"
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/amqsevtg" # Location of package manifests
     schedule:
-      interval: "monthly"
+      interval: "weekly"
